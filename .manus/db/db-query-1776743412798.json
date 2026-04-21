@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `guild_settings` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`guildId` varchar(64) NOT NULL,\n\t`guildName` text,\n\t`guildIcon` text,\n\t`ownerId` varchar(64),\n\t`prefix` varchar(16) NOT NULL DEFAULT '!',\n\t`language` varchar(16) NOT NULL DEFAULT 'en',\n\t`timezone` varchar(64) NOT NULL DEFAULT 'UTC',\n\t`adminRoleId` varchar(64),\n\t`welcomeChannelId` varchar(64),\n\t`logsChannelId` varchar(64),\n\t`botEnabled` boolean NOT NULL DEFAULT true,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `guild_settings_id` PRIMARY KEY(`id`),\n\tCONSTRAINT `guild_settings_guildId_unique` UNIQUE(`guildId`)\n)",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3kxcdQsK9wau4S7.root --database 4SaJjWE9H23nuEDVVXAX6A --execute CREATE TABLE `guild_settings` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`guildId` varchar(64) NOT NULL,\n\t`guildName` text,\n\t`guildIcon` text,\n\t`ownerId` varchar(64),\n\t`prefix` varchar(16) NOT NULL DEFAULT '!',\n\t`language` varchar(16) NOT NULL DEFAULT 'en',\n\t`timezone` varchar(64) NOT NULL DEFAULT 'UTC',\n\t`adminRoleId` varchar(64),\n\t`welcomeChannelId` varchar(64),\n\t`logsChannelId` varchar(64),\n\t`botEnabled` boolean NOT NULL DEFAULT true,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `guild_settings_id` PRIMARY KEY(`id`),\n\tCONSTRAINT `guild_settings_guildId_unique` UNIQUE(`guildId`)\n)",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 128
+}

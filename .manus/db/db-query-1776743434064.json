@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `welcome_messages` (`id` int AUTO_INCREMENT NOT NULL, `guildId` varchar(64) NOT NULL, `welcomeEnabled` boolean NOT NULL DEFAULT false, `welcomeChannelId` varchar(64), `welcomeMessage` text, `goodbyeEnabled` boolean NOT NULL DEFAULT false, `goodbyeChannelId` varchar(64), `goodbyeMessage` text, `dmWelcome` boolean NOT NULL DEFAULT false, `dmMessage` text, `createdAt` timestamp NOT NULL DEFAULT (now()), `updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP, CONSTRAINT `welcome_messages_id` PRIMARY KEY(`id`), CONSTRAINT `welcome_messages_guildId_unique` UNIQUE(`guildId`))",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3kxcdQsK9wau4S7.root --database 4SaJjWE9H23nuEDVVXAX6A --execute CREATE TABLE `welcome_messages` (`id` int AUTO_INCREMENT NOT NULL, `guildId` varchar(64) NOT NULL, `welcomeEnabled` boolean NOT NULL DEFAULT false, `welcomeChannelId` varchar(64), `welcomeMessage` text, `goodbyeEnabled` boolean NOT NULL DEFAULT false, `goodbyeChannelId` varchar(64), `goodbyeMessage` text, `dmWelcome` boolean NOT NULL DEFAULT false, `dmMessage` text, `createdAt` timestamp NOT NULL DEFAULT (now()), `updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP, CONSTRAINT `welcome_messages_id` PRIMARY KEY(`id`), CONSTRAINT `welcome_messages_guildId_unique` UNIQUE(`guildId`))",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 118
+}

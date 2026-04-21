@@ -1,0 +1,12 @@
+{
+  "query": "CREATE TABLE `command_settings` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`guildId` varchar(64) NOT NULL,\n\t`commandName` varchar(64) NOT NULL,\n\t`enabled` boolean NOT NULL DEFAULT true,\n\t`cooldown` int DEFAULT 0,\n\t`requiredRoleId` varchar(64),\n\t`allowedChannels` json DEFAULT ('[]'),\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `command_settings_id` PRIMARY KEY(`id`)\n)",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3kxcdQsK9wau4S7.root --database 4SaJjWE9H23nuEDVVXAX6A --execute CREATE TABLE `command_settings` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`guildId` varchar(64) NOT NULL,\n\t`commandName` varchar(64) NOT NULL,\n\t`enabled` boolean NOT NULL DEFAULT true,\n\t`cooldown` int DEFAULT 0,\n\t`requiredRoleId` varchar(64),\n\t`allowedChannels` json DEFAULT ('[]'),\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `command_settings_id` PRIMARY KEY(`id`)\n)",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1064 (42000) at line 1: You have an error in your SQL syntax; check the manual that corresponds to your TiDB version for the right syntax to use line 8 column 38 near \"'[]'),",
+    "\t`createdAt` timestamp NOT NULL DEFAULT (now()),",
+    "\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,",
+    "\tCONSTRAINT `command_settings_id` PRIMARY KEY(`id`)",
+    ")\""
+  ]
+}

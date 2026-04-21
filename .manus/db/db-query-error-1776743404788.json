@@ -1,0 +1,16 @@
+{
+  "query": "CREATE TABLE `auto_mod_settings` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`guildId` varchar(64) NOT NULL,\n\t`antiSpamEnabled` boolean NOT NULL DEFAULT false,\n\t`antiSpamThreshold` int DEFAULT 5,\n\t`antiSpamInterval` int DEFAULT 5,\n\t`antiLinkEnabled` boolean NOT NULL DEFAULT false,\n\t`antiLinkWhitelist` json DEFAULT ('[]'),\n\t`wordFilterEnabled` boolean NOT NULL DEFAULT false,\n\t`wordFilterList` json DEFAULT ('[]'),\n\t`antiCapsEnabled` boolean NOT NULL DEFAULT false,\n\t`antiCapsThreshold` int DEFAULT 70,\n\t`punishmentType` enum('warn','mute','kick','ban') NOT NULL DEFAULT 'warn',\n\t`punishmentDuration` int DEFAULT 10,\n\t`logChannelId` varchar(64),\n\t`exemptRoles` json DEFAULT ('[]'),\n\t`exemptChannels` json DEFAULT ('[]'),\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `auto_mod_settings_id` PRIMARY KEY(`id`),\n\tCONSTRAINT `auto_mod_settings_guildId_unique` UNIQUE(`guildId`)\n)",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3kxcdQsK9wau4S7.root --database 4SaJjWE9H23nuEDVVXAX6A --execute CREATE TABLE `auto_mod_settings` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`guildId` varchar(64) NOT NULL,\n\t`antiSpamEnabled` boolean NOT NULL DEFAULT false,\n\t`antiSpamThreshold` int DEFAULT 5,\n\t`antiSpamInterval` int DEFAULT 5,\n\t`antiLinkEnabled` boolean NOT NULL DEFAULT false,\n\t`antiLinkWhitelist` json DEFAULT ('[]'),\n\t`wordFilterEnabled` boolean NOT NULL DEFAULT false,\n\t`wordFilterList` json DEFAULT ('[]'),\n\t`antiCapsEnabled` boolean NOT NULL DEFAULT false,\n\t`antiCapsThreshold` int DEFAULT 70,\n\t`punishmentType` enum('warn','mute','kick','ban') NOT NULL DEFAULT 'warn',\n\t`punishmentDuration` int DEFAULT 10,\n\t`logChannelId` varchar(64),\n\t`exemptRoles` json DEFAULT ('[]'),\n\t`exemptChannels` json DEFAULT ('[]'),\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `auto_mod_settings_id` PRIMARY KEY(`id`),\n\tCONSTRAINT `auto_mod_settings_guildId_unique` UNIQUE(`guildId`)\n)",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1064 (42000) at line 1: You have an error in your SQL syntax; check the manual that corresponds to your TiDB version for the right syntax to use line 8 column 40 near \"'[]'),",
+    "\t`wordFilterEnabled` boolean NOT NULL DEFAULT false,",
+    "\t`wordFilterList` json DEFAULT ('[]'),",
+    "\t`antiCapsEnabled` boolean NOT NULL DEFAULT false,",
+    "\t`antiCapsThreshold` int DEFAULT 70,",
+    "\t`punishmentType` enum('warn','mute','kick','ban') NOT NULL DEFAULT 'warn',",
+    "\t`punishmentDuration` int DEFAULT 10,",
+    "\t`logChannelId` varchar(64),",
+    "\t`exemptRoles` json DEFAULT ('[]'),"
+  ]
+}

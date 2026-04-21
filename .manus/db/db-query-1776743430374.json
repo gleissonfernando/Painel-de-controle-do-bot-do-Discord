@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `social_notifications` (`id` int AUTO_INCREMENT NOT NULL, `guildId` varchar(64) NOT NULL, `platform` enum('youtube','twitch','tiktok') NOT NULL, `channelUsername` varchar(128) NOT NULL, `channelId` varchar(128), `channelDisplayName` text, `discordChannelId` varchar(64) NOT NULL, `message` text, `enabled` boolean NOT NULL DEFAULT true, `isLive` boolean NOT NULL DEFAULT false, `lastNotifiedAt` timestamp, `createdAt` timestamp NOT NULL DEFAULT (now()), `updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP, CONSTRAINT `social_notifications_id` PRIMARY KEY(`id`))",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3kxcdQsK9wau4S7.root --database 4SaJjWE9H23nuEDVVXAX6A --execute CREATE TABLE `social_notifications` (`id` int AUTO_INCREMENT NOT NULL, `guildId` varchar(64) NOT NULL, `platform` enum('youtube','twitch','tiktok') NOT NULL, `channelUsername` varchar(128) NOT NULL, `channelId` varchar(128), `channelDisplayName` text, `discordChannelId` varchar(64) NOT NULL, `message` text, `enabled` boolean NOT NULL DEFAULT true, `isLive` boolean NOT NULL DEFAULT false, `lastNotifiedAt` timestamp, `createdAt` timestamp NOT NULL DEFAULT (now()), `updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP, CONSTRAINT `social_notifications_id` PRIMARY KEY(`id`))",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 115
+}

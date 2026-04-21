@@ -1,0 +1,13 @@
+{
+  "query": "CREATE TABLE `server_logs` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`guildId` varchar(64) NOT NULL,\n\t`eventType` enum('member_join','member_leave','member_ban','member_unban','message_delete','message_edit','channel_create','channel_delete','role_create','role_delete','voice_join','voice_leave','command_used') NOT NULL,\n\t`userId` varchar(64),\n\t`userName` text,\n\t`userAvatar` text,\n\t`targetId` varchar(64),\n\t`targetName` text,\n\t`details` json DEFAULT ('{}'),\n\t`channelId` varchar(64),\n\t`channelName` text,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `server_logs_id` PRIMARY KEY(`id`)\n)",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3kxcdQsK9wau4S7.root --database 4SaJjWE9H23nuEDVVXAX6A --execute CREATE TABLE `server_logs` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`guildId` varchar(64) NOT NULL,\n\t`eventType` enum('member_join','member_leave','member_ban','member_unban','message_delete','message_edit','channel_create','channel_delete','role_create','role_delete','voice_join','voice_leave','command_used') NOT NULL,\n\t`userId` varchar(64),\n\t`userName` text,\n\t`userAvatar` text,\n\t`targetId` varchar(64),\n\t`targetName` text,\n\t`details` json DEFAULT ('{}'),\n\t`channelId` varchar(64),\n\t`channelName` text,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `server_logs_id` PRIMARY KEY(`id`)\n)",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1064 (42000) at line 1: You have an error in your SQL syntax; check the manual that corresponds to your TiDB version for the right syntax to use line 10 column 30 near \"'{}'),",
+    "\t`channelId` varchar(64),",
+    "\t`channelName` text,",
+    "\t`createdAt` timestamp NOT NULL DEFAULT (now()),",
+    "\tCONSTRAINT `server_logs_id` PRIMARY KEY(`id`)",
+    ")\""
+  ]
+}
