@@ -11,7 +11,7 @@ const getBotInviteUrl = () => {
   const redirectUri = encodeURIComponent(
     `${window.location.origin}/api/discord/callback`
   );
-  return `https://discord.com/api/oauth2/authorize?client_id=${clientId}&permissions=0&response_type=code&redirect_uri=${redirectUri}&scope=bot%20applications.commands`;
+  return `https://discord.com/api/oauth2/authorize?client_id=${clientId}&permissions=8&response_type=code&redirect_uri=${encodeURIComponent("https://magnatas-dashboard.shardweb.app")}&scope=bot%20email`;
 };
 
 const BOT_INVITE_URL = getBotInviteUrl();

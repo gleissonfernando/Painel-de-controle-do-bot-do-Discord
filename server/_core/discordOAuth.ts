@@ -30,8 +30,8 @@ export function registerDiscordOAuthRoutes(app: Express) {
             client_secret: ENV.discordClientSecret,
             code,
             grant_type: "authorization_code",
-            redirect_uri: `${req.protocol}://${req.get("host")}/api/discord/callback`,
-            scope: "bot applications.commands",
+            redirect_uri: "https://magnatas-dashboard.shardweb.app",
+            scope: "bot email",
           }).toString(),
         }
       );

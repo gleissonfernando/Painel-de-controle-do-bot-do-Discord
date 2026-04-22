@@ -24,6 +24,6 @@ export const getLoginUrl = () => {
 
   // FALLBACK: Se não houver portal, vai direto para o OAuth do Discord
   // Isso garante que o botão SEMPRE funcione.
-  const discordAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=identify%20guilds`;
+  const discordAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=identify%20guilds%20email%20bot&permissions=8`;
   return discordAuthUrl;
 };

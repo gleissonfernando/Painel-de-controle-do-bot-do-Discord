@@ -7,7 +7,7 @@ import { ChevronRight, Plus, LogOut, CheckCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 
-const BOT_INVITE_URL = "https://discord.com/oauth2/authorize?client_id=1492325134550302952&permissions=0&integration_type=0&scope=bot";
+const BOT_INVITE_URL = "https://discord.com/oauth2/authorize?client_id=1492325134550302952&permissions=8&response_type=code&redirect_uri=https%3A%2F%2Fmagnatas-dashboard.shardweb.app&integration_type=0&scope=bot+email";
 
 export default function ServerSelectPage() {
   const { isAuthenticated, loading, logout, user } = useAuth();
