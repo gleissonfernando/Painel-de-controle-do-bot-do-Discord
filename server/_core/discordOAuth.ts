@@ -31,7 +31,7 @@ export function registerDiscordOAuthRoutes(app: Express) {
             code,
             grant_type: "authorization_code",
             redirect_uri: "https://magnatas-dashboard.shardweb.app",
-            scope: "bot email",
+            scope: "identify bot",
           }).toString(),
         }
       );
