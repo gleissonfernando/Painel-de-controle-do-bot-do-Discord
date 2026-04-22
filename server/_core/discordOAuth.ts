@@ -30,7 +30,7 @@ export function registerDiscordOAuthRoutes(app: Express) {
             client_secret: ENV.discordClientSecret,
             code,
             grant_type: "authorization_code",
-            redirect_uri: "https://magnatas-dashboard.shardweb.app",
+            redirect_uri: `${req.protocol}://${req.get("host")}/api/discord/callback`,
             scope: "identify bot",
           }).toString(),
         }
@@ -74,9 +74,8 @@ export function registerDiscordOAuthRoutes(app: Express) {
       // The guild_id parameter tells us which server the bot was added to
       if (guildId) {
         const botStatus = botInGuild ? "true" : "false";
-        return res.redirect(302, `/dashboard/${guildId}?bot_added=true&bot_verified=${botStatus}`);
+        return res.redirect(302, `/servers?bot_added=true&bot_verified=${botStatus}&guild_id=${guildId}`);
       }
-
       // If no guild_id, redirect to servers page
       return res.redirect(302, "/servers?bot_added=true");
     } catch (error) {

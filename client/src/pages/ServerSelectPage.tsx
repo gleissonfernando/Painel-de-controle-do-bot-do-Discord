@@ -7,7 +7,11 @@ import { ChevronRight, Plus, LogOut, CheckCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 
-const BOT_INVITE_URL = "https://discord.com/oauth2/authorize?client_id=1492325134550302952&permissions=0&response_type=code&redirect_uri=https%3A%2F%2Fmagnatas-dashboard.shardweb.app&integration_type=0&scope=identify+bot";
+const getBotInviteUrl = () => {
+  const clientId = "1492325134550302952";
+  const redirectUri = encodeURIComponent(`${window.location.origin}/api/discord/callback`);
+  return `https://discord.com/oauth2/authorize?client_id=${clientId}&permissions=8&response_type=code&redirect_uri=${redirectUri}&integration_type=0&scope=identify+bot`;
+};
 
 export default function ServerSelectPage() {
   const { isAuthenticated, loading, logout, user } = useAuth();
@@ -54,7 +58,7 @@ export default function ServerSelectPage() {
   useEffect(() => {
     if (!guildsLoading && guilds && guilds.length === 0) {
       console.log("Nenhum servidor encontrado com o bot. Redirecionando para o convite...");
-      window.location.href = BOT_INVITE_URL;
+      window.location.href = getBotInviteUrl();
     }
   }, [guilds, guildsLoading]);
 
@@ -175,7 +179,7 @@ export default function ServerSelectPage() {
                 {t("servers.noServers")}
               </p>
                 <a
-                  href={BOT_INVITE_URL}
+                  href={getBotInviteUrl()}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -191,7 +195,7 @@ export default function ServerSelectPage() {
           {/* Add Server Button */}
           <div className="p-2 border-t border-border">
             <a
-              href={BOT_INVITE_URL}
+              href={getBotInviteUrl()}
               target="_blank"
               rel="noopener noreferrer"
               className="block"
@@ -237,7 +241,7 @@ export default function ServerSelectPage() {
                   {t("servers.noServersDesc")}
                 </p>
                 <a
-                  href={BOT_INVITE_URL}
+                  href={getBotInviteUrl()}
                   target="_blank"
                   rel="noopener noreferrer"
                 >

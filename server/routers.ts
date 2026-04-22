@@ -43,16 +43,15 @@ const authRouter = router({
 // ─── Guilds Router ────────────────────────────────────────────────────────────
 
 const guildsRouter = router({
-  list: protectedProcedure.query(async () => {
-    // Return the configured guild from environment or demo guilds
-    const guildId = process.env.VITE_DISCORD_GUILD_ID;
-
-    // If no guild ID is configured, return demo guilds
-    if (!guildId) {
+  list: protectedProcedure.query(async ({ ctx }) => {
+    const user = ctx.user;
+    
+    // Fallback to demo guilds if no Discord access token
+    if (!user || !user.accessToken) {
       return [
         {
           id: "1001",
-          name: "My Awesome Server",
+          name: "My Awesome Server (Demo)",
           icon: null,
           owner: true,
           permissions: "8",
@@ -60,51 +59,55 @@ const guildsRouter = router({
           channels: 5,
           roles: 4,
         },
-        {
-          id: "1002",
-          name: "Gaming Community",
-          icon: null,
-          owner: false,
-          permissions: "8",
-          memberCount: 5832,
-          channels: 12,
-          roles: 8,
-        },
-        {
-          id: "1003",
-          name: "Dev Hub",
-          icon: null,
-          owner: false,
-          permissions: "8",
-          memberCount: 342,
-          channels: 8,
-          roles: 5,
-        },
       ];
     }
 
     try {
-      const details = await fetchGuildDetails(guildId);
-      const channels = await fetchGuildChannels(guildId);
-      const roles = await fetchGuildRoles(guildId);
-      return [
-        {
-          id: guildId,
-          name: details?.name || "Configured Server",
-          icon: details?.icon || null,
-          owner: true,
-          permissions: "8",
-          memberCount: details?.approximate_member_count || 0,
-          channels: channels.length,
-          roles: roles.length,
-        },
-      ];
+      // Fetch all guilds the user is in
+      const userGuilds = await fetchDiscordGuilds(user.accessToken);
+      
+      // Filter guilds where user has MANAGE_GUILD (0x20) or ADMINISTRATOR (0x8) permission
+      // Or is the owner
+      const adminGuilds = userGuilds.filter(g => {
+        const perms = BigInt(g.permissions);
+        const isAdmin = (perms & BigInt(0x8)) === BigInt(0x8);
+        const canManage = (perms & BigInt(0x20)) === BigInt(0x20);
+        return g.owner || isAdmin || canManage;
+      });
+
+      // Check which of these guilds the bot is actually in
+      const results = await Promise.all(
+        adminGuilds.map(async (guild) => {
+          const isBotPresent = await checkBotInGuild(guild.id);
+          if (!isBotPresent) return null;
+
+          try {
+            const details = await fetchGuildDetails(guild.id);
+            const channels = await fetchGuildChannels(guild.id);
+            const roles = await fetchGuildRoles(guild.id);
+
+            return {
+              id: guild.id,
+              name: details?.name || guild.name,
+              icon: details?.icon || guild.icon,
+              owner: guild.owner,
+              permissions: guild.permissions,
+              memberCount: details?.approximate_member_count || 0,
+              channels: channels.length,
+              roles: roles.length,
+            };
+          } catch (err) {
+            console.error(`Error fetching details for guild ${guild.id}:`, err);
+            return null;
+          }
+        })
+      );
+
+      // Filter out nulls (guilds where bot is not present or error occurred)
+      return results.filter((r): r is NonNullable<typeof r> => r !== null);
     } catch (error) {
       console.error("Error fetching guild data:", error);
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to fetch guild data from Discord",
-      });
+      return [];
     }
   }),
 
