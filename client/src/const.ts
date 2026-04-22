@@ -25,7 +25,8 @@ export const getLoginUrl = () => {
   // FALLBACK: Se não houver portal, vai direto para o OAuth do Discord
   // Isso garante que o botão SEMPRE funcione.
   // IMPORTANTE: Adicionado o escopo 'guilds' para permitir listar os servidores do usuário.
-  const currentRedirectUri = encodeURIComponent(`${window.location.origin}/api/oauth/callback`);
+  // Fixado o redirectUri para o domínio de produção para evitar erros de "invalid redirect_uri" no Discord.
+  const currentRedirectUri = encodeURIComponent(`https://magnatas-dashboard.shardweb.app/api/oauth/callback`);
   const discordAuthUrl = `https://discord.com/oauth2/authorize?client_id=${clientId}&response_type=code&redirect_uri=${currentRedirectUri}&scope=identify+email+guilds`;
   return discordAuthUrl;
 };

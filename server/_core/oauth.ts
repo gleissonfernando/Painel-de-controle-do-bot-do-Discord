@@ -39,7 +39,7 @@ export function registerOAuthRoutes(app: Express) {
             client_secret: process.env.DISCORD_CLIENT_SECRET || "",
             grant_type: "authorization_code",
             code,
-            redirect_uri: `${req.protocol}://${req.get("host")}/api/oauth/callback`,
+            redirect_uri: `https://magnatas-dashboard.shardweb.app/api/oauth/callback`,
           }),
         });
 
