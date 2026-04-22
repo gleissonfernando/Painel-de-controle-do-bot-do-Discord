@@ -18,6 +18,9 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
 
   if (!isUnauthorized) return;
 
+  // Evita redirecionamento infinito se já estivermos na página de login
+  if (window.location.pathname === "/") return;
+
   window.location.href = getLoginUrl();
 };
 
