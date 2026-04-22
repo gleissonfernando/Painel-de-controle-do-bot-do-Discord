@@ -34,9 +34,10 @@ async function startServer() {
     serveStatic(app);
   }
 
-  // SHARD CLOUD PORT FIX
-  // Force port 80 if PORT is not set, and listen on 0.0.0.0
-  const port = Number(process.env.PORT || 80);
+  // ABSOLUTE PORT FORCING FOR SHARD CLOUD
+  // We ignore process.env.PORT because the logs show it's being set to 3000
+  // while the proxy expects port 80.
+  const port = 80;
   const host = "0.0.0.0";
 
   server.listen(port, host, () => {
