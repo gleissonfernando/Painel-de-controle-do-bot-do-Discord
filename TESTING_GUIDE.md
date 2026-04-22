@@ -18,6 +18,7 @@ Este painel permite gerenciar configurações do seu bot Discord por servidor. C
 ### 2. Verificar se o Bot Aparece na Lista
 
 Após adicionar o bot:
+
 - Volte para a página `/servers`
 - O servidor deve aparecer na lista "Your Servers"
 - Clique em **"Manage"** para acessar o dashboard
@@ -25,6 +26,7 @@ Após adicionar o bot:
 ### 3. Acessar o Dashboard do Servidor
 
 Na página do dashboard, você verá:
+
 - **Dashboard**: Estatísticas do servidor (membros, canais, cargos, etc.)
 - **General Settings**: Configurações básicas (prefixo, idioma, timezone, canais e cargos)
 - **Commands**: Gerenciar comandos do bot
@@ -50,6 +52,7 @@ Na página "General Settings":
 ### 5. Dados Reais do Discord
 
 O painel busca dados reais do Discord:
+
 - **Canais**: Lista todos os canais de texto do servidor
 - **Cargos**: Lista todos os cargos do servidor
 - **Membros**: Exibe o número de membros
@@ -62,6 +65,7 @@ O painel busca dados reais do Discord:
 **Causa**: O bot não tem permissões no servidor ou não está adicionado.
 
 **Solução**:
+
 1. Verifique se o bot está no servidor (em Membros)
 2. Verifique as permissões do bot (deve ter permissão de "Ver Canais" e "Gerenciar Cargos")
 3. Tente adicionar o bot novamente
@@ -71,6 +75,7 @@ O painel busca dados reais do Discord:
 **Causa**: O bot não tem permissão para listar canais ou cargos.
 
 **Solução**:
+
 1. Vá para Configurações do Servidor → Funções
 2. Selecione o cargo do bot
 3. Ative as permissões:
@@ -83,6 +88,7 @@ O painel busca dados reais do Discord:
 **Causa**: Erro ao salvar no banco de dados.
 
 **Solução**:
+
 1. Verifique a conexão com o banco de dados
 2. Tente salvar novamente
 3. Verifique os logs do servidor para mais detalhes
@@ -90,16 +96,19 @@ O painel busca dados reais do Discord:
 ## Recursos Principais
 
 ### 1. Configurações por Servidor
+
 - Cada servidor tem suas próprias configurações
 - Configurações são salvas automaticamente quando você clica "Save Changes"
 - Dados são armazenados no banco de dados MySQL/TiDB
 
 ### 2. Dados em Tempo Real
+
 - Canais, cargos e membros são buscados da Discord API
 - Dados são atualizados cada vez que você acessa a página
 - Sem cache - sempre dados atualizados
 
 ### 3. Segurança
+
 - Apenas usuários autenticados podem acessar o painel
 - Apenas administradores do servidor podem gerenciar configurações
 - Token do bot é armazenado com segurança no servidor
@@ -115,6 +124,7 @@ O painel busca dados reais do Discord:
 ## Suporte
 
 Se encontrar problemas:
+
 1. Verifique este guia
 2. Verifique os logs do servidor
 3. Verifique as permissões do bot no Discord

@@ -23,9 +23,12 @@ export async function fetchDiscordGuilds(accessToken: string) {
 export async function fetchGuildDetails(guildId: string) {
   if (!BOT_TOKEN) return getMockGuildDetails(guildId);
   try {
-    const res = await axios.get(`${DISCORD_API}/guilds/${guildId}?with_counts=true`, {
-      headers: { Authorization: `Bot ${BOT_TOKEN}` },
-    });
+    const res = await axios.get(
+      `${DISCORD_API}/guilds/${guildId}?with_counts=true`,
+      {
+        headers: { Authorization: `Bot ${BOT_TOKEN}` },
+      }
+    );
     return res.data as {
       id: string;
       name: string;
@@ -46,8 +49,10 @@ export async function fetchGuildChannels(guildId: string) {
     const res = await axios.get(`${DISCORD_API}/guilds/${guildId}/channels`, {
       headers: { Authorization: `Bot ${BOT_TOKEN}` },
     });
-    return (res.data as Array<{ id: string; name: string; type: number }>).filter(
-      (c) => c.type === 0 // text channels only
+    return (
+      res.data as Array<{ id: string; name: string; type: number }>
+    ).filter(
+      c => c.type === 0 // text channels only
     );
   } catch {
     return getMockChannels(guildId);

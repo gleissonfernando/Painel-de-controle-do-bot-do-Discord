@@ -25,56 +25,56 @@ function Router() {
       <Route path="/onboarding" component={OnboardingPage} />
       <Route path="/servers" component={ServerSelectPage} />
       <Route path="/dashboard/:guildId">
-        {(params) => (
+        {params => (
           <DashboardLayout guildId={params.guildId}>
             <DashboardPage guildId={params.guildId} />
           </DashboardLayout>
         )}
       </Route>
       <Route path="/dashboard/:guildId/general">
-        {(params) => (
+        {params => (
           <DashboardLayout guildId={params.guildId}>
             <GeneralSettingsPage guildId={params.guildId} />
           </DashboardLayout>
         )}
       </Route>
       <Route path="/dashboard/:guildId/commands">
-        {(params) => (
+        {params => (
           <DashboardLayout guildId={params.guildId}>
             <CommandsPage guildId={params.guildId} />
           </DashboardLayout>
         )}
       </Route>
       <Route path="/dashboard/:guildId/messages">
-        {(params) => (
+        {params => (
           <DashboardLayout guildId={params.guildId}>
             <MessagesPage guildId={params.guildId} />
           </DashboardLayout>
         )}
       </Route>
       <Route path="/dashboard/:guildId/automod">
-        {(params) => (
+        {params => (
           <DashboardLayout guildId={params.guildId}>
             <AutoModerationPage guildId={params.guildId} />
           </DashboardLayout>
         )}
       </Route>
       <Route path="/dashboard/:guildId/notifications">
-        {(params) => (
+        {params => (
           <DashboardLayout guildId={params.guildId}>
             <SocialNotificationsPage guildId={params.guildId} />
           </DashboardLayout>
         )}
       </Route>
       <Route path="/dashboard/:guildId/logs">
-        {(params) => (
+        {params => (
           <DashboardLayout guildId={params.guildId}>
             <LogsPage guildId={params.guildId} />
           </DashboardLayout>
         )}
       </Route>
       <Route path="/dashboard/:guildId/welcome">
-        {(params) => (
+        {params => (
           <DashboardLayout guildId={params.guildId}>
             <WelcomeGoodbyePage />
           </DashboardLayout>

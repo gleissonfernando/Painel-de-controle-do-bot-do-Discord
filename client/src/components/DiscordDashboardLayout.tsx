@@ -39,11 +39,18 @@ const navItems: NavItem[] = [
   { label: "Messages", icon: <MessageSquare size={18} />, path: "/messages" },
   { label: "Welcome/Goodbye", icon: <Activity size={18} />, path: "/welcome" },
   { label: "Auto Moderation", icon: <Shield size={18} />, path: "/automod" },
-  { label: "Social Notifications", icon: <Bell size={18} />, path: "/notifications" },
+  {
+    label: "Social Notifications",
+    icon: <Bell size={18} />,
+    path: "/notifications",
+  },
   { label: "Logs", icon: <FileText size={18} />, path: "/logs" },
 ];
 
-export default function DiscordDashboardLayout({ guildId, children }: DiscordDashboardLayoutProps) {
+export default function DiscordDashboardLayout({
+  guildId,
+  children,
+}: DiscordDashboardLayoutProps) {
   const { user, logout } = useAuth();
   const [location] = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -56,7 +63,7 @@ export default function DiscordDashboardLayout({ guildId, children }: DiscordDas
   const getInitials = (name: string) =>
     name
       .split(" ")
-      .map((w) => w[0])
+      .map(w => w[0])
       .join("")
       .toUpperCase()
       .slice(0, 2);
@@ -96,10 +103,15 @@ export default function DiscordDashboardLayout({ guildId, children }: DiscordDas
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-foreground truncate">{guildName}</p>
+              <p className="text-xs font-semibold text-foreground truncate">
+                {guildName}
+              </p>
               <p className="text-xs text-muted-foreground">Click to change</p>
             </div>
-            <ChevronLeft size={14} className="text-muted-foreground group-hover:text-primary transition-colors" />
+            <ChevronLeft
+              size={14}
+              className="text-muted-foreground group-hover:text-primary transition-colors"
+            />
           </div>
         </Link>
       </div>
@@ -109,7 +121,7 @@ export default function DiscordDashboardLayout({ guildId, children }: DiscordDas
         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2 mb-2">
           Management
         </p>
-        {navItems.map((item) => {
+        {navItems.map(item => {
           const active = isActive(item.path);
           return (
             <Link key={item.path} href={`/dashboard/${guildId}${item.path}`}>
@@ -123,7 +135,9 @@ export default function DiscordDashboardLayout({ guildId, children }: DiscordDas
               >
                 <span
                   className={`transition-colors ${
-                    active ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+                    active
+                      ? "text-primary"
+                      : "text-muted-foreground group-hover:text-foreground"
                   }`}
                 >
                   {item.icon}
@@ -143,14 +157,19 @@ export default function DiscordDashboardLayout({ guildId, children }: DiscordDas
         <div className="flex items-center gap-2 px-2 py-2 rounded-md bg-sidebar-accent">
           <Avatar className="w-8 h-8">
             {(user as { avatar?: string })?.avatar ? (
-              <AvatarImage src={(user as { avatar?: string }).avatar} alt={user?.name ?? ""} />
+              <AvatarImage
+                src={(user as { avatar?: string }).avatar}
+                alt={user?.name ?? ""}
+              />
             ) : null}
             <AvatarFallback className="bg-primary/20 text-primary text-xs font-bold">
               {getInitials(user?.name ?? "U")}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-foreground truncate">{user?.name ?? "User"}</p>
+            <p className="text-xs font-semibold text-foreground truncate">
+              {user?.name ?? "User"}
+            </p>
             <div className="flex items-center gap-1">
               <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
               <p className="text-xs text-muted-foreground">Online</p>
@@ -211,22 +230,24 @@ export default function DiscordDashboardLayout({ guildId, children }: DiscordDas
             </Button>
             <div className="flex items-center gap-2">
               <Server size={16} className="text-muted-foreground" />
-              <span className="text-sm font-semibold text-foreground">{guildName}</span>
+              <span className="text-sm font-semibold text-foreground">
+                {guildName}
+              </span>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-500/10 border border-green-500/20">
               <Activity size={12} className="text-green-500" />
-              <span className="text-xs font-medium text-green-500">Bot Online</span>
+              <span className="text-xs font-medium text-green-500">
+                Bot Online
+              </span>
             </div>
           </div>
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
-          {children}
-        </main>
+        <main className="flex-1 overflow-y-auto p-4 lg:p-6">{children}</main>
       </div>
     </div>
   );

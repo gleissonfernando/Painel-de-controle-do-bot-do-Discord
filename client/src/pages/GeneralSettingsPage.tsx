@@ -18,13 +18,23 @@ const LANGUAGES = [
 ];
 
 const TIMEZONES = [
-  "UTC", "America/New_York", "America/Chicago", "America/Denver",
-  "America/Los_Angeles", "America/Sao_Paulo", "Europe/London",
-  "Europe/Paris", "Europe/Berlin", "Asia/Tokyo", "Asia/Shanghai",
+  "UTC",
+  "America/New_York",
+  "America/Chicago",
+  "America/Denver",
+  "America/Los_Angeles",
+  "America/Sao_Paulo",
+  "Europe/London",
+  "Europe/Paris",
+  "Europe/Berlin",
+  "Asia/Tokyo",
+  "Asia/Shanghai",
   "Australia/Sydney",
 ];
 
-export default function GeneralSettingsPage({ guildId }: GeneralSettingsPageProps) {
+export default function GeneralSettingsPage({
+  guildId,
+}: GeneralSettingsPageProps) {
   const { data: settings, isLoading } = trpc.settings.get.useQuery({ guildId });
   const { data: channels } = trpc.guilds.channels.useQuery({ guildId });
   const { data: roles } = trpc.guilds.roles.useQuery({ guildId });
@@ -59,7 +69,7 @@ export default function GeneralSettingsPage({ guildId }: GeneralSettingsPageProp
       toast.success("Settings saved successfully!");
       utils.settings.get.invalidate({ guildId });
     },
-    onError: (err) => {
+    onError: err => {
       toast.error(`Failed to save: ${err.message}`);
     },
   });
@@ -80,8 +90,11 @@ export default function GeneralSettingsPage({ guildId }: GeneralSettingsPageProp
   if (isLoading) {
     return (
       <div className="space-y-4">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="bg-card border border-border rounded-xl p-6 animate-pulse">
+        {[1, 2, 3].map(i => (
+          <div
+            key={i}
+            className="bg-card border border-border rounded-xl p-6 animate-pulse"
+          >
             <div className="h-5 bg-muted rounded w-1/4 mb-4" />
             <div className="grid grid-cols-2 gap-4">
               <div className="h-10 bg-muted rounded" />
@@ -102,7 +115,9 @@ export default function GeneralSettingsPage({ guildId }: GeneralSettingsPageProp
             <Settings size={22} className="text-primary" />
             General Settings
           </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Configure your bot's basic settings for this server</p>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Configure your bot's basic settings for this server
+          </p>
         </div>
         <Button
           onClick={handleSave}
@@ -130,21 +145,29 @@ export default function GeneralSettingsPage({ guildId }: GeneralSettingsPageProp
             <input
               type="text"
               value={form.prefix}
-              onChange={(e) => setForm({ ...form, prefix: e.target.value.slice(0, 16) })}
+              onChange={e =>
+                setForm({ ...form, prefix: e.target.value.slice(0, 16) })
+              }
               maxLength={16}
               placeholder="!"
               className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors"
             />
-            <p className="text-xs text-muted-foreground mt-1">The prefix used to trigger bot commands (e.g., ! or /)</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              The prefix used to trigger bot commands (e.g., ! or /)
+            </p>
           </div>
 
           {/* Bot Enabled */}
           <div>
-            <label className="block text-sm font-medium text-foreground mb-1.5">Bot Status</label>
+            <label className="block text-sm font-medium text-foreground mb-1.5">
+              Bot Status
+            </label>
             <div className="flex items-center gap-3 p-3 bg-input border border-border rounded-lg">
               <button
                 type="button"
-                onClick={() => setForm({ ...form, botEnabled: !form.botEnabled })}
+                onClick={() =>
+                  setForm({ ...form, botEnabled: !form.botEnabled })
+                }
                 className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${
                   form.botEnabled ? "bg-primary" : "bg-muted"
                 }`}
@@ -155,11 +178,15 @@ export default function GeneralSettingsPage({ guildId }: GeneralSettingsPageProp
                   }`}
                 />
               </button>
-              <span className={`text-sm font-medium ${form.botEnabled ? "text-green-400" : "text-muted-foreground"}`}>
+              <span
+                className={`text-sm font-medium ${form.botEnabled ? "text-green-400" : "text-muted-foreground"}`}
+              >
                 {form.botEnabled ? "Enabled" : "Disabled"}
               </span>
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Enable or disable the bot in this server</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Enable or disable the bot in this server
+            </p>
           </div>
         </div>
       </div>
@@ -173,14 +200,18 @@ export default function GeneralSettingsPage({ guildId }: GeneralSettingsPageProp
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           {/* Language */}
           <div>
-            <label className="block text-sm font-medium text-foreground mb-1.5">Language</label>
+            <label className="block text-sm font-medium text-foreground mb-1.5">
+              Language
+            </label>
             <select
               value={form.language}
-              onChange={(e) => setForm({ ...form, language: e.target.value })}
+              onChange={e => setForm({ ...form, language: e.target.value })}
               className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors"
             >
-              {LANGUAGES.map((l) => (
-                <option key={l.value} value={l.value}>{l.label}</option>
+              {LANGUAGES.map(l => (
+                <option key={l.value} value={l.value}>
+                  {l.label}
+                </option>
               ))}
             </select>
           </div>
@@ -188,16 +219,21 @@ export default function GeneralSettingsPage({ guildId }: GeneralSettingsPageProp
           {/* Timezone */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-1.5">
-              <Clock size={14} className="inline mr-1.5 text-muted-foreground" />
+              <Clock
+                size={14}
+                className="inline mr-1.5 text-muted-foreground"
+              />
               Timezone
             </label>
             <select
               value={form.timezone}
-              onChange={(e) => setForm({ ...form, timezone: e.target.value })}
+              onChange={e => setForm({ ...form, timezone: e.target.value })}
               className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors"
             >
-              {TIMEZONES.map((tz) => (
-                <option key={tz} value={tz}>{tz}</option>
+              {TIMEZONES.map(tz => (
+                <option key={tz} value={tz}>
+                  {tz}
+                </option>
               ))}
             </select>
           </div>
@@ -213,46 +249,64 @@ export default function GeneralSettingsPage({ guildId }: GeneralSettingsPageProp
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           {/* Admin Role */}
           <div>
-            <label className="block text-sm font-medium text-foreground mb-1.5">Admin Role</label>
+            <label className="block text-sm font-medium text-foreground mb-1.5">
+              Admin Role
+            </label>
             <select
               value={form.adminRoleId}
-              onChange={(e) => setForm({ ...form, adminRoleId: e.target.value })}
+              onChange={e => setForm({ ...form, adminRoleId: e.target.value })}
               className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors"
             >
               <option value="">None selected</option>
               {(roles ?? []).map((r: { id: string; name: string }) => (
-                <option key={r.id} value={r.id}>{r.name}</option>
+                <option key={r.id} value={r.id}>
+                  {r.name}
+                </option>
               ))}
             </select>
-            <p className="text-xs text-muted-foreground mt-1">Role that can manage the bot</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Role that can manage the bot
+            </p>
           </div>
 
           {/* Welcome Channel */}
           <div>
-            <label className="block text-sm font-medium text-foreground mb-1.5">Welcome Channel</label>
+            <label className="block text-sm font-medium text-foreground mb-1.5">
+              Welcome Channel
+            </label>
             <select
               value={form.welcomeChannelId}
-              onChange={(e) => setForm({ ...form, welcomeChannelId: e.target.value })}
+              onChange={e =>
+                setForm({ ...form, welcomeChannelId: e.target.value })
+              }
               className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors"
             >
               <option value="">None selected</option>
               {(channels ?? []).map((c: { id: string; name: string }) => (
-                <option key={c.id} value={c.id}>#{c.name}</option>
+                <option key={c.id} value={c.id}>
+                  #{c.name}
+                </option>
               ))}
             </select>
           </div>
 
           {/* Logs Channel */}
           <div>
-            <label className="block text-sm font-medium text-foreground mb-1.5">Logs Channel</label>
+            <label className="block text-sm font-medium text-foreground mb-1.5">
+              Logs Channel
+            </label>
             <select
               value={form.logsChannelId}
-              onChange={(e) => setForm({ ...form, logsChannelId: e.target.value })}
+              onChange={e =>
+                setForm({ ...form, logsChannelId: e.target.value })
+              }
               className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors"
             >
               <option value="">None selected</option>
               {(channels ?? []).map((c: { id: string; name: string }) => (
-                <option key={c.id} value={c.id}>#{c.name}</option>
+                <option key={c.id} value={c.id}>
+                  #{c.name}
+                </option>
               ))}
             </select>
           </div>

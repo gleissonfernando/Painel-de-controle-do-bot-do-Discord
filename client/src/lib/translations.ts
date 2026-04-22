@@ -3,11 +3,13 @@ export const translations = {
     // Login Page
     login: {
       title: "BotPanel",
-      subtitle: "O painel definitivo de gerenciamento de bot Discord. Controle seus servidores com precisão.",
+      subtitle:
+        "O painel definitivo de gerenciamento de bot Discord. Controle seus servidores com precisão.",
       welcome: "Bem-vindo de volta",
       signIn: "Entre com sua conta do Discord para continuar",
       loginButton: "Entrar com Discord",
-      terms: "Ao fazer login, você concorda com nossos Termos de Serviço e Política de Privacidade",
+      terms:
+        "Ao fazer login, você concorda com nossos Termos de Serviço e Política de Privacidade",
       footer: "© 2024-2026 BotPanel • Todos os direitos reservados",
       features: {
         autoMod: "Auto Moderação",
@@ -22,20 +24,25 @@ export const translations = {
     // Onboarding Page
     onboarding: {
       title: "Bem-vindo ao BotPanel!",
-      subtitle: "Para começar, você precisa adicionar o bot ao seu servidor Discord.",
-      subtitleDesc: "Depois de adicionado, você poderá gerenciar todos os seus servidores em um painel.",
+      subtitle:
+        "Para começar, você precisa adicionar o bot ao seu servidor Discord.",
+      subtitleDesc:
+        "Depois de adicionado, você poderá gerenciar todos os seus servidores em um painel.",
       step1: "Clique no botão abaixo",
       step1Desc: "Você será redirecionado para o Discord para autorizar o bot",
       step2: "Selecione seu servidor",
       step2Desc: "Escolha qual servidor você deseja adicionar o bot",
       step3: "Conceda permissões",
-      step3Desc: "O bot precisa de permissões de admin para gerenciar seu servidor",
+      step3Desc:
+        "O bot precisa de permissões de admin para gerenciar seu servidor",
       step4: "Pronto!",
-      step4Desc: "Seu servidor aparecerá no painel e você pode começar a gerenciá-lo",
+      step4Desc:
+        "Seu servidor aparecerá no painel e você pode começar a gerenciá-lo",
       addBotButton: "Adicionar Bot ao Servidor",
       dashboardButton: "Ir para o Painel",
       tip: "💡 Dica",
-      tipDesc: "Depois de adicionar o bot, volte para esta página ou vá para o painel. Seu servidor aparecerá na lista e você pode começar a gerenciá-lo imediatamente.",
+      tipDesc:
+        "Depois de adicionar o bot, volte para esta página ou vá para o painel. Seu servidor aparecerá na lista e você pode começar a gerenciá-lo imediatamente.",
     },
 
     // Server Select Page
@@ -45,9 +52,11 @@ export const translations = {
       addServer: "Adicionar Servidor",
       addAServer: "Adicionar um servidor",
       selectServer: "Selecione um Servidor",
-      selectServerDesc: "Escolha um servidor da lista à esquerda para gerenciá-lo",
+      selectServerDesc:
+        "Escolha um servidor da lista à esquerda para gerenciá-lo",
       noServersYet: "Nenhum Servidor Ainda",
-      noServersDesc: "Adicione o bot ao seu servidor Discord para começar com o BotPanel",
+      noServersDesc:
+        "Adicione o bot ao seu servidor Discord para começar com o BotPanel",
       addBotToServer: "Adicionar Bot ao Servidor",
     },
 
@@ -184,7 +193,8 @@ export const translations = {
     // Welcome/Goodbye Messages
     welcomeGoodbye: {
       title: "Mensagens de Entrada e Saída",
-      subtitle: "Configure mensagens personalizadas para quando usuários entram ou saem do servidor",
+      subtitle:
+        "Configure mensagens personalizadas para quando usuários entram ou saem do servidor",
       welcomeMessage: "Mensagem de Entrada",
       welcomeChannel: "Canal de Destino",
       welcomeContent: "Mensagem",
@@ -242,11 +252,13 @@ export const translations = {
     // Login Page
     login: {
       title: "BotPanel",
-      subtitle: "The ultimate Discord bot management dashboard. Control your servers with precision.",
+      subtitle:
+        "The ultimate Discord bot management dashboard. Control your servers with precision.",
       welcome: "Welcome back",
       signIn: "Sign in with your Discord account to continue",
       loginButton: "Login with Discord",
-      terms: "By logging in, you agree to our Terms of Service and Privacy Policy",
+      terms:
+        "By logging in, you agree to our Terms of Service and Privacy Policy",
       footer: "© 2024-2026 BotPanel • All rights reserved",
       features: {
         autoMod: "Auto Moderation",
@@ -261,8 +273,10 @@ export const translations = {
     // Onboarding Page
     onboarding: {
       title: "Welcome to BotPanel!",
-      subtitle: "To get started, you need to add the bot to your Discord server.",
-      subtitleDesc: "Once added, you'll be able to manage all your servers from one dashboard.",
+      subtitle:
+        "To get started, you need to add the bot to your Discord server.",
+      subtitleDesc:
+        "Once added, you'll be able to manage all your servers from one dashboard.",
       step1: "Click the button below",
       step1Desc: "You'll be redirected to Discord to authorize the bot",
       step2: "Select your server",
@@ -270,11 +284,13 @@ export const translations = {
       step3: "Grant permissions",
       step3Desc: "The bot needs admin permissions to manage your server",
       step4: "Done!",
-      step4Desc: "Your server will appear in the dashboard and you can start managing it",
+      step4Desc:
+        "Your server will appear in the dashboard and you can start managing it",
       addBotButton: "Add Bot to Server",
       dashboardButton: "Go to Dashboard",
       tip: "💡 Tip",
-      tipDesc: "After adding the bot, return to this page or go to the dashboard. Your server will appear in the list and you can start managing it immediately.",
+      tipDesc:
+        "After adding the bot, return to this page or go to the dashboard. Your server will appear in the list and you can start managing it immediately.",
     },
 
     // Server Select Page
@@ -284,9 +300,11 @@ export const translations = {
       addServer: "Add Server",
       addAServer: "Add a server",
       selectServer: "Select a Server",
-      selectServerDesc: "Choose a server from the list on the left to manage it",
+      selectServerDesc:
+        "Choose a server from the list on the left to manage it",
       noServersYet: "No Servers Yet",
-      noServersDesc: "Add the bot to your Discord server to get started with BotPanel",
+      noServersDesc:
+        "Add the bot to your Discord server to get started with BotPanel",
       addBotToServer: "Add Bot to Server",
     },
 
@@ -423,7 +441,8 @@ export const translations = {
     // Welcome/Goodbye Messages
     welcomeGoodbye: {
       title: "Welcome & Goodbye Messages",
-      subtitle: "Configure custom messages for when users join or leave your server",
+      subtitle:
+        "Configure custom messages for when users join or leave your server",
       welcomeMessage: "Welcome Message",
       welcomeChannel: "Destination Channel",
       welcomeContent: "Message",

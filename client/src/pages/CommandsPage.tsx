@@ -18,15 +18,17 @@ export default function CommandsPage({ guildId }: CommandsPageProps) {
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
 
-  const { data: commands, isLoading } = trpc.commands.list.useQuery({ guildId });
+  const { data: commands, isLoading } = trpc.commands.list.useQuery({
+    guildId,
+  });
   const utils = trpc.useUtils();
 
   const toggleMutation = trpc.commands.toggle.useMutation({
     onMutate: async ({ commandName, enabled }) => {
       await utils.commands.list.cancel({ guildId });
       const prev = utils.commands.list.getData({ guildId });
-      utils.commands.list.setData({ guildId }, (old) =>
-        old?.map((c) => c.commandName === commandName ? { ...c, enabled } : c)
+      utils.commands.list.setData({ guildId }, old =>
+        old?.map(c => (c.commandName === commandName ? { ...c, enabled } : c))
       );
       return { prev };
     },
@@ -39,16 +41,21 @@ export default function CommandsPage({ guildId }: CommandsPageProps) {
     },
   });
 
-  const categories = ["All", ...Array.from(new Set((commands ?? []).map((c) => c.category)))];
+  const categories = [
+    "All",
+    ...Array.from(new Set((commands ?? []).map(c => c.category))),
+  ];
 
-  const filtered = (commands ?? []).filter((c) => {
-    const matchSearch = c.commandName.toLowerCase().includes(search.toLowerCase()) ||
+  const filtered = (commands ?? []).filter(c => {
+    const matchSearch =
+      c.commandName.toLowerCase().includes(search.toLowerCase()) ||
       c.description.toLowerCase().includes(search.toLowerCase());
-    const matchCategory = selectedCategory === "All" || c.category === selectedCategory;
+    const matchCategory =
+      selectedCategory === "All" || c.category === selectedCategory;
     return matchSearch && matchCategory;
   });
 
-  const enabledCount = (commands ?? []).filter((c) => c.enabled).length;
+  const enabledCount = (commands ?? []).filter(c => c.enabled).length;
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -66,7 +73,9 @@ export default function CommandsPage({ guildId }: CommandsPageProps) {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
         <div className="bg-card border border-border rounded-xl p-4 text-center">
-          <p className="text-2xl font-bold text-foreground">{commands?.length ?? 0}</p>
+          <p className="text-2xl font-bold text-foreground">
+            {commands?.length ?? 0}
+          </p>
           <p className="text-xs text-muted-foreground">Total Commands</p>
         </div>
         <div className="bg-card border border-green-500/20 rounded-xl p-4 text-center bg-green-500/5">
@@ -74,7 +83,9 @@ export default function CommandsPage({ guildId }: CommandsPageProps) {
           <p className="text-xs text-muted-foreground">Enabled</p>
         </div>
         <div className="bg-card border border-red-500/20 rounded-xl p-4 text-center bg-red-500/5">
-          <p className="text-2xl font-bold text-red-400">{(commands?.length ?? 0) - enabledCount}</p>
+          <p className="text-2xl font-bold text-red-400">
+            {(commands?.length ?? 0) - enabledCount}
+          </p>
           <p className="text-xs text-muted-foreground">Disabled</p>
         </div>
       </div>
@@ -82,17 +93,20 @@ export default function CommandsPage({ guildId }: CommandsPageProps) {
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Search
+            size={14}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+          />
           <input
             type="text"
             placeholder="Search commands..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={e => setSearch(e.target.value)}
             className="w-full pl-9 pr-4 py-2 bg-card border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors"
           />
         </div>
         <div className="flex gap-2 flex-wrap">
-          {categories.map((cat) => (
+          {categories.map(cat => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
@@ -112,7 +126,7 @@ export default function CommandsPage({ guildId }: CommandsPageProps) {
       <div className="bg-card border border-border rounded-xl overflow-hidden">
         {isLoading ? (
           <div className="p-4 space-y-3">
-            {[1, 2, 3, 4].map((i) => (
+            {[1, 2, 3, 4].map(i => (
               <div key={i} className="flex items-center gap-3 animate-pulse">
                 <div className="h-8 w-8 bg-muted rounded" />
                 <div className="flex-1">
@@ -125,12 +139,15 @@ export default function CommandsPage({ guildId }: CommandsPageProps) {
           </div>
         ) : filtered.length === 0 ? (
           <div className="py-12 text-center">
-            <Terminal size={32} className="text-muted-foreground mx-auto mb-2" />
+            <Terminal
+              size={32}
+              className="text-muted-foreground mx-auto mb-2"
+            />
             <p className="text-muted-foreground text-sm">No commands found</p>
           </div>
         ) : (
           <div className="divide-y divide-border">
-            {filtered.map((cmd) => (
+            {filtered.map(cmd => (
               <div
                 key={cmd.commandName}
                 className="flex items-center gap-4 px-5 py-3.5 hover:bg-accent/50 transition-colors"
@@ -143,14 +160,24 @@ export default function CommandsPage({ guildId }: CommandsPageProps) {
                     <code className="text-sm font-mono font-semibold text-foreground">
                       !{cmd.commandName}
                     </code>
-                    <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${CATEGORY_COLORS[cmd.category] ?? "bg-muted text-muted-foreground border-border"}`}>
+                    <span
+                      className={`text-xs px-2 py-0.5 rounded-full border font-medium ${CATEGORY_COLORS[cmd.category] ?? "bg-muted text-muted-foreground border-border"}`}
+                    >
                       {cmd.category}
                     </span>
                   </div>
-                  <p className="text-xs text-muted-foreground truncate">{cmd.description}</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {cmd.description}
+                  </p>
                 </div>
                 <button
-                  onClick={() => toggleMutation.mutate({ guildId, commandName: cmd.commandName, enabled: !cmd.enabled })}
+                  onClick={() =>
+                    toggleMutation.mutate({
+                      guildId,
+                      commandName: cmd.commandName,
+                      enabled: !cmd.enabled,
+                    })
+                  }
                   disabled={toggleMutation.isPending}
                   className="flex-shrink-0 transition-opacity hover:opacity-80"
                   title={cmd.enabled ? "Disable command" : "Enable command"}

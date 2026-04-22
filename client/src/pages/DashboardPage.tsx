@@ -18,20 +18,95 @@ interface DashboardPageProps {
 }
 
 const STAT_CARDS = [
-  { label: "Total Members", value: "1,247", change: "+12", icon: <Users size={20} />, color: "text-blue-400", bg: "bg-blue-500/10 border-blue-500/20" },
-  { label: "Text Channels", value: "24", change: "+2", icon: <Hash size={20} />, color: "text-green-400", bg: "bg-green-500/10 border-green-500/20" },
-  { label: "Active Commands", value: "12", change: "0", icon: <Terminal size={20} />, color: "text-yellow-400", bg: "bg-yellow-500/10 border-yellow-500/20" },
-  { label: "Live Monitors", value: "3", change: "+1", icon: <Activity size={20} />, color: "text-primary", bg: "bg-primary/10 border-primary/20" },
-  { label: "Mod Actions", value: "47", change: "+5", icon: <Shield size={20} />, color: "text-orange-400", bg: "bg-orange-500/10 border-orange-500/20" },
-  { label: "Messages Today", value: "3,891", change: "+284", icon: <MessageSquare size={20} />, color: "text-purple-400", bg: "bg-purple-500/10 border-purple-500/20" },
+  {
+    label: "Total Members",
+    value: "1,247",
+    change: "+12",
+    icon: <Users size={20} />,
+    color: "text-blue-400",
+    bg: "bg-blue-500/10 border-blue-500/20",
+  },
+  {
+    label: "Text Channels",
+    value: "24",
+    change: "+2",
+    icon: <Hash size={20} />,
+    color: "text-green-400",
+    bg: "bg-green-500/10 border-green-500/20",
+  },
+  {
+    label: "Active Commands",
+    value: "12",
+    change: "0",
+    icon: <Terminal size={20} />,
+    color: "text-yellow-400",
+    bg: "bg-yellow-500/10 border-yellow-500/20",
+  },
+  {
+    label: "Live Monitors",
+    value: "3",
+    change: "+1",
+    icon: <Activity size={20} />,
+    color: "text-primary",
+    bg: "bg-primary/10 border-primary/20",
+  },
+  {
+    label: "Mod Actions",
+    value: "47",
+    change: "+5",
+    icon: <Shield size={20} />,
+    color: "text-orange-400",
+    bg: "bg-orange-500/10 border-orange-500/20",
+  },
+  {
+    label: "Messages Today",
+    value: "3,891",
+    change: "+284",
+    icon: <MessageSquare size={20} />,
+    color: "text-purple-400",
+    bg: "bg-purple-500/10 border-purple-500/20",
+  },
 ];
 
 const RECENT_EVENTS = [
-  { type: "member_join", user: "CoolUser#1234", time: "2 min ago", icon: <Users size={14} />, color: "text-green-400 bg-green-500/10" },
-  { type: "command_used", user: "AnotherUser#5678", time: "5 min ago", icon: <Terminal size={14} />, color: "text-blue-400 bg-blue-500/10", detail: "!help" },
-  { type: "member_ban", user: "BadActor#0001", time: "12 min ago", icon: <Shield size={14} />, color: "text-red-400 bg-red-500/10", detail: "Spam" },
-  { type: "message_delete", user: "SomeUser#9999", time: "18 min ago", icon: <MessageSquare size={14} />, color: "text-yellow-400 bg-yellow-500/10" },
-  { type: "live_notification", user: "StreamerXYZ", time: "1 hr ago", icon: <Activity size={14} />, color: "text-primary bg-primary/10", detail: "Twitch" },
+  {
+    type: "member_join",
+    user: "CoolUser#1234",
+    time: "2 min ago",
+    icon: <Users size={14} />,
+    color: "text-green-400 bg-green-500/10",
+  },
+  {
+    type: "command_used",
+    user: "AnotherUser#5678",
+    time: "5 min ago",
+    icon: <Terminal size={14} />,
+    color: "text-blue-400 bg-blue-500/10",
+    detail: "!help",
+  },
+  {
+    type: "member_ban",
+    user: "BadActor#0001",
+    time: "12 min ago",
+    icon: <Shield size={14} />,
+    color: "text-red-400 bg-red-500/10",
+    detail: "Spam",
+  },
+  {
+    type: "message_delete",
+    user: "SomeUser#9999",
+    time: "18 min ago",
+    icon: <MessageSquare size={14} />,
+    color: "text-yellow-400 bg-yellow-500/10",
+  },
+  {
+    type: "live_notification",
+    user: "StreamerXYZ",
+    time: "1 hr ago",
+    icon: <Activity size={14} />,
+    color: "text-primary bg-primary/10",
+    detail: "Twitch",
+  },
 ];
 
 const EVENT_LABELS: Record<string, string> = {
@@ -54,19 +129,25 @@ export default function DashboardPage({ guildId }: DashboardPageProps) {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">{guildName}</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Server overview and statistics</p>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Server overview and statistics
+          </p>
         </div>
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-card border border-border">
           <Clock size={14} className="text-muted-foreground" />
           <span className="text-xs text-muted-foreground">
-            {new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+            {new Date().toLocaleDateString("en-US", {
+              weekday: "short",
+              month: "short",
+              day: "numeric",
+            })}
           </span>
         </div>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-        {STAT_CARDS.map((card) => (
+        {STAT_CARDS.map(card => (
           <div
             key={card.label}
             className={`bg-card border rounded-xl p-4 transition-all duration-200 hover:scale-[1.02] ${card.bg}`}
@@ -75,9 +156,15 @@ export default function DashboardPage({ guildId }: DashboardPageProps) {
               <div className={`p-2 rounded-lg border ${card.bg} ${card.color}`}>
                 {card.icon}
               </div>
-              <div className={`flex items-center gap-1 text-xs font-medium ${
-                card.change.startsWith("+") ? "text-green-400" : card.change === "0" ? "text-muted-foreground" : "text-red-400"
-              }`}>
+              <div
+                className={`flex items-center gap-1 text-xs font-medium ${
+                  card.change.startsWith("+")
+                    ? "text-green-400"
+                    : card.change === "0"
+                      ? "text-muted-foreground"
+                      : "text-red-400"
+                }`}
+              >
                 <TrendingUp size={10} />
                 {card.change}
               </div>
@@ -93,67 +180,93 @@ export default function DashboardPage({ guildId }: DashboardPageProps) {
         {/* Recent Events */}
         <div className="lg:col-span-2 bg-card border border-border rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-foreground text-sm">Recent Events</h2>
+            <h2 className="font-semibold text-foreground text-sm">
+              Recent Events
+            </h2>
             <span className="text-xs text-muted-foreground">Last 24h</span>
           </div>
           <div className="space-y-2">
-            {(logs && logs.length > 0 ? logs : RECENT_EVENTS).map((event, i) => {
-              const isLog = logs && logs.length > 0;
-              const eventType = isLog ? (event as { eventType: string }).eventType : (event as { type: string }).type;
-              const user = isLog ? (event as { userName?: string | null }).userName ?? "Unknown" : (event as { user: string }).user;
-              const time = isLog
-                ? new Date((event as { createdAt: Date }).createdAt).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
-                : (event as { time: string }).time;
-              const detail = isLog ? null : (event as { detail?: string }).detail;
+            {(logs && logs.length > 0 ? logs : RECENT_EVENTS).map(
+              (event, i) => {
+                const isLog = logs && logs.length > 0;
+                const eventType = isLog
+                  ? (event as { eventType: string }).eventType
+                  : (event as { type: string }).type;
+                const user = isLog
+                  ? ((event as { userName?: string | null }).userName ??
+                    "Unknown")
+                  : (event as { user: string }).user;
+                const time = isLog
+                  ? new Date(
+                      (event as { createdAt: Date }).createdAt
+                    ).toLocaleTimeString("en-US", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })
+                  : (event as { time: string }).time;
+                const detail = isLog
+                  ? null
+                  : (event as { detail?: string }).detail;
 
-              const colorMap: Record<string, string> = {
-                member_join: "text-green-400 bg-green-500/10",
-                member_leave: "text-yellow-400 bg-yellow-500/10",
-                member_ban: "text-red-400 bg-red-500/10",
-                member_unban: "text-blue-400 bg-blue-500/10",
-                message_delete: "text-orange-400 bg-orange-500/10",
-                message_edit: "text-purple-400 bg-purple-500/10",
-                command_used: "text-blue-400 bg-blue-500/10",
-                live_notification: "text-primary bg-primary/10",
-              };
+                const colorMap: Record<string, string> = {
+                  member_join: "text-green-400 bg-green-500/10",
+                  member_leave: "text-yellow-400 bg-yellow-500/10",
+                  member_ban: "text-red-400 bg-red-500/10",
+                  member_unban: "text-blue-400 bg-blue-500/10",
+                  message_delete: "text-orange-400 bg-orange-500/10",
+                  message_edit: "text-purple-400 bg-purple-500/10",
+                  command_used: "text-blue-400 bg-blue-500/10",
+                  live_notification: "text-primary bg-primary/10",
+                };
 
-              const iconMap: Record<string, React.ReactNode> = {
-                member_join: <Users size={14} />,
-                member_leave: <Users size={14} />,
-                member_ban: <Shield size={14} />,
-                member_unban: <Shield size={14} />,
-                message_delete: <MessageSquare size={14} />,
-                message_edit: <MessageSquare size={14} />,
-                command_used: <Terminal size={14} />,
-                live_notification: <Activity size={14} />,
-              };
+                const iconMap: Record<string, React.ReactNode> = {
+                  member_join: <Users size={14} />,
+                  member_leave: <Users size={14} />,
+                  member_ban: <Shield size={14} />,
+                  member_unban: <Shield size={14} />,
+                  message_delete: <MessageSquare size={14} />,
+                  message_edit: <MessageSquare size={14} />,
+                  command_used: <Terminal size={14} />,
+                  live_notification: <Activity size={14} />,
+                };
 
-              const colorClass = colorMap[eventType] ?? "text-muted-foreground bg-muted";
-              const icon = iconMap[eventType] ?? <Zap size={14} />;
+                const colorClass =
+                  colorMap[eventType] ?? "text-muted-foreground bg-muted";
+                const icon = iconMap[eventType] ?? <Zap size={14} />;
 
-              return (
-                <div key={i} className="flex items-center gap-3 py-2 border-b border-border last:border-0">
-                  <div className={`p-1.5 rounded-md ${colorClass}`}>
-                    {icon}
+                return (
+                  <div
+                    key={i}
+                    className="flex items-center gap-3 py-2 border-b border-border last:border-0"
+                  >
+                    <div className={`p-1.5 rounded-md ${colorClass}`}>
+                      {icon}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-foreground font-medium">
+                        {EVENT_LABELS[eventType] ??
+                          eventType.replace(/_/g, " ")}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {user}
+                        {detail ? ` — ${detail}` : ""}
+                      </p>
+                    </div>
+                    <span className="text-xs text-muted-foreground flex-shrink-0">
+                      {time}
+                    </span>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-foreground font-medium">
-                      {EVENT_LABELS[eventType] ?? eventType.replace(/_/g, " ")}
-                    </p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {user}{detail ? ` — ${detail}` : ""}
-                    </p>
-                  </div>
-                  <span className="text-xs text-muted-foreground flex-shrink-0">{time}</span>
-                </div>
-              );
-            })}
+                );
+              }
+            )}
           </div>
         </div>
 
         {/* Server Info */}
         <div className="bg-card border border-border rounded-xl p-5">
-          <h2 className="font-semibold text-foreground text-sm mb-4">Server Info</h2>
+          <h2 className="font-semibold text-foreground text-sm mb-4">
+            Server Info
+          </h2>
           <div className="space-y-3">
             <div className="flex items-center justify-between py-2 border-b border-border">
               <span className="text-xs text-muted-foreground">Prefix</span>
@@ -177,12 +290,16 @@ export default function DashboardPage({ guildId }: DashboardPageProps) {
               <span className="text-xs text-muted-foreground">Bot Status</span>
               <div className="flex items-center gap-1.5">
                 <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                <span className="text-xs text-green-400 font-medium">Online</span>
+                <span className="text-xs text-green-400 font-medium">
+                  Online
+                </span>
               </div>
             </div>
             <div className="flex items-center justify-between py-2">
               <span className="text-xs text-muted-foreground">Bot Enabled</span>
-              <span className={`text-xs font-medium ${settings?.botEnabled !== false ? "text-green-400" : "text-red-400"}`}>
+              <span
+                className={`text-xs font-medium ${settings?.botEnabled !== false ? "text-green-400" : "text-red-400"}`}
+              >
                 {settings?.botEnabled !== false ? "Yes" : "No"}
               </span>
             </div>
@@ -190,7 +307,9 @@ export default function DashboardPage({ guildId }: DashboardPageProps) {
 
           {/* Quick Actions */}
           <div className="mt-4 pt-4 border-t border-border">
-            <p className="text-xs text-muted-foreground mb-2 font-medium">Quick Actions</p>
+            <p className="text-xs text-muted-foreground mb-2 font-medium">
+              Quick Actions
+            </p>
             <div className="grid grid-cols-2 gap-2">
               <button className="flex flex-col items-center gap-1 p-2 rounded-lg bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-colors">
                 <Bot size={16} className="text-primary" />

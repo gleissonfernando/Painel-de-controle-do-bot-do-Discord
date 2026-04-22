@@ -6,8 +6,11 @@ import { useLocation } from "wouter";
 import { Bot, ArrowRight, Check, Zap } from "lucide-react";
 
 const getBotInviteUrl = () => {
-  const clientId = import.meta.env.VITE_DISCORD_CLIENT_ID || "YOUR_BOT_CLIENT_ID";
-  const redirectUri = encodeURIComponent(`${window.location.origin}/api/discord/callback`);
+  const clientId =
+    import.meta.env.VITE_DISCORD_CLIENT_ID || "YOUR_BOT_CLIENT_ID";
+  const redirectUri = encodeURIComponent(
+    `${window.location.origin}/api/discord/callback`
+  );
   return `https://discord.com/api/oauth2/authorize?client_id=${clientId}&permissions=8&response_type=code&redirect_uri=${redirectUri}&scope=bot%20applications.commands`;
 };
 
@@ -53,7 +56,10 @@ export default function OnboardingPage() {
             <span className="font-bold text-lg text-foreground">BotPanel</span>
           </div>
           <div className="text-sm text-muted-foreground">
-            {t("servers.loggedInAs")} <span className="font-semibold text-foreground">{user?.name || "User"}</span>
+            {t("servers.loggedInAs")}{" "}
+            <span className="font-semibold text-foreground">
+              {user?.name || "User"}
+            </span>
           </div>
         </div>
       </header>
@@ -66,7 +72,9 @@ export default function OnboardingPage() {
             <div className="w-20 h-20 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto mb-6">
               <Bot size={40} className="text-primary" />
             </div>
-            <h1 className="text-4xl font-bold text-foreground mb-3">{t("onboarding.title")}</h1>
+            <h1 className="text-4xl font-bold text-foreground mb-3">
+              {t("onboarding.title")}
+            </h1>
             <p className="text-lg text-muted-foreground mb-2">
               {t("onboarding.subtitle")}
             </p>
@@ -84,7 +92,9 @@ export default function OnboardingPage() {
                 </div>
               </div>
               <div className="flex-1">
-                <h3 className="text-base font-semibold text-foreground mb-1">{t("onboarding.step1")}</h3>
+                <h3 className="text-base font-semibold text-foreground mb-1">
+                  {t("onboarding.step1")}
+                </h3>
                 <p className="text-sm text-muted-foreground">
                   {t("onboarding.step1Desc")}
                 </p>
@@ -98,7 +108,9 @@ export default function OnboardingPage() {
                 </div>
               </div>
               <div className="flex-1">
-                <h3 className="text-base font-semibold text-foreground mb-1">{t("onboarding.step2")}</h3>
+                <h3 className="text-base font-semibold text-foreground mb-1">
+                  {t("onboarding.step2")}
+                </h3>
                 <p className="text-sm text-muted-foreground">
                   {t("onboarding.step2Desc")}
                 </p>
@@ -112,7 +124,9 @@ export default function OnboardingPage() {
                 </div>
               </div>
               <div className="flex-1">
-                <h3 className="text-base font-semibold text-foreground mb-1">{t("onboarding.step3")}</h3>
+                <h3 className="text-base font-semibold text-foreground mb-1">
+                  {t("onboarding.step3")}
+                </h3>
                 <p className="text-sm text-muted-foreground">
                   {t("onboarding.step3Desc")}
                 </p>
@@ -126,7 +140,9 @@ export default function OnboardingPage() {
                 </div>
               </div>
               <div className="flex-1">
-                <h3 className="text-base font-semibold text-foreground mb-1">{t("onboarding.step4")}</h3>
+                <h3 className="text-base font-semibold text-foreground mb-1">
+                  {t("onboarding.step4")}
+                </h3>
                 <p className="text-sm text-muted-foreground">
                   {t("onboarding.step4Desc")}
                 </p>
@@ -136,7 +152,12 @@ export default function OnboardingPage() {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href={BOT_INVITE_URL} target="_blank" rel="noopener noreferrer" className="flex-1">
+            <a
+              href={BOT_INVITE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1"
+            >
               <Button className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold gap-2 text-base">
                 <Bot size={20} />
                 {t("onboarding.addBotButton")}
@@ -155,7 +176,9 @@ export default function OnboardingPage() {
 
           {/* Info Box */}
           <div className="mt-8 p-6 rounded-xl bg-blue-500/10 border border-blue-500/20">
-            <h4 className="font-semibold text-blue-400 mb-2">{t("onboarding.tip")}</h4>
+            <h4 className="font-semibold text-blue-400 mb-2">
+              {t("onboarding.tip")}
+            </h4>
             <p className="text-sm text-blue-300/90">
               {t("onboarding.tipDesc")}
             </p>

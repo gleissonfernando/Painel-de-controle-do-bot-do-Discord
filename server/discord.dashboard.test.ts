@@ -23,7 +23,9 @@ vi.mock("./db", () => ({
 // Mock the discord module
 vi.mock("./discord", () => ({
   fetchDiscordGuilds: vi.fn().mockResolvedValue([]),
-  fetchGuildDetails: vi.fn().mockResolvedValue({ id: "123", name: "Test Guild" }),
+  fetchGuildDetails: vi
+    .fn()
+    .mockResolvedValue({ id: "123", name: "Test Guild" }),
   fetchGuildChannels: vi.fn().mockResolvedValue([]),
   fetchGuildRoles: vi.fn().mockResolvedValue([]),
 }));
@@ -98,7 +100,9 @@ describe("notifications.list", () => {
   it("returns empty array when no notifications exist", async () => {
     const ctx = createAuthContext();
     const caller = appRouter.createCaller(ctx);
-    const notifications = await caller.notifications.list({ guildId: "test-guild-123" });
+    const notifications = await caller.notifications.list({
+      guildId: "test-guild-123",
+    });
     expect(Array.isArray(notifications)).toBe(true);
     expect(notifications).toHaveLength(0);
   });
@@ -108,7 +112,10 @@ describe("logs.list", () => {
   it("returns empty array when no logs exist", async () => {
     const ctx = createAuthContext();
     const caller = appRouter.createCaller(ctx);
-    const logs = await caller.logs.list({ guildId: "test-guild-123", limit: 10 });
+    const logs = await caller.logs.list({
+      guildId: "test-guild-123",
+      limit: 10,
+    });
     expect(Array.isArray(logs)).toBe(true);
     expect(logs).toHaveLength(0);
   });
@@ -121,7 +128,7 @@ describe("commands.list", () => {
     const commands = await caller.commands.list({ guildId: "test-guild-123" });
     expect(Array.isArray(commands)).toBe(true);
     expect(commands.length).toBeGreaterThan(0);
-    const helpCmd = commands.find((c) => c.commandName === "help");
+    const helpCmd = commands.find(c => c.commandName === "help");
     expect(helpCmd).toBeDefined();
     expect(helpCmd?.enabled).toBe(true);
   });

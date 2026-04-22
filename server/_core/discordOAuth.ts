@@ -17,35 +17,43 @@ export function registerDiscordOAuthRoutes(app: Express) {
 
     try {
       // Exchange code for access token
-      const tokenResponse = await fetch("https://discord.com/api/v10/oauth2/token", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams({
-          client_id: ENV.discordClientId,
-          client_secret: ENV.discordClientSecret,
-          code,
-          grant_type: "authorization_code",
-          redirect_uri: `${req.protocol}://${req.get("host")}/api/discord/callback`,
-          scope: "bot applications.commands",
-        }).toString(),
-      });
+      const tokenResponse = await fetch(
+        "https://discord.com/api/v10/oauth2/token",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: new URLSearchParams({
+            client_id: ENV.discordClientId,
+            client_secret: ENV.discordClientSecret,
+            code,
+            grant_type: "authorization_code",
+            redirect_uri: `${req.protocol}://${req.get("host")}/api/discord/callback`,
+            scope: "bot applications.commands",
+          }).toString(),
+        }
+      );
 
       if (!tokenResponse.ok) {
         const error = await tokenResponse.json();
         console.error("[Discord OAuth] Token exchange failed:", error);
-        return res.status(400).json({ error: "Failed to exchange code for token" });
+        return res
+          .status(400)
+          .json({ error: "Failed to exchange code for token" });
       }
 
       const tokenData = await tokenResponse.json();
 
       // Get bot info
-      const botResponse = await fetch("https://discord.com/api/v10/oauth2/@me", {
-        headers: {
-          Authorization: `Bearer ${tokenData.access_token}`,
-        },
-      });
+      const botResponse = await fetch(
+        "https://discord.com/api/v10/oauth2/@me",
+        {
+          headers: {
+            Authorization: `Bearer ${tokenData.access_token}`,
+          },
+        }
+      );
 
       if (!botResponse.ok) {
         console.error("[Discord OAuth] Failed to get bot info");

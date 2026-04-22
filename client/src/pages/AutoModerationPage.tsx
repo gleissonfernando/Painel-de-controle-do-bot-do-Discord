@@ -1,6 +1,15 @@
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
-import { Shield, Save, AlertTriangle, Ban, MessageSquare, Type, X, Plus } from "lucide-react";
+import {
+  Shield,
+  Save,
+  AlertTriangle,
+  Ban,
+  MessageSquare,
+  Type,
+  X,
+  Plus,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -15,7 +24,9 @@ const PUNISHMENT_OPTIONS = [
   { value: "ban", label: "Ban", color: "text-red-600" },
 ];
 
-export default function AutoModerationPage({ guildId }: AutoModerationPageProps) {
+export default function AutoModerationPage({
+  guildId,
+}: AutoModerationPageProps) {
   const { data: settings, isLoading } = trpc.autoMod.get.useQuery({ guildId });
   const { data: channels } = trpc.guilds.channels.useQuery({ guildId });
   const utils = trpc.useUtils();
@@ -50,7 +61,9 @@ export default function AutoModerationPage({ guildId }: AutoModerationPageProps)
         wordFilterList: (settings.wordFilterList as string[]) ?? [],
         antiCapsEnabled: settings.antiCapsEnabled ?? false,
         antiCapsThreshold: settings.antiCapsThreshold ?? 70,
-        punishmentType: (settings.punishmentType as "warn" | "mute" | "kick" | "ban") ?? "warn",
+        punishmentType:
+          (settings.punishmentType as "warn" | "mute" | "kick" | "ban") ??
+          "warn",
         punishmentDuration: settings.punishmentDuration ?? 10,
         logChannelId: settings.logChannelId ?? "",
       });
@@ -62,7 +75,7 @@ export default function AutoModerationPage({ guildId }: AutoModerationPageProps)
       toast.success("Auto Moderation settings saved!");
       utils.autoMod.get.invalidate({ guildId });
     },
-    onError: (err) => toast.error(`Failed: ${err.message}`),
+    onError: err => toast.error(`Failed: ${err.message}`),
   });
 
   const handleSave = () => {
@@ -73,25 +86,52 @@ export default function AutoModerationPage({ guildId }: AutoModerationPageProps)
     });
   };
 
-  const Toggle = ({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) => (
+  const Toggle = ({
+    value,
+    onChange,
+  }: {
+    value: boolean;
+    onChange: (v: boolean) => void;
+  }) => (
     <button
       type="button"
       onClick={() => onChange(!value)}
       className={`relative w-11 h-6 rounded-full transition-colors duration-200 flex-shrink-0 ${value ? "bg-primary" : "bg-muted"}`}
     >
-      <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${value ? "translate-x-5" : "translate-x-0"}`} />
+      <span
+        className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${value ? "translate-x-5" : "translate-x-0"}`}
+      />
     </button>
   );
 
-  const RuleCard = ({ title, desc, icon, enabled, onToggle, children }: {
-    title: string; desc: string; icon: React.ReactNode;
-    enabled: boolean; onToggle: (v: boolean) => void; children?: React.ReactNode;
+  const RuleCard = ({
+    title,
+    desc,
+    icon,
+    enabled,
+    onToggle,
+    children,
+  }: {
+    title: string;
+    desc: string;
+    icon: React.ReactNode;
+    enabled: boolean;
+    onToggle: (v: boolean) => void;
+    children?: React.ReactNode;
   }) => (
-    <div className={`bg-card border rounded-xl p-5 transition-all ${enabled ? "border-primary/30" : "border-border"}`}>
+    <div
+      className={`bg-card border rounded-xl p-5 transition-all ${enabled ? "border-primary/30" : "border-border"}`}
+    >
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
-          <div className={`p-2 rounded-lg ${enabled ? "bg-primary/10 border border-primary/20" : "bg-muted border border-border"}`}>
-            <span className={enabled ? "text-primary" : "text-muted-foreground"}>{icon}</span>
+          <div
+            className={`p-2 rounded-lg ${enabled ? "bg-primary/10 border border-primary/20" : "bg-muted border border-border"}`}
+          >
+            <span
+              className={enabled ? "text-primary" : "text-muted-foreground"}
+            >
+              {icon}
+            </span>
           </div>
           <div>
             <h3 className="font-semibold text-foreground text-sm">{title}</h3>
@@ -111,8 +151,11 @@ export default function AutoModerationPage({ guildId }: AutoModerationPageProps)
   if (isLoading) {
     return (
       <div className="space-y-4">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="bg-card border border-border rounded-xl p-5 animate-pulse">
+        {[1, 2, 3].map(i => (
+          <div
+            key={i}
+            className="bg-card border border-border rounded-xl p-5 animate-pulse"
+          >
             <div className="h-5 bg-muted rounded w-1/3 mb-3" />
             <div className="h-3 bg-muted rounded w-1/2" />
           </div>
@@ -130,7 +173,9 @@ export default function AutoModerationPage({ guildId }: AutoModerationPageProps)
             <Shield size={22} className="text-primary" />
             Auto Moderation
           </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Configure automatic moderation rules for this server</p>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Configure automatic moderation rules for this server
+          </p>
         </div>
         <Button
           onClick={handleSave}
@@ -148,26 +193,36 @@ export default function AutoModerationPage({ guildId }: AutoModerationPageProps)
         desc="Detect and punish users sending too many messages quickly"
         icon={<MessageSquare size={16} />}
         enabled={form.antiSpamEnabled}
-        onToggle={(v) => setForm({ ...form, antiSpamEnabled: v })}
+        onToggle={v => setForm({ ...form, antiSpamEnabled: v })}
       >
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-medium text-foreground mb-1">Max Messages</label>
+            <label className="block text-xs font-medium text-foreground mb-1">
+              Max Messages
+            </label>
             <input
               type="number"
               value={form.antiSpamThreshold}
-              onChange={(e) => setForm({ ...form, antiSpamThreshold: Number(e.target.value) })}
-              min={2} max={20}
+              onChange={e =>
+                setForm({ ...form, antiSpamThreshold: Number(e.target.value) })
+              }
+              min={2}
+              max={20}
               className="w-full px-3 py-1.5 bg-input border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-foreground mb-1">Interval (seconds)</label>
+            <label className="block text-xs font-medium text-foreground mb-1">
+              Interval (seconds)
+            </label>
             <input
               type="number"
               value={form.antiSpamInterval}
-              onChange={(e) => setForm({ ...form, antiSpamInterval: Number(e.target.value) })}
-              min={1} max={60}
+              onChange={e =>
+                setForm({ ...form, antiSpamInterval: Number(e.target.value) })
+              }
+              min={1}
+              max={60}
               className="w-full px-3 py-1.5 bg-input border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
@@ -180,15 +235,29 @@ export default function AutoModerationPage({ guildId }: AutoModerationPageProps)
         desc="Block users from posting unauthorized links"
         icon={<Ban size={16} />}
         enabled={form.antiLinkEnabled}
-        onToggle={(v) => setForm({ ...form, antiLinkEnabled: v })}
+        onToggle={v => setForm({ ...form, antiLinkEnabled: v })}
       >
         <div>
-          <label className="block text-xs font-medium text-foreground mb-2">Whitelisted Domains</label>
+          <label className="block text-xs font-medium text-foreground mb-2">
+            Whitelisted Domains
+          </label>
           <div className="flex flex-wrap gap-2 mb-2">
-            {form.antiLinkWhitelist.map((link) => (
-              <span key={link} className="flex items-center gap-1 px-2 py-0.5 bg-primary/10 text-primary text-xs rounded-full border border-primary/20">
+            {form.antiLinkWhitelist.map(link => (
+              <span
+                key={link}
+                className="flex items-center gap-1 px-2 py-0.5 bg-primary/10 text-primary text-xs rounded-full border border-primary/20"
+              >
                 {link}
-                <button onClick={() => setForm({ ...form, antiLinkWhitelist: form.antiLinkWhitelist.filter((l) => l !== link) })}>
+                <button
+                  onClick={() =>
+                    setForm({
+                      ...form,
+                      antiLinkWhitelist: form.antiLinkWhitelist.filter(
+                        l => l !== link
+                      ),
+                    })
+                  }
+                >
                   <X size={10} />
                 </button>
               </span>
@@ -199,10 +268,16 @@ export default function AutoModerationPage({ guildId }: AutoModerationPageProps)
               type="text"
               placeholder="e.g. discord.com"
               value={newLink}
-              onChange={(e) => setNewLink(e.target.value)}
-              onKeyDown={(e) => {
+              onChange={e => setNewLink(e.target.value)}
+              onKeyDown={e => {
                 if (e.key === "Enter" && newLink.trim()) {
-                  setForm({ ...form, antiLinkWhitelist: [...form.antiLinkWhitelist, newLink.trim()] });
+                  setForm({
+                    ...form,
+                    antiLinkWhitelist: [
+                      ...form.antiLinkWhitelist,
+                      newLink.trim(),
+                    ],
+                  });
                   setNewLink("");
                 }
               }}
@@ -211,7 +286,13 @@ export default function AutoModerationPage({ guildId }: AutoModerationPageProps)
             <button
               onClick={() => {
                 if (newLink.trim()) {
-                  setForm({ ...form, antiLinkWhitelist: [...form.antiLinkWhitelist, newLink.trim()] });
+                  setForm({
+                    ...form,
+                    antiLinkWhitelist: [
+                      ...form.antiLinkWhitelist,
+                      newLink.trim(),
+                    ],
+                  });
                   setNewLink("");
                 }
               }}
@@ -229,15 +310,29 @@ export default function AutoModerationPage({ guildId }: AutoModerationPageProps)
         desc="Automatically delete messages containing banned words"
         icon={<AlertTriangle size={16} />}
         enabled={form.wordFilterEnabled}
-        onToggle={(v) => setForm({ ...form, wordFilterEnabled: v })}
+        onToggle={v => setForm({ ...form, wordFilterEnabled: v })}
       >
         <div>
-          <label className="block text-xs font-medium text-foreground mb-2">Banned Words</label>
+          <label className="block text-xs font-medium text-foreground mb-2">
+            Banned Words
+          </label>
           <div className="flex flex-wrap gap-2 mb-2">
-            {form.wordFilterList.map((word) => (
-              <span key={word} className="flex items-center gap-1 px-2 py-0.5 bg-red-500/10 text-red-400 text-xs rounded-full border border-red-500/20">
+            {form.wordFilterList.map(word => (
+              <span
+                key={word}
+                className="flex items-center gap-1 px-2 py-0.5 bg-red-500/10 text-red-400 text-xs rounded-full border border-red-500/20"
+              >
                 {word}
-                <button onClick={() => setForm({ ...form, wordFilterList: form.wordFilterList.filter((w) => w !== word) })}>
+                <button
+                  onClick={() =>
+                    setForm({
+                      ...form,
+                      wordFilterList: form.wordFilterList.filter(
+                        w => w !== word
+                      ),
+                    })
+                  }
+                >
                   <X size={10} />
                 </button>
               </span>
@@ -248,10 +343,13 @@ export default function AutoModerationPage({ guildId }: AutoModerationPageProps)
               type="text"
               placeholder="Add a word..."
               value={newWord}
-              onChange={(e) => setNewWord(e.target.value)}
-              onKeyDown={(e) => {
+              onChange={e => setNewWord(e.target.value)}
+              onKeyDown={e => {
                 if (e.key === "Enter" && newWord.trim()) {
-                  setForm({ ...form, wordFilterList: [...form.wordFilterList, newWord.trim()] });
+                  setForm({
+                    ...form,
+                    wordFilterList: [...form.wordFilterList, newWord.trim()],
+                  });
                   setNewWord("");
                 }
               }}
@@ -260,7 +358,10 @@ export default function AutoModerationPage({ guildId }: AutoModerationPageProps)
             <button
               onClick={() => {
                 if (newWord.trim()) {
-                  setForm({ ...form, wordFilterList: [...form.wordFilterList, newWord.trim()] });
+                  setForm({
+                    ...form,
+                    wordFilterList: [...form.wordFilterList, newWord.trim()],
+                  });
                   setNewWord("");
                 }
               }}
@@ -278,21 +379,26 @@ export default function AutoModerationPage({ guildId }: AutoModerationPageProps)
         desc="Prevent excessive use of capital letters"
         icon={<Type size={16} />}
         enabled={form.antiCapsEnabled}
-        onToggle={(v) => setForm({ ...form, antiCapsEnabled: v })}
+        onToggle={v => setForm({ ...form, antiCapsEnabled: v })}
       >
         <div>
           <label className="block text-xs font-medium text-foreground mb-1">
-            Caps Threshold: <span className="text-primary">{form.antiCapsThreshold}%</span>
+            Caps Threshold:{" "}
+            <span className="text-primary">{form.antiCapsThreshold}%</span>
           </label>
           <input
             type="range"
-            min={30} max={100}
+            min={30}
+            max={100}
             value={form.antiCapsThreshold}
-            onChange={(e) => setForm({ ...form, antiCapsThreshold: Number(e.target.value) })}
+            onChange={e =>
+              setForm({ ...form, antiCapsThreshold: Number(e.target.value) })
+            }
             className="w-full accent-primary"
           />
           <div className="flex justify-between text-xs text-muted-foreground mt-1">
-            <span>30%</span><span>100%</span>
+            <span>30%</span>
+            <span>100%</span>
           </div>
         </div>
       </RuleCard>
@@ -305,12 +411,23 @@ export default function AutoModerationPage({ guildId }: AutoModerationPageProps)
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <label className="block text-xs font-medium text-foreground mb-1.5">Punishment Type</label>
+            <label className="block text-xs font-medium text-foreground mb-1.5">
+              Punishment Type
+            </label>
             <div className="grid grid-cols-2 gap-2">
-              {PUNISHMENT_OPTIONS.map((opt) => (
+              {PUNISHMENT_OPTIONS.map(opt => (
                 <button
                   key={opt.value}
-                  onClick={() => setForm({ ...form, punishmentType: opt.value as "warn" | "mute" | "kick" | "ban" })}
+                  onClick={() =>
+                    setForm({
+                      ...form,
+                      punishmentType: opt.value as
+                        | "warn"
+                        | "mute"
+                        | "kick"
+                        | "ban",
+                    })
+                  }
                   className={`py-1.5 px-2 rounded-lg text-xs font-medium border transition-colors ${
                     form.punishmentType === opt.value
                       ? `bg-primary/10 border-primary/30 text-primary`
@@ -323,25 +440,33 @@ export default function AutoModerationPage({ guildId }: AutoModerationPageProps)
             </div>
           </div>
           <div>
-            <label className="block text-xs font-medium text-foreground mb-1.5">Duration (minutes)</label>
+            <label className="block text-xs font-medium text-foreground mb-1.5">
+              Duration (minutes)
+            </label>
             <input
               type="number"
               value={form.punishmentDuration}
-              onChange={(e) => setForm({ ...form, punishmentDuration: Number(e.target.value) })}
+              onChange={e =>
+                setForm({ ...form, punishmentDuration: Number(e.target.value) })
+              }
               min={1}
               className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-foreground mb-1.5">Log Channel</label>
+            <label className="block text-xs font-medium text-foreground mb-1.5">
+              Log Channel
+            </label>
             <select
               value={form.logChannelId}
-              onChange={(e) => setForm({ ...form, logChannelId: e.target.value })}
+              onChange={e => setForm({ ...form, logChannelId: e.target.value })}
               className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
             >
               <option value="">None</option>
               {(channels ?? []).map((c: { id: string; name: string }) => (
-                <option key={c.id} value={c.id}>#{c.name}</option>
+                <option key={c.id} value={c.id}>
+                  #{c.name}
+                </option>
               ))}
             </select>
           </div>

@@ -2,11 +2,23 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { trpc } from "@/lib/trpc";
 import { useParams } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Save, Eye } from "lucide-react";
@@ -27,7 +39,10 @@ const PLACEHOLDER_VARIABLES = [
   { name: "{username}", description: "Nome do usuário" },
   { name: "{server}", description: "Nome do servidor" },
   { name: "{memberCount}", description: "Total de membros" },
-  { name: "{joinPosition}", description: "Posição de entrada (ex: 42º membro)" },
+  {
+    name: "{joinPosition}",
+    description: "Posição de entrada (ex: 42º membro)",
+  },
 ];
 
 export default function WelcomeGoodbyePage() {
@@ -36,19 +51,26 @@ export default function WelcomeGoodbyePage() {
   const [config, setConfig] = useState<WelcomeGoodbyeConfig>({
     welcomeEnabled: true,
     welcomeChannelId: null,
-    welcomeMessage: "Bem-vindo {user}! 👋 Você é o {joinPosition} membro de {server}",
+    welcomeMessage:
+      "Bem-vindo {user}! 👋 Você é o {joinPosition} membro de {server}",
     goodbyeEnabled: true,
     goodbyeChannelId: null,
     goodbyeMessage: "{user} saiu do servidor. Até logo! 👋",
   });
 
-  const { data: channels } = trpc.guilds.channels.useQuery({ guildId: guildId || "" }, {
-    enabled: !!guildId,
-  });
+  const { data: channels } = trpc.guilds.channels.useQuery(
+    { guildId: guildId || "" },
+    {
+      enabled: !!guildId,
+    }
+  );
 
-  const { data: savedConfig } = trpc.welcomeGoodbye.get.useQuery({ guildId: guildId || "" }, {
-    enabled: !!guildId,
-  });
+  const { data: savedConfig } = trpc.welcomeGoodbye.get.useQuery(
+    { guildId: guildId || "" },
+    {
+      enabled: !!guildId,
+    }
+  );
 
   const saveMutation = trpc.welcomeGoodbye.save.useMutation({
     onSuccess: () => {
@@ -61,14 +83,21 @@ export default function WelcomeGoodbyePage() {
 
   useEffect(() => {
     if (savedConfig) {
-      setConfig(savedConfig);
+      setConfig({
+        welcomeEnabled: savedConfig.welcomeEnabled ?? false,
+        welcomeChannelId: savedConfig.welcomeChannelId ?? null,
+        welcomeMessage: savedConfig.welcomeMessage ?? null,
+        goodbyeEnabled: savedConfig.goodbyeEnabled ?? false,
+        goodbyeChannelId: savedConfig.goodbyeChannelId ?? null,
+        goodbyeMessage: savedConfig.goodbyeMessage ?? null,
+      });
     }
   }, [savedConfig]);
 
   const handleSave = () => {
     if (!guildId) return;
-    saveMutation.mutate({ 
-      guildId, 
+    saveMutation.mutate({
+      guildId,
       config: {
         welcomeEnabled: config.welcomeEnabled,
         welcomeChannelId: config.welcomeChannelId || "",
@@ -76,7 +105,7 @@ export default function WelcomeGoodbyePage() {
         goodbyeEnabled: config.goodbyeEnabled,
         goodbyeChannelId: config.goodbyeChannelId || "",
         goodbyeMessage: config.goodbyeMessage || "",
-      }
+      },
     });
   };
 
@@ -94,9 +123,12 @@ export default function WelcomeGoodbyePage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Mensagens de Entrada e Saída</h1>
+        <h1 className="text-3xl font-bold text-foreground">
+          Mensagens de Entrada e Saída
+        </h1>
         <p className="text-muted-foreground mt-2">
-          Configure mensagens personalizadas para quando usuários entram ou saem do servidor
+          Configure mensagens personalizadas para quando usuários entram ou saem
+          do servidor
         </p>
       </div>
 
@@ -106,7 +138,7 @@ export default function WelcomeGoodbyePage() {
         <AlertDescription>
           <p className="font-semibold mb-2">Variáveis disponíveis:</p>
           <div className="grid grid-cols-2 gap-2 text-sm">
-            {PLACEHOLDER_VARIABLES.map((v) => (
+            {PLACEHOLDER_VARIABLES.map(v => (
               <div key={v.name}>
                 <code className="bg-muted px-2 py-1 rounded">{v.name}</code>
                 <p className="text-xs text-muted-foreground">{v.description}</p>
@@ -138,7 +170,9 @@ export default function WelcomeGoodbyePage() {
                   type="checkbox"
                   id="welcomeEnabled"
                   checked={config.welcomeEnabled}
-                  onChange={(e) => setConfig({ ...config, welcomeEnabled: e.target.checked })}
+                  onChange={e =>
+                    setConfig({ ...config, welcomeEnabled: e.target.checked })
+                  }
                   className="w-4 h-4 rounded border-border bg-background cursor-pointer"
                 />
                 <Label htmlFor="welcomeEnabled" className="cursor-pointer">
@@ -151,12 +185,17 @@ export default function WelcomeGoodbyePage() {
                   {/* Channel Select */}
                   <div className="space-y-2">
                     <Label htmlFor="welcomeChannel">Canal de Destino</Label>
-                    <Select value={config.welcomeChannelId || ""} onValueChange={(value) => setConfig({ ...config, welcomeChannelId: value })}>
+                    <Select
+                      value={config.welcomeChannelId || ""}
+                      onValueChange={value =>
+                        setConfig({ ...config, welcomeChannelId: value })
+                      }
+                    >
                       <SelectTrigger id="welcomeChannel">
                         <SelectValue placeholder="Selecione um canal" />
                       </SelectTrigger>
                       <SelectContent>
-                        {channels?.map((channel) => (
+                        {channels?.map(channel => (
                           <SelectItem key={channel.id} value={channel.id}>
                             #{channel.name}
                           </SelectItem>
@@ -171,7 +210,9 @@ export default function WelcomeGoodbyePage() {
                     <Textarea
                       id="welcomeMessage"
                       value={config.welcomeMessage || ""}
-                      onChange={(e) => setConfig({ ...config, welcomeMessage: e.target.value })}
+                      onChange={e =>
+                        setConfig({ ...config, welcomeMessage: e.target.value })
+                      }
                       placeholder="Digite a mensagem de boas-vindas..."
                       className="min-h-[120px]"
                     />
@@ -208,7 +249,9 @@ export default function WelcomeGoodbyePage() {
                   type="checkbox"
                   id="goodbyeEnabled"
                   checked={config.goodbyeEnabled}
-                  onChange={(e) => setConfig({ ...config, goodbyeEnabled: e.target.checked })}
+                  onChange={e =>
+                    setConfig({ ...config, goodbyeEnabled: e.target.checked })
+                  }
                   className="w-4 h-4 rounded border-border bg-background cursor-pointer"
                 />
                 <Label htmlFor="goodbyeEnabled" className="cursor-pointer">
@@ -221,12 +264,17 @@ export default function WelcomeGoodbyePage() {
                   {/* Channel Select */}
                   <div className="space-y-2">
                     <Label htmlFor="goodbyeChannel">Canal de Destino</Label>
-                    <Select value={config.goodbyeChannelId || ""} onValueChange={(value) => setConfig({ ...config, goodbyeChannelId: value })}>
+                    <Select
+                      value={config.goodbyeChannelId || ""}
+                      onValueChange={value =>
+                        setConfig({ ...config, goodbyeChannelId: value })
+                      }
+                    >
                       <SelectTrigger id="goodbyeChannel">
                         <SelectValue placeholder="Selecione um canal" />
                       </SelectTrigger>
                       <SelectContent>
-                        {channels?.map((channel) => (
+                        {channels?.map(channel => (
                           <SelectItem key={channel.id} value={channel.id}>
                             #{channel.name}
                           </SelectItem>
@@ -241,7 +289,9 @@ export default function WelcomeGoodbyePage() {
                     <Textarea
                       id="goodbyeMessage"
                       value={config.goodbyeMessage || ""}
-                      onChange={(e) => setConfig({ ...config, goodbyeMessage: e.target.value })}
+                      onChange={e =>
+                        setConfig({ ...config, goodbyeMessage: e.target.value })
+                      }
                       placeholder="Digite a mensagem de despedida..."
                       className="min-h-[120px]"
                     />

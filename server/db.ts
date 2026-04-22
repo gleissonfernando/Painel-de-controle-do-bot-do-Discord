@@ -1,196 +1,160 @@
-import { and, desc, eq } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/mysql2";
-import {
-  InsertUser,
-  autoModSettings,
-  commandSettings,
-  guildSettings,
-  serverLogs,
-  socialNotifications,
-  users,
-  welcomeMessages,
-  type InsertAutoModSettings,
-  type InsertGuildSettings,
-  type InsertServerLog,
-  type InsertSocialNotification,
-  type InsertWelcomeMessage,
-} from "../drizzle/schema";
+import mongoose from "mongoose";
+import { 
+  User, 
+  GuildSettings, 
+  AutoModSettings, 
+  SocialNotification, 
+  ServerLog, 
+  CommandSetting, 
+  WelcomeMessage 
+} from "./models";
 import { ENV } from "./_core/env";
 
-let _db: ReturnType<typeof drizzle> | null = null;
+let _connected = false;
 
 export async function getDb() {
-  if (!_db && process.env.DATABASE_URL) {
-    try {
-      _db = drizzle(process.env.DATABASE_URL);
-    } catch (error) {
-      console.warn("[Database] Failed to connect:", error);
-      _db = null;
-    }
+  if (_connected) return mongoose.connection;
+
+  const uri = process.env.MONGODB_URI;
+  if (!uri) {
+    console.error("[Database] MONGODB_URI is not defined in environment variables!");
+    return mongoose.connection;
   }
-  return _db;
+
+  try {
+    // Adicionando opções de timeout para evitar que o servidor trave esperando o banco
+    await mongoose.connect(uri, {
+      serverSelectionTimeoutMS: 5000,
+      connectTimeoutMS: 10000,
+    });
+    _connected = true;
+    console.log("[Database] Connected to MongoDB");
+  } catch (error) {
+    console.error("[Database] Failed to connect to MongoDB:", error);
+    // Não lançamos erro aqui para permitir que o servidor HTTP suba e responda (evita 502)
+  }
+  
+  return mongoose.connection;
 }
 
-// ─── Users ────────────────────────────────────────────────────────────────────
-
-export async function upsertUser(user: InsertUser): Promise<void> {
-  if (!user.openId) throw new Error("User openId is required for upsert");
-  const db = await getDb();
-  if (!db) return;
-
-  const values: InsertUser = { openId: user.openId };
-  const updateSet: Record<string, unknown> = {};
-
-  const fields = ["name", "email", "loginMethod", "discordId", "avatar", "accessToken", "refreshToken"] as const;
-  for (const field of fields) {
-    const value = (user as Record<string, unknown>)[field];
-    if (value !== undefined) {
-      (values as Record<string, unknown>)[field] = value ?? null;
-      updateSet[field] = value ?? null;
-    }
+// --- Users ---
+export async function upsertUser(userData: any): Promise<void> {
+  await getDb();
+  const { openId, ...rest } = userData;
+  if (!openId) throw new Error("User openId is required for upsert");
+  
+  if (!rest.role && openId === ENV.ownerOpenId) {
+    rest.role = "admin";
   }
 
-  if (user.lastSignedIn !== undefined) {
-    values.lastSignedIn = user.lastSignedIn;
-    updateSet.lastSignedIn = user.lastSignedIn;
-  }
-
-  if (user.role !== undefined) {
-    values.role = user.role;
-    updateSet.role = user.role;
-  } else if (user.openId === ENV.ownerOpenId) {
-    values.role = "admin";
-    updateSet.role = "admin";
-  }
-
-  if (!values.lastSignedIn) values.lastSignedIn = new Date();
-  if (Object.keys(updateSet).length === 0) updateSet.lastSignedIn = new Date();
-
-  await db.insert(users).values(values).onDuplicateKeyUpdate({ set: updateSet });
+  await User.findOneAndUpdate(
+    { openId },
+    { $set: { ...rest, lastSignedIn: new Date() } },
+    { upsert: true, new: true }
+  );
 }
 
 export async function getUserByOpenId(openId: string) {
-  const db = await getDb();
-  if (!db) return undefined;
-  const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
-  return result.length > 0 ? result[0] : undefined;
+  await getDb();
+  return User.findOne({ openId }).lean();
 }
 
-// ─── Guild Settings ────────────────────────────────────────────────────────────
-
+// --- Guild Settings ---
 export async function getGuildSettings(guildId: string) {
-  const db = await getDb();
-  if (!db) return null;
-  const result = await db.select().from(guildSettings).where(eq(guildSettings.guildId, guildId)).limit(1);
-  return result.length > 0 ? result[0] : null;
+  await getDb();
+  return GuildSettings.findOne({ guildId }).lean();
 }
 
-export async function upsertGuildSettings(data: InsertGuildSettings) {
-  const db = await getDb();
-  if (!db) return;
+export async function upsertGuildSettings(data: any) {
+  await getDb();
   const { guildId, ...rest } = data;
-  await db
-    .insert(guildSettings)
-    .values(data)
-    .onDuplicateKeyUpdate({ set: rest });
+  await GuildSettings.findOneAndUpdate(
+    { guildId },
+    { $set: rest },
+    { upsert: true, new: true }
+  );
 }
 
-// ─── Auto Moderation ──────────────────────────────────────────────────────────
-
+// --- Auto Moderation ---
 export async function getAutoModSettings(guildId: string) {
-  const db = await getDb();
-  if (!db) return null;
-  const result = await db.select().from(autoModSettings).where(eq(autoModSettings.guildId, guildId)).limit(1);
-  return result.length > 0 ? result[0] : null;
+  await getDb();
+  return AutoModSettings.findOne({ guildId }).lean();
 }
 
-export async function upsertAutoModSettings(data: InsertAutoModSettings) {
-  const db = await getDb();
-  if (!db) return;
+export async function upsertAutoModSettings(data: any) {
+  await getDb();
   const { guildId, ...rest } = data;
-  await db
-    .insert(autoModSettings)
-    .values(data)
-    .onDuplicateKeyUpdate({ set: rest });
+  await AutoModSettings.findOneAndUpdate(
+    { guildId },
+    { $set: rest },
+    { upsert: true, new: true }
+  );
 }
 
-// ─── Social Notifications ─────────────────────────────────────────────────────
-
+// --- Social Notifications ---
 export async function getSocialNotifications(guildId: string) {
-  const db = await getDb();
-  if (!db) return [];
-  return db.select().from(socialNotifications).where(eq(socialNotifications.guildId, guildId));
+  await getDb();
+  const notifications = await SocialNotification.find({ guildId }).lean();
+  // Map _id to id for frontend compatibility if needed
+  return notifications.map(n => ({ ...n, id: n._id.toString() }));
 }
 
-export async function createSocialNotification(data: InsertSocialNotification) {
-  const db = await getDb();
-  if (!db) return;
-  await db.insert(socialNotifications).values(data);
+export async function createSocialNotification(data: any) {
+  await getDb();
+  await SocialNotification.create(data);
 }
 
-export async function updateSocialNotification(id: number, data: Partial<InsertSocialNotification>) {
-  const db = await getDb();
-  if (!db) return;
-  await db.update(socialNotifications).set(data).where(eq(socialNotifications.id, id));
+export async function updateSocialNotification(id: string, data: any) {
+  await getDb();
+  await SocialNotification.findByIdAndUpdate(id, { $set: data });
 }
 
-export async function deleteSocialNotification(id: number) {
-  const db = await getDb();
-  if (!db) return;
-  await db.delete(socialNotifications).where(eq(socialNotifications.id, id));
+export async function deleteSocialNotification(id: string) {
+  await getDb();
+  await SocialNotification.findByIdAndDelete(id);
 }
 
-// ─── Server Logs ──────────────────────────────────────────────────────────────
-
+// --- Server Logs ---
 export async function getServerLogs(guildId: string, limit = 50) {
-  const db = await getDb();
-  if (!db) return [];
-  return db
-    .select()
-    .from(serverLogs)
-    .where(eq(serverLogs.guildId, guildId))
-    .orderBy(desc(serverLogs.createdAt))
-    .limit(limit);
+  await getDb();
+  return ServerLog.find({ guildId })
+    .sort({ createdAt: -1 })
+    .limit(limit)
+    .lean();
 }
 
-export async function createServerLog(data: InsertServerLog) {
-  const db = await getDb();
-  if (!db) return;
-  await db.insert(serverLogs).values(data);
+export async function createServerLog(data: any) {
+  await getDb();
+  await ServerLog.create(data);
 }
 
-// ─── Command Settings ─────────────────────────────────────────────────────────
-
+// --- Command Settings ---
 export async function getCommandSettings(guildId: string) {
-  const db = await getDb();
-  if (!db) return [];
-  return db.select().from(commandSettings).where(eq(commandSettings.guildId, guildId));
+  await getDb();
+  return CommandSetting.find({ guildId }).lean();
 }
 
-export async function upsertCommandSetting(guildId: string, commandName: string, data: Partial<typeof commandSettings.$inferInsert>) {
-  const db = await getDb();
-  if (!db) return;
-  await db
-    .insert(commandSettings)
-    .values({ guildId, commandName, ...data })
-    .onDuplicateKeyUpdate({ set: data });
+export async function upsertCommandSetting(guildId: string, commandName: string, data: any) {
+  await getDb();
+  await CommandSetting.findOneAndUpdate(
+    { guildId, commandName },
+    { $set: data },
+    { upsert: true, new: true }
+  );
 }
 
-// ─── Welcome Messages ─────────────────────────────────────────────────────────
-
+// --- Welcome Messages ---
 export async function getWelcomeMessages(guildId: string) {
-  const db = await getDb();
-  if (!db) return null;
-  const result = await db.select().from(welcomeMessages).where(eq(welcomeMessages.guildId, guildId)).limit(1);
-  return result.length > 0 ? result[0] : null;
+  await getDb();
+  return WelcomeMessage.findOne({ guildId }).lean();
 }
 
-export async function upsertWelcomeMessages(data: InsertWelcomeMessage) {
-  const db = await getDb();
-  if (!db) return;
+export async function upsertWelcomeMessages(data: any) {
+  await getDb();
   const { guildId, ...rest } = data;
-  await db
-    .insert(welcomeMessages)
-    .values(data)
-    .onDuplicateKeyUpdate({ set: rest });
+  await WelcomeMessage.findOneAndUpdate(
+    { guildId },
+    { $set: rest },
+    { upsert: true, new: true }
+  );
 }

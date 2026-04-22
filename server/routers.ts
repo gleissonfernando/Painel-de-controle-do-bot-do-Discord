@@ -20,12 +20,18 @@ import {
   upsertWelcomeMessages,
   updateSocialNotification,
 } from "./db";
-import { fetchDiscordGuilds, fetchGuildDetails, fetchGuildChannels, fetchGuildRoles } from "./discord";
+import {
+  fetchDiscordGuilds,
+  fetchGuildDetails,
+  fetchGuildChannels,
+  fetchGuildRoles,
+  getMockGuilds,
+} from "./discord";
 
 // ─── Auth Router ──────────────────────────────────────────────────────────────
 
 const authRouter = router({
-  me: publicProcedure.query((opts) => opts.ctx.user),
+  me: publicProcedure.query(opts => opts.ctx.user),
   logout: publicProcedure.mutation(({ ctx }) => {
     const cookieOptions = getSessionCookieOptions(ctx.req);
     ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
@@ -37,11 +43,45 @@ const authRouter = router({
 
 const guildsRouter = router({
   list: protectedProcedure.query(async () => {
-    // Return the configured guild from environment
+    // Return the configured guild from environment or demo guilds
     const guildId = process.env.VITE_DISCORD_GUILD_ID;
+
+    // If no guild ID is configured, return demo guilds
     if (!guildId) {
-      throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Guild ID not configured" });
+      return [
+        {
+          id: "1001",
+          name: "My Awesome Server",
+          icon: null,
+          owner: true,
+          permissions: "8",
+          memberCount: 1247,
+          channels: 5,
+          roles: 4,
+        },
+        {
+          id: "1002",
+          name: "Gaming Community",
+          icon: null,
+          owner: false,
+          permissions: "8",
+          memberCount: 5832,
+          channels: 12,
+          roles: 8,
+        },
+        {
+          id: "1003",
+          name: "Dev Hub",
+          icon: null,
+          owner: false,
+          permissions: "8",
+          memberCount: 342,
+          channels: 8,
+          roles: 5,
+        },
+      ];
     }
+
     try {
       const details = await fetchGuildDetails(guildId);
       const channels = await fetchGuildChannels(guildId);
@@ -60,7 +100,10 @@ const guildsRouter = router({
       ];
     } catch (error) {
       console.error("Error fetching guild data:", error);
-      throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to fetch guild data from Discord" });
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to fetch guild data from Discord",
+      });
     }
   }),
 
@@ -131,19 +174,21 @@ const settingsRouter = router({
     .input(z.object({ guildId: z.string() }))
     .query(async ({ input }) => {
       const settings = await getGuildSettings(input.guildId);
-      return settings ?? {
-        guildId: input.guildId,
-        prefix: "!",
-        language: "en",
-        timezone: "UTC",
-        adminRoleId: null,
-        welcomeChannelId: null,
-        logsChannelId: null,
-        botEnabled: true,
-        guildName: null,
-        guildIcon: null,
-        ownerId: null,
-      };
+      return (
+        settings ?? {
+          guildId: input.guildId,
+          prefix: "!",
+          language: "en",
+          timezone: "UTC",
+          adminRoleId: null,
+          welcomeChannelId: null,
+          logsChannelId: null,
+          botEnabled: true,
+          guildName: null,
+          guildIcon: null,
+          ownerId: null,
+        }
+      );
     }),
 
   update: protectedProcedure
@@ -176,23 +221,25 @@ const autoModRouter = router({
     .input(z.object({ guildId: z.string() }))
     .query(async ({ input }) => {
       const settings = await getAutoModSettings(input.guildId);
-      return settings ?? {
-        guildId: input.guildId,
-        antiSpamEnabled: false,
-        antiSpamThreshold: 5,
-        antiSpamInterval: 5,
-        antiLinkEnabled: false,
-        antiLinkWhitelist: [],
-        wordFilterEnabled: false,
-        wordFilterList: [],
-        antiCapsEnabled: false,
-        antiCapsThreshold: 70,
-        punishmentType: "warn" as const,
-        punishmentDuration: 10,
-        logChannelId: null,
-        exemptRoles: [],
-        exemptChannels: [],
-      };
+      return (
+        settings ?? {
+          guildId: input.guildId,
+          antiSpamEnabled: false,
+          antiSpamThreshold: 5,
+          antiSpamInterval: 5,
+          antiLinkEnabled: false,
+          antiLinkWhitelist: [],
+          wordFilterEnabled: false,
+          wordFilterList: [],
+          antiCapsEnabled: false,
+          antiCapsThreshold: 70,
+          punishmentType: "warn" as const,
+          punishmentDuration: 10,
+          logChannelId: null,
+          exemptRoles: [],
+          exemptChannels: [],
+        }
+      );
     }),
 
   update: protectedProcedure
@@ -251,7 +298,7 @@ const notificationsRouter = router({
   update: protectedProcedure
     .input(
       z.object({
-        id: z.number(),
+        id: z.string(),
         discordChannelId: z.string().optional(),
         message: z.string().optional(),
         enabled: z.boolean().optional(),
@@ -264,7 +311,7 @@ const notificationsRouter = router({
     }),
 
   delete: protectedProcedure
-    .input(z.object({ id: z.number() }))
+    .input(z.object({ id: z.string() }))
     .mutation(async ({ input }) => {
       await deleteSocialNotification(input.id);
       return { success: true };
@@ -285,9 +332,19 @@ const logsRouter = router({
       z.object({
         guildId: z.string(),
         eventType: z.enum([
-          "member_join", "member_leave", "member_ban", "member_unban",
-          "message_delete", "message_edit", "channel_create", "channel_delete",
-          "role_create", "role_delete", "voice_join", "voice_leave", "command_used",
+          "member_join",
+          "member_leave",
+          "member_ban",
+          "member_unban",
+          "message_delete",
+          "message_edit",
+          "channel_create",
+          "channel_delete",
+          "role_create",
+          "role_delete",
+          "voice_join",
+          "voice_leave",
+          "command_used",
         ]),
         userId: z.string().optional(),
         userName: z.string().optional(),
@@ -308,11 +365,43 @@ const logsRouter = router({
     .input(z.object({ guildId: z.string() }))
     .mutation(async ({ input }) => {
       const sampleLogs = [
-        { guildId: input.guildId, eventType: "member_join" as const, userId: "123456789", userName: "CoolUser#1234", details: {} },
-        { guildId: input.guildId, eventType: "member_leave" as const, userId: "987654321", userName: "AnotherUser#5678", details: {} },
-        { guildId: input.guildId, eventType: "member_ban" as const, userId: "111222333", userName: "BadActor#0001", details: { reason: "Spam" } },
-        { guildId: input.guildId, eventType: "message_delete" as const, userId: "444555666", userName: "SomeUser#9999", channelId: "777888999", channelName: "general", details: { content: "Deleted message content" } },
-        { guildId: input.guildId, eventType: "command_used" as const, userId: "123456789", userName: "CoolUser#1234", details: { command: "!help" } },
+        {
+          guildId: input.guildId,
+          eventType: "member_join" as const,
+          userId: "123456789",
+          userName: "CoolUser#1234",
+          details: {},
+        },
+        {
+          guildId: input.guildId,
+          eventType: "member_leave" as const,
+          userId: "987654321",
+          userName: "AnotherUser#5678",
+          details: {},
+        },
+        {
+          guildId: input.guildId,
+          eventType: "member_ban" as const,
+          userId: "111222333",
+          userName: "BadActor#0001",
+          details: { reason: "Spam" },
+        },
+        {
+          guildId: input.guildId,
+          eventType: "message_delete" as const,
+          userId: "444555666",
+          userName: "SomeUser#9999",
+          channelId: "777888999",
+          channelName: "general",
+          details: { content: "Deleted message content" },
+        },
+        {
+          guildId: input.guildId,
+          eventType: "command_used" as const,
+          userId: "123456789",
+          userName: "CoolUser#1234",
+          details: { command: "!help" },
+        },
       ];
       for (const log of sampleLogs) {
         await createServerLog(log);
@@ -329,21 +418,61 @@ const commandsRouter = router({
     .query(async ({ input }) => {
       const saved = await getCommandSettings(input.guildId);
       const defaultCommands = [
-        { commandName: "help", description: "Shows help information", category: "General" },
-        { commandName: "ping", description: "Check bot latency", category: "General" },
-        { commandName: "info", description: "Server information", category: "General" },
-        { commandName: "ban", description: "Ban a member", category: "Moderation" },
-        { commandName: "kick", description: "Kick a member", category: "Moderation" },
-        { commandName: "mute", description: "Mute a member", category: "Moderation" },
-        { commandName: "warn", description: "Warn a member", category: "Moderation" },
-        { commandName: "clear", description: "Clear messages", category: "Moderation" },
+        {
+          commandName: "help",
+          description: "Shows help information",
+          category: "General",
+        },
+        {
+          commandName: "ping",
+          description: "Check bot latency",
+          category: "General",
+        },
+        {
+          commandName: "info",
+          description: "Server information",
+          category: "General",
+        },
+        {
+          commandName: "ban",
+          description: "Ban a member",
+          category: "Moderation",
+        },
+        {
+          commandName: "kick",
+          description: "Kick a member",
+          category: "Moderation",
+        },
+        {
+          commandName: "mute",
+          description: "Mute a member",
+          category: "Moderation",
+        },
+        {
+          commandName: "warn",
+          description: "Warn a member",
+          category: "Moderation",
+        },
+        {
+          commandName: "clear",
+          description: "Clear messages",
+          category: "Moderation",
+        },
         { commandName: "play", description: "Play music", category: "Music" },
-        { commandName: "skip", description: "Skip current song", category: "Music" },
+        {
+          commandName: "skip",
+          description: "Skip current song",
+          category: "Music",
+        },
         { commandName: "stop", description: "Stop music", category: "Music" },
-        { commandName: "queue", description: "Show music queue", category: "Music" },
+        {
+          commandName: "queue",
+          description: "Show music queue",
+          category: "Music",
+        },
       ];
-      return defaultCommands.map((cmd) => {
-        const savedCmd = saved.find((s) => s.commandName === cmd.commandName);
+      return defaultCommands.map(cmd => {
+        const savedCmd = saved.find(s => s.commandName === cmd.commandName);
         return {
           ...cmd,
           enabled: savedCmd?.enabled ?? true,
@@ -354,9 +483,19 @@ const commandsRouter = router({
     }),
 
   toggle: protectedProcedure
-    .input(z.object({ guildId: z.string(), commandName: z.string(), enabled: z.boolean() }))
+    .input(
+      z.object({
+        guildId: z.string(),
+        commandName: z.string(),
+        enabled: z.boolean(),
+      })
+    )
     .mutation(async ({ input }) => {
-      await upsertCommandSetting(input.guildId, input.commandName, { enabled: input.enabled, guildId: input.guildId, commandName: input.commandName });
+      await upsertCommandSetting(input.guildId, input.commandName, {
+        enabled: input.enabled,
+        guildId: input.guildId,
+        commandName: input.commandName,
+      });
       return { success: true };
     }),
 });
@@ -368,17 +507,19 @@ const messagesRouter = router({
     .input(z.object({ guildId: z.string() }))
     .query(async ({ input }) => {
       const msgs = await getWelcomeMessages(input.guildId);
-      return msgs ?? {
-        guildId: input.guildId,
-        welcomeEnabled: false,
-        welcomeChannelId: null,
-        welcomeMessage: "Welcome to the server, {user}! 🎉",
-        goodbyeEnabled: false,
-        goodbyeChannelId: null,
-        goodbyeMessage: "{user} has left the server.",
-        dmWelcome: false,
-        dmMessage: "Welcome to {server}! Please read the rules.",
-      };
+      return (
+        msgs ?? {
+          guildId: input.guildId,
+          welcomeEnabled: false,
+          welcomeChannelId: null,
+          welcomeMessage: "Welcome to the server, {user}! 🎉",
+          goodbyeEnabled: false,
+          goodbyeChannelId: null,
+          goodbyeMessage: "{user} has left the server.",
+          dmWelcome: false,
+          dmMessage: "Welcome to {server}! Please read the rules.",
+        }
+      );
     }),
 
   update: protectedProcedure
@@ -409,14 +550,17 @@ const welcomeGoodbyeRouter = router({
     .input(z.object({ guildId: z.string() }))
     .query(async ({ input }) => {
       const msgs = await getWelcomeMessages(input.guildId);
-      return msgs ?? {
-        welcomeEnabled: true,
-        welcomeChannelId: "",
-        welcomeMessage: "Bem-vindo {user}! 👋 Você é o {joinPosition} membro de {server}",
-        goodbyeEnabled: true,
-        goodbyeChannelId: "",
-        goodbyeMessage: "{user} saiu do servidor. Até logo! 👋",
-      };
+      return (
+        msgs ?? {
+          welcomeEnabled: true,
+          welcomeChannelId: "",
+          welcomeMessage:
+            "Bem-vindo {user}! 👋 Você é o {joinPosition} membro de {server}",
+          goodbyeEnabled: true,
+          goodbyeChannelId: "",
+          goodbyeMessage: "{user} saiu do servidor. Até logo! 👋",
+        }
+      );
     }),
 
   save: protectedProcedure
