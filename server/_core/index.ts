@@ -53,12 +53,18 @@ async function startServer() {
     serveStatic(app);
   }
 
-  // Shard Cloud and most hosting providers use PORT env var.
-  // The error message indicated the server should listen on port 80 and interface 0.0.0.0.
-  const port = parseInt(process.env.PORT || "80");
+  // FORCED CONFIG FOR SHARD CLOUD (Error 502 Fix)
+  // We prioritize process.env.PORT but fallback to 80 as requested by Shard Cloud
+  const port = Number(process.env.PORT) || 80;
+  const host = "0.0.0.0";
 
-  server.listen(port, "0.0.0.0", () => {
-    console.log(`Server running on http://0.0.0.0:${port}/`);
+  server.listen(port, host, () => {
+    console.log("========================================");
+    console.log(`🚀 SERVER IS LIVE!`);
+    console.log(`Port: ${port}`);
+    console.log(`Host: ${host}`);
+    console.log(`Env: ${process.env.NODE_ENV}`);
+    console.log("========================================");
   });
 }
 
