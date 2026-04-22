@@ -8,16 +8,7 @@ import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 
 const getBotInviteUrl = () => {
-  try {
-    const clientId =
-      import.meta.env.VITE_DISCORD_CLIENT_ID || "YOUR_BOT_CLIENT_ID";
-    const origin = typeof window !== "undefined" ? window.location.origin : "";
-    const redirectUri = encodeURIComponent(`${origin}/api/discord/callback`);
-    return `https://discord.com/api/oauth2/authorize?client_id=${clientId}&permissions=8&response_type=code&redirect_uri=${redirectUri}&scope=bot%20applications.commands`;
-  } catch (e) {
-    console.error("Failed to construct bot invite URL:", e);
-    return "#";
-  }
+  return "https://discord.com/oauth2/authorize?client_id=1492325134550302952&permissions=8&integration_type=0&scope=bot";
 };
 
 // We don't call it at module level to avoid SSR/Initial load issues
@@ -42,6 +33,14 @@ export default function ServerSelectPage() {
       navigate("/");
     }
   }, [isAuthenticated, loading, navigate]);
+
+  // Redireciona automaticamente para o convite do bot se o carregamento terminar e não houver servidores
+  useEffect(() => {
+    if (!guildsLoading && guilds && guilds.length === 0) {
+      console.log("Nenhum servidor encontrado com o bot. Redirecionando para o convite...");
+      window.location.href = getBotInviteUrl();
+    }
+  }, [guilds, guildsLoading]);
 
   if (loading) {
     return (
