@@ -7,13 +7,7 @@ import { ChevronRight, Plus, LogOut } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 
-const getBotInviteUrl = () => {
-  return "https://discord.com/oauth2/authorize?client_id=1492325134550302952&permissions=8&integration_type=0&scope=bot";
-};
-
-// We don't call it at module level to avoid SSR/Initial load issues
-// We'll call it inside the component or as a lazy constant.
-const BOT_INVITE_URL_LAZY = () => getBotInviteUrl();
+const BOT_INVITE_URL = "https://discord.com/oauth2/authorize?client_id=1492325134550302952&permissions=8&integration_type=0&scope=bot";
 
 export default function ServerSelectPage() {
   const { isAuthenticated, loading, logout, user } = useAuth();
@@ -38,7 +32,7 @@ export default function ServerSelectPage() {
   useEffect(() => {
     if (!guildsLoading && guilds && guilds.length === 0) {
       console.log("Nenhum servidor encontrado com o bot. Redirecionando para o convite...");
-      window.location.href = getBotInviteUrl();
+      window.location.href = BOT_INVITE_URL;
     }
   }, [guilds, guildsLoading]);
 
@@ -142,7 +136,7 @@ export default function ServerSelectPage() {
                 {t("servers.noServers")}
               </p>
                 <a
-                  href={BOT_INVITE_URL_LAZY()}
+                  href={BOT_INVITE_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -158,7 +152,7 @@ export default function ServerSelectPage() {
           {/* Add Server Button */}
           <div className="p-2 border-t border-border">
             <a
-              href={BOT_INVITE_URL_LAZY()}
+              href={BOT_INVITE_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="block"
@@ -204,7 +198,7 @@ export default function ServerSelectPage() {
                   {t("servers.noServersDesc")}
                 </p>
                 <a
-                  href={BOT_INVITE_URL_LAZY()}
+                  href={BOT_INVITE_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
