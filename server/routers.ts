@@ -64,7 +64,9 @@ const guildsRouter = router({
 
     try {
       // Fetch all guilds the user is in
+      console.log(`[Guilds] Fetching guilds for user ${user.openId} with token: ${user.accessToken?.substring(0, 10)}...`);
       const userGuilds = await fetchDiscordGuilds(user.accessToken);
+      console.log(`[Guilds] Found ${userGuilds.length} guilds total`);
       
       // Filter guilds where user has MANAGE_GUILD (0x20) or ADMINISTRATOR (0x8) permission
       // Or is the owner. Using bitwise operators on the permission string.

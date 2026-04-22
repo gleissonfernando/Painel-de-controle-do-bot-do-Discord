@@ -24,6 +24,9 @@ export const getLoginUrl = () => {
 
   // FALLBACK: Se não houver portal, vai direto para o OAuth do Discord
   // Isso garante que o botão SEMPRE funcione.
-  const discordAuthUrl = "https://discord.com/oauth2/authorize?client_id=1492325134550302952&permissions=0&response_type=code&redirect_uri=https%3A%2F%2Fmagnatas-dashboard.shardweb.app&integration_type=0&scope=identify+bot";
+  // IMPORTANTE: Adicionado o escopo 'guilds' para permitir listar os servidores do usuário.
+  const clientId = "1492325134550302952";
+  const currentRedirectUri = encodeURIComponent(`${window.location.origin}/api/oauth/callback`);
+  const discordAuthUrl = `https://discord.com/oauth2/authorize?client_id=${clientId}&response_type=code&redirect_uri=${currentRedirectUri}&scope=identify+email+guilds`;
   return discordAuthUrl;
 };

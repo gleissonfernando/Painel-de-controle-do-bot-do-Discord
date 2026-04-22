@@ -20,8 +20,52 @@ export function registerOAuthRoutes(app: Express) {
     }
 
     try {
-      const tokenResponse = await sdk.exchangeCodeForToken(code, state);
-      const userInfo = await sdk.getUserInfo(tokenResponse.accessToken);
+      let tokenResponse;
+      let userInfo;
+
+      // Tenta usar o SDK (Portal Externo)
+      try {
+        tokenResponse = await sdk.exchangeCodeForToken(code, state);
+        userInfo = await sdk.getUserInfo(tokenResponse.accessToken);
+      } catch (sdkError) {
+        console.warn("[OAuth] SDK exchange failed, trying direct Discord exchange:", sdkError);
+        
+        // FALLBACK: Troca de código direta com o Discord
+        const discordResponse = await fetch("https://discord.com/api/v10/oauth2/token", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({
+            client_id: process.env.VITE_DISCORD_CLIENT_ID || "1492325134550302952",
+            client_secret: process.env.DISCORD_CLIENT_SECRET || "",
+            grant_type: "authorization_code",
+            code,
+            redirect_uri: `${req.protocol}://${req.get("host")}/api/oauth/callback`,
+          }),
+        });
+
+        if (!discordResponse.ok) {
+          throw new Error(`Discord token exchange failed: ${await discordResponse.text()}`);
+        }
+
+        const discordTokens = await discordResponse.json();
+        tokenResponse = {
+          accessToken: discordTokens.access_token,
+          refreshToken: discordTokens.refresh_token,
+        };
+
+        // Busca info do usuário no Discord
+        const userResponse = await fetch("https://discord.com/api/v10/users/@me", {
+          headers: { Authorization: `Bearer ${tokenResponse.accessToken}` },
+        });
+        
+        const discordUser = await userResponse.json();
+        userInfo = {
+          openId: discordUser.id,
+          name: discordUser.global_name || discordUser.username,
+          email: discordUser.email,
+          loginMethod: "discord",
+        };
+      }
 
       if (!userInfo.openId) {
         res.status(400).json({ error: "openId missing from user info" });
