@@ -14,8 +14,8 @@ export function registerOAuthRoutes(app: Express) {
     const code = getQueryParam(req, "code");
     const state = getQueryParam(req, "state");
 
-    if (!code || !state) {
-      res.status(400).json({ error: "code and state are required" });
+    if (!code) {
+      res.status(400).json({ error: "code is required" });
       return;
     }
 
@@ -23,8 +23,9 @@ export function registerOAuthRoutes(app: Express) {
       let tokenResponse;
       let userInfo;
 
-      // Tenta usar o SDK (Portal Externo)
+      // Tenta usar o SDK (Portal Externo) se o state estiver presente
       try {
+        if (!state) throw new Error("State missing, falling back to direct Discord exchange");
         tokenResponse = await sdk.exchangeCodeForToken(code, state);
         userInfo = await sdk.getUserInfo(tokenResponse.accessToken);
       } catch (sdkError) {
