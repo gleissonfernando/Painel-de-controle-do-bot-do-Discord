@@ -7,11 +7,21 @@ export const getLoginUrl = () => {
   const redirectUri = `${window.location.origin}/api/oauth/callback`;
   const state = btoa(redirectUri);
 
-  const url = new URL(`${oauthPortalUrl}/app-auth`);
-  url.searchParams.set("appId", appId);
-  url.searchParams.set("redirectUri", redirectUri);
-  url.searchParams.set("state", state);
-  url.searchParams.set("type", "signIn");
+  // If oauthPortalUrl is missing or invalid, fallback to a safe string to avoid crashing the app
+  if (!oauthPortalUrl || !oauthPortalUrl.startsWith("http")) {
+    console.warn("VITE_OAUTH_PORTAL_URL is not configured correctly.");
+    return "#";
+  }
 
-  return url.toString();
+  try {
+    const url = new URL(`${oauthPortalUrl}/app-auth`);
+    url.searchParams.set("appId", appId || "");
+    url.searchParams.set("redirectUri", redirectUri);
+    url.searchParams.set("state", state);
+    url.searchParams.set("type", "signIn");
+    return url.toString();
+  } catch (e) {
+    console.error("Failed to construct login URL:", e);
+    return "#";
+  }
 };

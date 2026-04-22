@@ -8,15 +8,21 @@ import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 
 const getBotInviteUrl = () => {
-  const clientId =
-    import.meta.env.VITE_DISCORD_CLIENT_ID || "YOUR_BOT_CLIENT_ID";
-  const redirectUri = encodeURIComponent(
-    `${window.location.origin}/api/discord/callback`
-  );
-  return `https://discord.com/api/oauth2/authorize?client_id=${clientId}&permissions=8&response_type=code&redirect_uri=${redirectUri}&scope=bot%20applications.commands`;
+  try {
+    const clientId =
+      import.meta.env.VITE_DISCORD_CLIENT_ID || "YOUR_BOT_CLIENT_ID";
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const redirectUri = encodeURIComponent(`${origin}/api/discord/callback`);
+    return `https://discord.com/api/oauth2/authorize?client_id=${clientId}&permissions=8&response_type=code&redirect_uri=${redirectUri}&scope=bot%20applications.commands`;
+  } catch (e) {
+    console.error("Failed to construct bot invite URL:", e);
+    return "#";
+  }
 };
 
-const BOT_INVITE_URL = getBotInviteUrl();
+// We don't call it at module level to avoid SSR/Initial load issues
+// We'll call it inside the component or as a lazy constant.
+const BOT_INVITE_URL_LAZY = () => getBotInviteUrl();
 
 export default function ServerSelectPage() {
   const { isAuthenticated, loading, logout, user } = useAuth();
@@ -136,80 +142,80 @@ export default function ServerSelectPage() {
               <p className="text-xs text-muted-foreground mb-3">
                 {t("servers.noServers")}
               </p>
-              <a
-                href={BOT_INVITE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Button size="sm" variant="outline" className="w-full gap-2">
-                  <Plus size={14} />
-                  {t("servers.addServer")}
-                </Button>
-              </a>
-            </div>
-          )}
-        </div>
-
-        {/* Add Server Button */}
-        <div className="p-2 border-t border-border">
-          <a
-            href={BOT_INVITE_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block"
-          >
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full justify-center gap-2 text-primary hover:bg-primary/10"
+                <a
+                  href={BOT_INVITE_URL_LAZY()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Button size="sm" variant="outline" className="w-full gap-2">
+                    <Plus size={14} />
+                    {t("servers.addServer")}
+                  </Button>
+                </a>
+              </div>
+            )}
+          </div>
+  
+          {/* Add Server Button */}
+          <div className="p-2 border-t border-border">
+            <a
+              href={BOT_INVITE_URL_LAZY()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block"
             >
-              <Plus size={16} />
-              {t("servers.addAServer")}
-            </Button>
-          </a>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-md">
-          {(guilds ?? []).length > 0 ? (
-            <div className="text-center">
-              <h1 className="text-2xl font-bold text-foreground mb-2">
-                {t("servers.selectServer")}
-              </h1>
-              <p className="text-muted-foreground text-sm mb-8">
-                {t("servers.selectServerDesc")}
-              </p>
-              <div className="p-6 rounded-lg bg-card border border-border">
-                <p className="text-muted-foreground text-sm">
-                  👈 Click on a server to get started
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div className="text-center">
-              <div className="w-16 h-16 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto mb-4">
-                <Plus size={32} className="text-primary" />
-              </div>
-              <h1 className="text-2xl font-bold text-foreground mb-2">
-                {t("servers.noServersYet")}
-              </h1>
-              <p className="text-muted-foreground text-sm mb-6">
-                {t("servers.noServersDesc")}
-              </p>
-              <a
-                href={BOT_INVITE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-center gap-2 text-primary hover:bg-primary/10"
               >
-                <Button className="gap-2">
-                  <Plus size={16} />
-                  {t("servers.addBotToServer")}
-                </Button>
-              </a>
-            </div>
-          )}
+                <Plus size={16} />
+                {t("servers.addAServer")}
+              </Button>
+            </a>
+          </div>
+        </div>
+  
+        {/* Main Content */}
+        <div className="flex-1 flex items-center justify-center px-4 py-12">
+          <div className="w-full max-w-md">
+            {(guilds ?? []).length > 0 ? (
+              <div className="text-center">
+                <h1 className="text-2xl font-bold text-foreground mb-2">
+                  {t("servers.selectServer")}
+                </h1>
+                <p className="text-muted-foreground text-sm mb-8">
+                  {t("servers.selectServerDesc")}
+                </p>
+                <div className="p-6 rounded-lg bg-card border border-border">
+                  <p className="text-muted-foreground text-sm">
+                    👈 Click on a server to get started
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center">
+                <div className="w-16 h-16 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto mb-4">
+                  <Plus size={32} className="text-primary" />
+                </div>
+                <h1 className="text-2xl font-bold text-foreground mb-2">
+                  {t("servers.noServersYet")}
+                </h1>
+                <p className="text-muted-foreground text-sm mb-6">
+                  {t("servers.noServersDesc")}
+                </p>
+                <a
+                  href={BOT_INVITE_URL_LAZY()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Button className="gap-2">
+                    <Plus size={16} />
+                    {t("servers.addBotToServer")}
+                  </Button>
+                </a>
+              </div>
+            )}
         </div>
       </div>
     </div>
