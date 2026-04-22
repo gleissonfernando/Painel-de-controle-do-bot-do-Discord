@@ -34,22 +34,28 @@ async function startServer() {
     serveStatic(app);
   }
 
-  // ABSOLUTE PORT FORCING FOR SHARD CLOUD
-  // We ignore process.env.PORT because the logs show it's being set to 3000
-  // while the proxy expects port 80.
+  // ABSOLUTE FORCE PORT 80 FOR SHARD CLOUD
+  // We ignore process.env.PORT entirely because Shard Cloud sets it to 3000
+  // but their proxy only looks for port 80.
   const port = 80;
   const host = "0.0.0.0";
 
   server.listen(port, host, () => {
     console.log("========================================");
-    console.log(`🚀 SERVER IS LIVE!`);
-    console.log(`URL: http://${host}:${port}`);
+    console.log(`🚀 SHARD CLOUD DEPLOYMENT ACTIVE`);
+    console.log(`FORCED PORT: ${port}`);
+    console.log(`HOST: ${host}`);
     console.log(`NODE_ENV: ${process.env.NODE_ENV}`);
     console.log("========================================");
+    
+    // Diagnostic heartbeat to keep logs active and verify port
+    setInterval(() => {
+      console.log(`[Heartbeat] Server still responding on port ${port}...`);
+    }, 30000);
   });
 }
 
 startServer().catch(err => {
-  console.error("FAILED TO START SERVER:", err);
+  console.error("CRITICAL ERROR DURING STARTUP:", err);
   process.exit(1);
 });
