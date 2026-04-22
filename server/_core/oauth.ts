@@ -78,8 +78,17 @@ export function registerOAuthRoutes(app: Express) {
         console.warn("[OAuth] User info missing, but check if bot was added.");
         const guildId = getQueryParam(req, "guild_id") || (req.query.guild_id as string);
         if (guildId) {
-          console.log(`[OAuth] Bot added to guild ${guildId}, redirecting to servers.`);
-          return res.redirect(302, "/servers");
+          console.log(`[OAuth] Bot added to guild ${guildId}, initializing settings and redirecting.`);
+          
+          // Inicializa as configurações do servidor no banco para garantir que o acesso seja liberado
+          await db.upsertGuildSettings({ 
+            guildId, 
+            botEnabled: true,
+            prefix: "!" // Prefixo padrão
+          });
+
+          // Redireciona direto para o dashboard do servidor adicionado
+          return res.redirect(302, `/dashboard/${guildId}`);
         }
         res.status(400).json({ error: "Authentication failed: User information could not be retrieved and no bot was added." });
         return;
@@ -106,13 +115,21 @@ export function registerOAuthRoutes(app: Express) {
         maxAge: ONE_YEAR_MS,
       });
 
+      const guildId = getQueryParam(req, "guild_id") || (req.query.guild_id as string);
+      if (guildId) {
+        // Inicializa as configurações se o bot foi adicionado
+        await db.upsertGuildSettings({ guildId, botEnabled: true });
+        return res.redirect(302, `/dashboard/${guildId}`);
+      }
+
       res.redirect(302, "/servers");
     } catch (error) {
       console.error("[OAuth] Callback failed", error);
-      // Se houver erro no login mas o bot foi adicionado, ainda redirecionamos para /servers
+      // Se houver erro no login mas o bot foi adicionado, ainda redirecionamos para o dashboard
       const guildId = getQueryParam(req, "guild_id") || (req.query.guild_id as string);
       if (guildId) {
-        return res.redirect(302, "/servers");
+        await db.upsertGuildSettings({ guildId, botEnabled: true });
+        return res.redirect(302, `/dashboard/${guildId}`);
       }
       res.status(500).json({ error: "OAuth callback failed" });
     }
