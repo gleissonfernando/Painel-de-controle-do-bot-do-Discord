@@ -164,11 +164,21 @@ export default function ServerSelectPage() {
                       <p className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">
                         {guild.name}
                       </p>
+                      {!(guild as any).botPresent && (
+                        <p className="text-[10px] text-amber-500 font-medium">Bot não adicionado</p>
+                      )}
                     </div>
-                    <ChevronRight
-                      size={16}
-                      className="text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0"
-                    />
+                    {(guild as any).botPresent ? (
+                      <ChevronRight
+                        size={16}
+                        className="text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0"
+                      />
+                    ) : (
+                      <Plus
+                        size={16}
+                        className="text-amber-500 group-hover:scale-110 transition-transform flex-shrink-0"
+                      />
+                    )}
                   </button>
                 )
               )}

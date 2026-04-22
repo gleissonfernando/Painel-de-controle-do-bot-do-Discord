@@ -79,12 +79,20 @@ const guildsRouter = router({
       const results = await Promise.all(
         adminGuilds.map(async (guild) => {
           const isBotPresent = await checkBotInGuild(guild.id);
-          if (!isBotPresent) return null;
 
           try {
-            const details = await fetchGuildDetails(guild.id);
-            const channels = await fetchGuildChannels(guild.id);
-            const roles = await fetchGuildRoles(guild.id);
+            // Se o bot estiver presente, pegamos detalhes reais, senão usamos dados básicos do usuário
+            let details = null;
+            let channelsCount = 0;
+            let rolesCount = 0;
+
+            if (isBotPresent) {
+              details = await fetchGuildDetails(guild.id);
+              const channels = await fetchGuildChannels(guild.id);
+              const roles = await fetchGuildRoles(guild.id);
+              channelsCount = channels.length;
+              rolesCount = roles.length;
+            }
 
             return {
               id: guild.id,
@@ -93,18 +101,28 @@ const guildsRouter = router({
               owner: guild.owner,
               permissions: guild.permissions,
               memberCount: details?.approximate_member_count || 0,
-              channels: channels.length,
-              roles: roles.length,
+              channels: channelsCount,
+              roles: rolesCount,
+              botPresent: isBotPresent,
             };
           } catch (err) {
             console.error(`Error fetching details for guild ${guild.id}:`, err);
-            return null;
+            return {
+              id: guild.id,
+              name: guild.name,
+              icon: guild.icon,
+              owner: guild.owner,
+              permissions: guild.permissions,
+              memberCount: 0,
+              channels: 0,
+              roles: 0,
+              botPresent: isBotPresent,
+            };
           }
         })
       );
 
-      // Filter out nulls (guilds where bot is not present or error occurred)
-      return results.filter((r): r is NonNullable<typeof r> => r !== null);
+      return results;
     } catch (error) {
       console.error("Error fetching guild data:", error);
       return [];
@@ -247,6 +265,16 @@ const settingsRouter = router({
     )
     .mutation(async ({ input }) => {
       const { guildId, ...rest } = input;
+      
+      // Bloqueio se o bot não estiver no servidor
+      const isBotPresent = await checkBotInGuild(guildId);
+      if (!isBotPresent) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "BOT_NOT_IN_GUILD",
+        });
+      }
+
       await upsertGuildSettings({ guildId, ...rest });
       return { success: true };
     }),
@@ -302,6 +330,15 @@ const autoModRouter = router({
     )
     .mutation(async ({ input }) => {
       const { guildId, ...rest } = input;
+
+      const isBotPresent = await checkBotInGuild(guildId);
+      if (!isBotPresent) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "BOT_NOT_IN_GUILD",
+        });
+      }
+
       await upsertAutoModSettings({ guildId, ...rest });
       return { success: true };
     }),
@@ -529,6 +566,14 @@ const commandsRouter = router({
       })
     )
     .mutation(async ({ input }) => {
+      const isBotPresent = await checkBotInGuild(input.guildId);
+      if (!isBotPresent) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "BOT_NOT_IN_GUILD",
+        });
+      }
+
       await upsertCommandSetting(input.guildId, input.commandName, {
         enabled: input.enabled,
         guildId: input.guildId,

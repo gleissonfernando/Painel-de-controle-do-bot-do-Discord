@@ -120,11 +120,38 @@ const EVENT_LABELS: Record<string, string> = {
 export default function DashboardPage({ guildId }: DashboardPageProps) {
   const { data: settings } = trpc.settings.get.useQuery({ guildId });
   const { data: logs } = trpc.logs.list.useQuery({ guildId, limit: 5 });
+  const { data: botStatus } = trpc.guilds.checkBotStatus.useQuery({ guildId });
 
   const guildName = settings?.guildName ?? "Your Server";
+  const isBotPresent = botStatus?.botInGuild ?? true;
+
+  const getBotInviteUrl = () => {
+    const clientId = "1492325134550302952";
+    const redirectUri = encodeURIComponent(`${window.location.origin}/api/discord/callback`);
+    return `https://discord.com/oauth2/authorize?client_id=${clientId}&permissions=8&response_type=code&redirect_uri=${redirectUri}&integration_type=0&scope=identify+bot&guild_id=${guildId}`;
+  };
 
   return (
     <div className="space-y-6">
+      {!isBotPresent && (
+        <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-amber-500/20 rounded-lg">
+              <Bot className="text-amber-500" size={20} />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-amber-500">Bot não detectado</h3>
+              <p className="text-xs text-amber-500/80">O bot precisa estar no servidor para que as configurações funcionem.</p>
+            </div>
+          </div>
+          <a href={getBotInviteUrl()} className="w-full md:w-auto">
+            <button className="w-full px-4 py-2 bg-amber-500 text-black text-xs font-bold rounded-lg hover:bg-amber-600 transition-colors">
+              Adicionar Bot Agora
+            </button>
+          </a>
+        </div>
+      )}
+
       {/* Page Header */}
       <div className="flex items-start justify-between">
         <div>
@@ -289,9 +316,9 @@ export default function DashboardPage({ guildId }: DashboardPageProps) {
             <div className="flex items-center justify-between py-2 border-b border-border">
               <span className="text-xs text-muted-foreground">Bot Status</span>
               <div className="flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                <span className="text-xs text-green-400 font-medium">
-                  Online
+                <div className={`w-2 h-2 rounded-full ${isBotPresent ? "bg-green-500 animate-pulse" : "bg-red-500"}`} />
+                <span className={`text-xs font-medium ${isBotPresent ? "text-green-400" : "text-red-400"}`}>
+                  {isBotPresent ? "Online" : "Offline / Not Added"}
                 </span>
               </div>
             </div>
