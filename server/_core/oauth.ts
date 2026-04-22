@@ -74,8 +74,14 @@ export function registerOAuthRoutes(app: Express) {
         };
       }
 
-      if (!userInfo.openId) {
-        res.status(400).json({ error: "openId missing from user info" });
+      if (!userInfo || !userInfo.openId) {
+        console.warn("[OAuth] User info missing, but check if bot was added.");
+        const guildId = getQueryParam(req, "guild_id") || (req.query.guild_id as string);
+        if (guildId) {
+          console.log(`[OAuth] Bot added to guild ${guildId}, redirecting to servers.`);
+          return res.redirect(302, "/servers");
+        }
+        res.status(400).json({ error: "Authentication failed: User information could not be retrieved and no bot was added." });
         return;
       }
 
@@ -103,6 +109,11 @@ export function registerOAuthRoutes(app: Express) {
       res.redirect(302, "/servers");
     } catch (error) {
       console.error("[OAuth] Callback failed", error);
+      // Se houver erro no login mas o bot foi adicionado, ainda redirecionamos para /servers
+      const guildId = getQueryParam(req, "guild_id") || (req.query.guild_id as string);
+      if (guildId) {
+        return res.redirect(302, "/servers");
+      }
       res.status(500).json({ error: "OAuth callback failed" });
     }
   });
