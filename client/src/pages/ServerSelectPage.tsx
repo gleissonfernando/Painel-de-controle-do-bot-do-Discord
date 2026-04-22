@@ -3,7 +3,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { trpc } from "@/lib/trpc";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { ChevronRight, Plus, LogOut } from "lucide-react";
+import { ChevronRight, Plus, LogOut, CheckCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 
@@ -13,14 +13,36 @@ export default function ServerSelectPage() {
   const { isAuthenticated, loading, logout, user } = useAuth();
   const { t } = useLanguage();
   const [, navigate] = useLocation();
+  const [botVerified, setBotVerified] = useState(false);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
-  const { data: guilds, isLoading: guildsLoading } = trpc.guilds.list.useQuery(
+  const { data: guilds, isLoading: guildsLoading, refetch: refetchGuilds } = trpc.guilds.list.useQuery(
     undefined,
     {
       enabled: isAuthenticated,
       retry: false,
     }
   );
+
+  // Check for bot_added query parameter and verify bot status
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const botAdded = params.get("bot_added");
+    const botVerifiedParam = params.get("bot_verified");
+
+    if (botAdded === "true") {
+      setShowSuccessMessage(true);
+      if (botVerifiedParam === "true") {
+        setBotVerified(true);
+      }
+      // Refetch guilds after bot is added
+      setTimeout(() => {
+        refetchGuilds();
+      }, 1500);
+      // Clean up URL
+      window.history.replaceState({}, document.title, "/servers");
+    }
+  }, [refetchGuilds]);
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -57,6 +79,23 @@ export default function ServerSelectPage() {
 
   return (
     <div className="min-h-screen bg-background flex">
+      {/* Success Message */}
+      {showSuccessMessage && (
+        <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-top">
+          <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4 flex items-center gap-3">
+            <CheckCircle size={20} className="text-green-500" />
+            <div>
+              <p className="text-sm font-semibold text-green-500">
+                {botVerified ? "Bot adicionado com sucesso!" : "Bot adicionado!"}
+              </p>
+              {botVerified && (
+                <p className="text-xs text-green-400">Seu acesso foi liberado automaticamente</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Sidebar */}
       <div className="w-80 border-r border-border bg-card/30 backdrop-blur-sm flex flex-col">
         {/* Header */}

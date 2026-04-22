@@ -1,5 +1,6 @@
 import type { Express, Request, Response } from "express";
 import { ENV } from "./env";
+import { checkBotInGuild } from "../discord";
 
 /**
  * Handles Discord OAuth2 callback when user adds bot to server
@@ -62,16 +63,41 @@ export function registerDiscordOAuthRoutes(app: Express) {
 
       const botInfo = await botResponse.json();
 
+      // Check if bot is now in the guild
+      let botInGuild = false;
+      if (guildId) {
+        botInGuild = await checkBotInGuild(guildId);
+        console.log(`[Discord OAuth] Bot in guild ${guildId}: ${botInGuild}`);
+      }
+
       // Redirect back to dashboard with success
       // The guild_id parameter tells us which server the bot was added to
       if (guildId) {
-        return res.redirect(302, `/dashboard/${guildId}?bot_added=true`);
+        const botStatus = botInGuild ? "true" : "false";
+        return res.redirect(302, `/dashboard/${guildId}?bot_added=true&bot_verified=${botStatus}`);
       }
 
       // If no guild_id, redirect to servers page
       return res.redirect(302, "/servers?bot_added=true");
     } catch (error) {
       console.error("[Discord OAuth] Callback error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // ─── Endpoint to check if bot is in a guild ────────────────────────────────────
+  app.get("/api/check-bot/:guildId", async (req: Request, res: Response) => {
+    const { guildId } = req.params;
+
+    if (!guildId) {
+      return res.status(400).json({ error: "Guild ID is required" });
+    }
+
+    try {
+      const botInGuild = await checkBotInGuild(guildId);
+      return res.json({ botInGuild, guildId });
+    } catch (error) {
+      console.error("[Check Bot] Error:", error);
       res.status(500).json({ error: "Internal server error" });
     }
   });

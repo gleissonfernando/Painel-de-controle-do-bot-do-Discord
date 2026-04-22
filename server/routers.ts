@@ -26,6 +26,7 @@ import {
   fetchGuildChannels,
   fetchGuildRoles,
   getMockGuilds,
+  checkBotInGuild,
 } from "./discord";
 
 // ─── Auth Router ──────────────────────────────────────────────────────────────
@@ -163,6 +164,18 @@ const guildsRouter = router({
       } catch (error) {
         console.error("Error fetching roles:", error);
         return [];
+      }
+    }),
+
+  checkBotStatus: protectedProcedure
+    .input(z.object({ guildId: z.string() }))
+    .query(async ({ input }) => {
+      try {
+        const botInGuild = await checkBotInGuild(input.guildId);
+        return { botInGuild, guildId: input.guildId };
+      } catch (error) {
+        console.error("Error checking bot status:", error);
+        return { botInGuild: false, guildId: input.guildId };
       }
     }),
 });

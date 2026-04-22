@@ -105,6 +105,25 @@ function getMockGuildDetails(guildId: string) {
 
 // ─── Mock guilds for demo mode ────────────────────────────────────────────────
 
+export async function checkBotInGuild(guildId: string) {
+  if (!BOT_TOKEN) return true; // Return true in demo mode
+  try {
+    const res = await axios.get(
+      `${DISCORD_API}/guilds/${guildId}/members/me`,
+      {
+        headers: { Authorization: `Bot ${BOT_TOKEN}` },
+      }
+    );
+    return res.status === 200; // Bot is in the guild
+  } catch (error: any) {
+    if (error.response?.status === 404) {
+      return false; // Bot is not in the guild
+    }
+    console.error("Error checking bot in guild:", error);
+    return false;
+  }
+}
+
 export function getMockGuilds() {
   return [
     {
