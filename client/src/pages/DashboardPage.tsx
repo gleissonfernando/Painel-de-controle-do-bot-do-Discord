@@ -132,15 +132,9 @@ export default function DashboardPage({ guildId }: DashboardPageProps) {
     return `https://discord.com/oauth2/authorize?client_id=${clientId}&permissions=8&response_type=code&redirect_uri=${redirectUri}&integration_type=0&scope=identify+bot&guild_id=${guildId}`;
   };
 
-  // Redirecionamento automático a cada 10 segundos se o bot não estiver no servidor
+  // Redirecionamento automático desativado para permitir navegação mesmo sem o bot ou banco de dados
   useEffect(() => {
-    if (botStatus && !botStatus.botInGuild) {
-      const interval = setInterval(() => {
-        console.log("Bot não detectado. Redirecionando para convite em 10 segundos...");
-        window.location.href = getBotInviteUrl();
-      }, 10000);
-      return () => clearInterval(interval);
-    }
+    console.log("Verificação de bot ativa, mas redirecionamento automático desativado por solicitação do usuário.");
   }, [botStatus, guildId]);
 
   return (
