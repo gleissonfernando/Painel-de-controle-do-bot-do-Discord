@@ -11,11 +11,14 @@ function getQueryParam(req: Request, key: string): string | undefined {
 
 export function registerOAuthRoutes(app: Express) {
   app.get("/api/oauth/callback", async (req: Request, res: Response) => {
-    const code = getQueryParam(req, "code");
-    const state = getQueryParam(req, "state");
+    const code = getQueryParam(req, "code") || (req.query.code as string);
+    const state = getQueryParam(req, "state") || (req.query.state as string);
+
+    console.log(`[OAuth] Callback received. Code: ${code ? "present" : "missing"}, State: ${state ? "present" : "missing"}`);
 
     if (!code) {
-      res.status(400).json({ error: "code is required" });
+      console.error("[OAuth] Missing code in query parameters:", req.query);
+      res.status(400).json({ error: "Authentication code is missing from Discord redirect." });
       return;
     }
 
@@ -25,11 +28,14 @@ export function registerOAuthRoutes(app: Express) {
 
       // Tenta usar o SDK (Portal Externo) se o state estiver presente
       try {
-        if (!state) throw new Error("State missing, falling back to direct Discord exchange");
+        if (!state) {
+          console.log("[OAuth] No state provided, skipping SDK exchange and going direct to Discord.");
+          throw new Error("State missing");
+        }
         tokenResponse = await sdk.exchangeCodeForToken(code, state);
         userInfo = await sdk.getUserInfo(tokenResponse.accessToken);
       } catch (sdkError) {
-        console.warn("[OAuth] SDK exchange failed, trying direct Discord exchange:", sdkError);
+        console.warn("[OAuth] Using direct Discord exchange (SDK fallback/no state).");
         
         // FALLBACK: Troca de código direta com o Discord
         const discordResponse = await fetch("https://discord.com/api/v10/oauth2/token", {
