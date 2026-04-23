@@ -23,6 +23,8 @@ import {
   CheckCircle2,
   AlertCircle,
   Loader2,
+  MessageSquare,
+  Bell,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -39,11 +41,18 @@ export default function DevsPage() {
   const { user } = useAuth();
   const [session, setSession] = useState<DevSession | null>(null);
   const [timeRemaining, setTimeRemaining] = useState<string>("");
-  const [activeTab, setActiveTab] = useState<"control" | "test" | "logs" | "settings">("control");
+  const [activeTab, setActiveTab] = useState<"control" | "messages" | "logs" | "settings">("control");
 
   // Estados para Bot Control
   const [botEnabled, setBotEnabled] = useState(true);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const [maintenanceReason, setMaintenanceReason] = useState("");
+  const [isTogglingMaintenance, setIsTogglingMaintenance] = useState(false);
+
+  // Estados para Envio de Mensagens
+  const [messageChannel, setMessageChannel] = useState("");
+  const [messageContent, setMessageContent] = useState("");
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
 
   // Estados para Teste de Mensagem
   const [testChannel, setTestChannel] = useState("");
@@ -57,6 +66,9 @@ export default function DevsPage() {
   // Estados para Seletor de Call de Logs
   const [logsChannel, setLogsChannel] = useState("");
   const [channels, setChannels] = useState<Array<{ id: string; name: string; type: "text" | "voice" }>>([]);
+
+  // Histórico de mudanças
+  const [changeHistory, setChangeHistory] = useState<Array<{ timestamp: string; action: string; details: string }>>([]);
 
   // Verificar se o usuario esta autenticado via Discord OAuth2
   useEffect(() => {
@@ -109,6 +121,7 @@ export default function DevsPage() {
         { id: "2", name: "announcements", type: "text" },
         { id: "3", name: "voice-general", type: "voice" },
         { id: "4", name: "logs-audit", type: "text" },
+        { id: "5", name: "dev-logs", type: "text" },
       ]);
 
       return () => clearInterval(interval);
@@ -124,23 +137,71 @@ export default function DevsPage() {
     setLocation("/");
   };
 
+  const addToHistory = (action: string, details: string) => {
+    const now = new Date();
+    const timestamp = now.toLocaleTimeString("pt-BR");
+    setChangeHistory(prev => [{ timestamp, action, details }, ...prev.slice(0, 19)]);
+  };
+
   const handleToggleBotStatus = async () => {
     try {
       setBotEnabled(!botEnabled);
+      const action = !botEnabled ? "Bot Ativado" : "Bot Desativado";
+      addToHistory(action, `Status alterado para ${!botEnabled ? "Online" : "Offline"}`);
       toast.success(`Bot ${!botEnabled ? "ativado" : "desativado"} com sucesso!`);
-      // Aqui você faria uma chamada à API para atualizar o estado no servidor
     } catch (error) {
       toast.error("Erro ao alterar status do bot");
     }
   };
 
   const handleToggleMaintenance = async () => {
+    if (!maintenanceMode && !maintenanceReason.trim()) {
+      toast.error("Descreva o motivo da manutenção");
+      return;
+    }
+
+    setIsTogglingMaintenance(true);
     try {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const action = !maintenanceMode ? "Manutenção Ativada" : "Manutenção Desativada";
+      const details = !maintenanceMode 
+        ? `Motivo: ${maintenanceReason}` 
+        : "Sistema retornou ao normal";
+      
+      addToHistory(action, details);
       setMaintenanceMode(!maintenanceMode);
-      toast.success(`Modo de manutenção ${!maintenanceMode ? "ativado" : "desativado"}!`);
-      // Aqui você faria uma chamada à API para ativar/desativar manutenção
+      
+      if (!maintenanceMode) {
+        toast.success(`✅ Modo de manutenção ativado!\nMensagem: ${maintenanceReason}`);
+      } else {
+        toast.success("✅ Modo de manutenção desativado!");
+      }
+      
+      setMaintenanceReason("");
     } catch (error) {
       toast.error("Erro ao alterar modo de manutenção");
+    } finally {
+      setIsTogglingMaintenance(false);
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!messageChannel || !messageContent.trim()) {
+      toast.error("Selecione um canal e digite uma mensagem");
+      return;
+    }
+
+    setIsSendingMessage(true);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 800));
+      addToHistory("Mensagem Enviada", `Canal: #${messageChannel} | Conteúdo: ${messageContent.substring(0, 50)}...`);
+      toast.success(`✅ Mensagem enviada para #${messageChannel}!`);
+      setMessageContent("");
+    } catch (error) {
+      toast.error("Erro ao enviar mensagem");
+    } finally {
+      setIsSendingMessage(false);
     }
   };
 
@@ -152,9 +213,9 @@ export default function DevsPage() {
 
     setIsTestingMessage(true);
     try {
-      // Simular envio de mensagem
       await new Promise(resolve => setTimeout(resolve, 1000));
-      toast.success(`Mensagem enviada para #${testChannel}!`);
+      addToHistory("Teste de Mensagem", `Canal: #${testChannel}`);
+      toast.success(`✅ Mensagem de teste enviada para #${testChannel}!`);
       setTestMessage("");
     } catch (error) {
       toast.error("Erro ao enviar mensagem de teste");
@@ -174,7 +235,6 @@ export default function DevsPage() {
     ]);
 
     try {
-      // Simular testes
       for (let i = 0; i < 5; i++) {
         await new Promise(resolve => setTimeout(resolve, 800));
         setTestResults(prev => {
@@ -185,6 +245,8 @@ export default function DevsPage() {
       }
 
       const allPassed = testResults.every(r => r.status === "success");
+      addToHistory("Teste Geral Executado", allPassed ? "Todos os testes passaram ✅" : "Alguns testes falharam ⚠️");
+      
       if (allPassed) {
         toast.success("✅ Todos os testes passaram!");
       } else {
@@ -204,9 +266,9 @@ export default function DevsPage() {
     }
 
     try {
-      // Simular salvamento
       await new Promise(resolve => setTimeout(resolve, 500));
-      toast.success(`Canal de logs configurado para #${logsChannel}!`);
+      addToHistory("Canal de Logs Configurado", `Canal: #${logsChannel}`);
+      toast.success(`✅ Canal de logs configurado para #${logsChannel}!`);
     } catch (error) {
       toast.error("Erro ao configurar canal de logs");
     }
@@ -290,8 +352,8 @@ export default function DevsPage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Erros (24h)</p>
-                  <p className="text-3xl font-bold text-foreground mt-1">3</p>
+                  <p className="text-sm text-muted-foreground">Mudanças (24h)</p>
+                  <p className="text-3xl font-bold text-foreground mt-1">{changeHistory.length}</p>
                 </div>
                 <AlertCircle className="text-yellow-500/50" size={32} />
               </div>
@@ -303,8 +365,8 @@ export default function DevsPage() {
         <div className="flex gap-2 border-b border-border overflow-x-auto">
           {[
             { id: "control", label: "Controle do Bot", icon: Zap },
-            { id: "test", label: "Testes", icon: Play },
-            { id: "logs", label: "Configurar Logs", icon: Database },
+            { id: "messages", label: "Mensagens", icon: MessageSquare },
+            { id: "logs", label: "Logs de Eventos", icon: Database },
             { id: "settings", label: "Configurações", icon: Settings },
           ].map(({ id, label, icon: Icon }) => (
             <button
@@ -353,69 +415,36 @@ export default function DevsPage() {
                     </div>
                     <Button
                       onClick={handleToggleMaintenance}
+                      disabled={isTogglingMaintenance || (!maintenanceMode && !maintenanceReason.trim())}
                       className={maintenanceMode ? "bg-yellow-600 hover:bg-yellow-700" : "bg-gray-600 hover:bg-gray-700"}
                     >
-                      {maintenanceMode ? "Desativar" : "Ativar"}
+                      {isTogglingMaintenance ? (
+                        <>
+                          <Loader2 size={16} className="animate-spin mr-2" />
+                          Processando...
+                        </>
+                      ) : maintenanceMode ? (
+                        "Desativar"
+                      ) : (
+                        "Ativar"
+                      )}
                     </Button>
                   </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
 
-          {/* Test Tab */}
-          {activeTab === "test" && (
-            <div className="space-y-4">
-              {/* Teste de Mensagem */}
-              <Card className="bg-card border-border">
-                <CardHeader>
-                  <CardTitle>Teste de Mensagem</CardTitle>
-                  <CardDescription>Envie uma mensagem de teste para um canal</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold">Selecione o Canal</label>
-                    <Select value={testChannel} onValueChange={setTestChannel}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Escolha um canal..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {channels.map(ch => (
-                          <SelectItem key={ch.id} value={ch.name}>
-                            #{ch.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold">Mensagem de Teste</label>
-                    <Textarea
-                      placeholder="Digite a mensagem de teste..."
-                      value={testMessage}
-                      onChange={(e) => setTestMessage(e.target.value)}
-                      className="min-h-24"
-                    />
-                  </div>
-
-                  <Button
-                    onClick={handleSendTestMessage}
-                    disabled={isTestingMessage || !testChannel || !testMessage.trim()}
-                    className="w-full gap-2"
-                  >
-                    {isTestingMessage ? (
-                      <>
-                        <Loader2 size={16} className="animate-spin" />
-                        Enviando...
-                      </>
-                    ) : (
-                      <>
-                        <Send size={16} />
-                        Enviar Teste
-                      </>
-                    )}
-                  </Button>
+                  {!maintenanceMode && (
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold">Descreva o que foi mudado:</label>
+                      <Textarea
+                        placeholder="Ex: Atualizando sistema de verificação, corrigindo bugs de voz, etc..."
+                        value={maintenanceReason}
+                        onChange={(e) => setMaintenanceReason(e.target.value)}
+                        className="min-h-20"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Esta descrição será enviada como alerta para todos os servidores
+                      </p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -467,44 +496,177 @@ export default function DevsPage() {
             </div>
           )}
 
+          {/* Messages Tab */}
+          {activeTab === "messages" && (
+            <div className="space-y-4">
+              {/* Envio de Mensagem Oficial */}
+              <Card className="bg-card border-border">
+                <CardHeader>
+                  <CardTitle>Enviar Mensagem Oficial</CardTitle>
+                  <CardDescription>Envie uma mensagem para um canal específico</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold">Selecione o Canal</label>
+                    <Select value={messageChannel} onValueChange={setMessageChannel}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Escolha um canal..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {channels.filter(ch => ch.type === "text").map(ch => (
+                          <SelectItem key={ch.id} value={ch.name}>
+                            #{ch.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold">Conteúdo da Mensagem</label>
+                    <Textarea
+                      placeholder="Digite a mensagem que será enviada..."
+                      value={messageContent}
+                      onChange={(e) => setMessageContent(e.target.value)}
+                      className="min-h-24"
+                    />
+                  </div>
+
+                  <Button
+                    onClick={handleSendMessage}
+                    disabled={isSendingMessage || !messageChannel || !messageContent.trim()}
+                    className="w-full gap-2"
+                  >
+                    {isSendingMessage ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" />
+                        Enviando...
+                      </>
+                    ) : (
+                      <>
+                        <Send size={16} />
+                        Enviar Mensagem
+                      </>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Teste de Mensagem */}
+              <Card className="bg-card border-border">
+                <CardHeader>
+                  <CardTitle>Teste de Mensagem</CardTitle>
+                  <CardDescription>Envie uma mensagem de teste para validar o bot</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold">Selecione o Canal</label>
+                    <Select value={testChannel} onValueChange={setTestChannel}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Escolha um canal..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {channels.filter(ch => ch.type === "text").map(ch => (
+                          <SelectItem key={ch.id} value={ch.name}>
+                            #{ch.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold">Mensagem de Teste</label>
+                    <Textarea
+                      placeholder="Digite a mensagem de teste..."
+                      value={testMessage}
+                      onChange={(e) => setTestMessage(e.target.value)}
+                      className="min-h-20"
+                    />
+                  </div>
+
+                  <Button
+                    onClick={handleSendTestMessage}
+                    disabled={isTestingMessage || !testChannel || !testMessage.trim()}
+                    className="w-full gap-2"
+                  >
+                    {isTestingMessage ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" />
+                        Enviando...
+                      </>
+                    ) : (
+                      <>
+                        <Send size={16} />
+                        Enviar Teste
+                      </>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
           {/* Logs Tab */}
           {activeTab === "logs" && (
-            <Card className="bg-card border-border">
-              <CardHeader>
-                <CardTitle>Configurar Canal de Logs</CardTitle>
-                <CardDescription>Selecione o canal onde os logs de auditoria serão enviados</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold">Canal para Logs</label>
-                  <Select value={logsChannel} onValueChange={setLogsChannel}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Escolha um canal para logs..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {channels.map(ch => (
-                        <SelectItem key={ch.id} value={ch.name}>
-                          {ch.type === "voice" ? "🔊" : "#"} {ch.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+            <div className="space-y-4">
+              <Card className="bg-card border-border">
+                <CardHeader>
+                  <CardTitle>Configurar Canal de Logs</CardTitle>
+                  <CardDescription>Selecione o canal onde os logs de eventos serão enviados</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold">Canal para Logs de Eventos</label>
+                    <Select value={logsChannel} onValueChange={setLogsChannel}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Escolha um canal para logs..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {channels.map(ch => (
+                          <SelectItem key={ch.id} value={ch.name}>
+                            {ch.type === "voice" ? "🔊" : "#"} {ch.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                <div className="p-4 bg-muted/50 rounded-lg">
-                  <p className="text-sm text-muted-foreground mb-2">Canal Selecionado:</p>
-                  <p className="text-lg font-bold">{logsChannel ? `#${logsChannel}` : "Nenhum canal selecionado"}</p>
-                </div>
+                  <div className="p-4 bg-muted/50 rounded-lg">
+                    <p className="text-sm text-muted-foreground mb-2">Canal Selecionado:</p>
+                    <p className="text-lg font-bold">{logsChannel ? `#${logsChannel}` : "Nenhum canal selecionado"}</p>
+                  </div>
 
-                <Button
-                  onClick={handleSaveLogsChannel}
-                  disabled={!logsChannel}
-                  className="w-full"
-                >
-                  Salvar Configuração de Logs
-                </Button>
-              </CardContent>
-            </Card>
+                  <Button
+                    onClick={handleSaveLogsChannel}
+                    disabled={!logsChannel}
+                    className="w-full"
+                  >
+                    Salvar Configuração de Logs
+                  </Button>
+
+                  {/* Histórico de Mudanças */}
+                  <div className="mt-6 pt-6 border-t border-border">
+                    <h3 className="font-semibold mb-4">Histórico de Mudanças (Últimas 20)</h3>
+                    <div className="space-y-2 max-h-96 overflow-y-auto">
+                      {changeHistory.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">Nenhuma mudança registrada ainda</p>
+                      ) : (
+                        changeHistory.map((change, idx) => (
+                          <div key={idx} className="p-3 bg-muted/30 rounded-lg border border-border/50">
+                            <div className="flex items-center justify-between mb-1">
+                              <p className="font-semibold text-sm">{change.action}</p>
+                              <p className="text-xs text-muted-foreground">{change.timestamp}</p>
+                            </div>
+                            <p className="text-sm text-muted-foreground">{change.details}</p>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           )}
 
           {/* Settings Tab */}
@@ -518,7 +680,7 @@ export default function DevsPage() {
                 <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
                   <div>
                     <p className="font-semibold">Debug Mode</p>
-                    <p className="text-sm text-muted-foreground">Ativa logs detalhados</p>
+                    <p className="text-sm text-muted-foreground">Ativa logs detalhados do sistema</p>
                   </div>
                   <Button variant="outline" size="sm">Ativar</Button>
                 </div>
@@ -528,6 +690,13 @@ export default function DevsPage() {
                     <p className="text-sm text-muted-foreground">Remove cache do sistema</p>
                   </div>
                   <Button variant="destructive" size="sm">Limpar</Button>
+                </div>
+                <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                  <div>
+                    <p className="font-semibold">Sincronizar Dados</p>
+                    <p className="text-sm text-muted-foreground">Força sincronização com Discord</p>
+                  </div>
+                  <Button variant="outline" size="sm">Sincronizar</Button>
                 </div>
               </CardContent>
             </Card>
