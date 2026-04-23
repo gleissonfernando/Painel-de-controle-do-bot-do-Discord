@@ -1,11 +1,14 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 
 type Theme = "light" | "dark";
+export type ColorScheme = "red" | "orange" | "default";
 
 interface ThemeContextType {
   theme: Theme;
+  colorScheme: ColorScheme;
   toggleTheme?: () => void;
   switchable: boolean;
+  setColorScheme: (scheme: ColorScheme) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -14,6 +17,7 @@ interface ThemeProviderProps {
   children: React.ReactNode;
   defaultTheme?: Theme;
   switchable?: boolean;
+  defaultColorScheme?: ColorScheme;
 }
 
 export function ThemeProvider({
@@ -29,6 +33,11 @@ export function ThemeProvider({
     return defaultTheme;
   });
 
+  const [colorScheme, setColorSchemeState] = useState<ColorScheme>(() => {
+    const stored = localStorage.getItem("colorScheme");
+    return (stored as ColorScheme) || "red";
+  });
+
   useEffect(() => {
     const root = document.documentElement;
     if (theme === "dark") {
@@ -37,10 +46,15 @@ export function ThemeProvider({
       root.classList.remove("dark");
     }
 
+    // Aplicar esquema de cores
+    root.classList.remove("scheme-red", "scheme-orange", "scheme-default");
+    root.classList.add(`scheme-${colorScheme}`);
+
     if (switchable) {
       localStorage.setItem("theme", theme);
+      localStorage.setItem("colorScheme", colorScheme);
     }
-  }, [theme, switchable]);
+  }, [theme, colorScheme, switchable]);
 
   const toggleTheme = switchable
     ? () => {
@@ -48,8 +62,12 @@ export function ThemeProvider({
       }
     : undefined;
 
+  const setColorScheme = (scheme: ColorScheme) => {
+    setColorSchemeState(scheme);
+  };
+
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, switchable }}>
+    <ThemeContext.Provider value={{ theme, colorScheme, toggleTheme, switchable, setColorScheme }}>
       {children}
     </ThemeContext.Provider>
   );
