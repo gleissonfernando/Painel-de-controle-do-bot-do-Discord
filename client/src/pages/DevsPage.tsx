@@ -392,16 +392,16 @@ export default function DevsPage() {
       .slice(0, 2);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6">
+    <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-bold text-white flex items-center gap-3">
-              <Zap className="text-yellow-400" size={32} />
+            <h1 className="flex items-center gap-3 text-2xl font-bold text-foreground">
+              <Zap className="text-primary" size={32} />
               Painel de Desenvolvimento
             </h1>
-            <p className="text-slate-400 mt-2">Controle total do bot Magnatas</p>
+            <p className="text-muted-foreground mt-2">Controle total do bot Magnatas</p>
           </div>
           <Button onClick={handleLogout} variant="destructive" className="gap-2">
             <LogOut size={16} />
@@ -411,16 +411,16 @@ export default function DevsPage() {
 
         {/* Session Info */}
         {session && (
-          <Card className="bg-slate-800 border-slate-700">
+          <Card className="bg-secondary border-muted">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Clock size={16} className="text-yellow-400" />
-                  <span className="text-sm text-slate-300">
-                    Sessão expira em: <strong className="text-white">{timeRemaining}</strong>
+                  <Clock size={16} className="text-primary" />
+                  <span className="text-sm text-muted-foreground">
+                    Sessão expira em: <strong className="text-foreground">{timeRemaining}</strong>
                   </span>
                 </div>
-                <span className="text-xs text-slate-400">
+                <span className="text-xs text-muted-foreground">
                   Usuário: {session.discordUsername}
                 </span>
               </div>
@@ -429,16 +429,16 @@ export default function DevsPage() {
         )}
 
         {/* Server Selector */}
-        <Card className="bg-slate-800 border-slate-700">
+        <Card className="bg-secondary border-muted">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-white">
+            <CardTitle className="flex items-center gap-2 text-foreground">
               <Server size={20} />
               Servidor Ativo
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {activeGuild && (
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-700/50 border border-slate-600">
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-muted">
                 <Avatar className="w-10 h-10">
                   {activeGuild.icon ? (
                     <AvatarImage
@@ -451,24 +451,24 @@ export default function DevsPage() {
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
-                  <p className="font-semibold text-white">{activeGuild.name}</p>
-                  <p className="text-xs text-slate-400">Configurando: {activeGuild.name}</p>
+                  <p className="font-semibold text-foreground">{activeGuild.name}</p>
+                  <p className="text-xs text-muted-foreground">Configurando: {activeGuild.name}</p>
                 </div>
               </div>
             )}
 
             {guilds.length > 1 && (
               <div>
-                <label className="text-sm font-medium text-slate-300 mb-2 block">
+                <label className="text-sm font-medium text-muted-foreground mb-2 block">
                   Trocar Servidor
                 </label>
                 <Select value={activeGuildId || ""} onValueChange={setActiveGuild}>
-                  <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                  <SelectTrigger className="bg-muted border-muted text-foreground">
                     <SelectValue placeholder="Selecione um servidor..." />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-700 border-slate-600">
+                  <SelectContent className="bg-muted border-muted">
                     {guilds.map(guild => (
-                      <SelectItem key={guild.id} value={guild.id} className="text-white">
+                      <SelectItem key={guild.id} value={guild.id} className="text-foreground">
                         {guild.name}
                       </SelectItem>
                     ))}
@@ -480,7 +480,7 @@ export default function DevsPage() {
         </Card>
 
         {/* Tabs */}
-        <div className="flex gap-2 border-b border-slate-700">
+        <div className="flex gap-2 border-b border-muted">
           {[
             { id: "control", label: "Controle", icon: Power },
             { id: "local", label: "Mensagem Local", icon: Send },
@@ -493,8 +493,8 @@ export default function DevsPage() {
               onClick={() => setActiveTab(tab.id as any)}
               className={`px-4 py-2 font-medium text-sm flex items-center gap-2 border-b-2 transition-colors ${
                 activeTab === tab.id
-                  ? "border-yellow-400 text-yellow-400"
-                  : "border-transparent text-slate-400 hover:text-slate-300"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
               <tab.icon size={16} />
@@ -509,16 +509,16 @@ export default function DevsPage() {
           {activeTab === "control" && (
             <div className="space-y-6">
               {/* Bot Status */}
-              <Card className={`bg-slate-800 border-2 ${botEnabled ? "border-green-500/50" : "border-red-500/50"}`}>
+              <Card className={`bg-secondary border-2 ${botEnabled ? "border-green-500/50" : "border-red-500/50"}`}>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-white">
+                  <CardTitle className="flex items-center gap-2 text-foreground">
                     <Power size={20} className={botEnabled ? "text-green-400" : "text-red-400"} />
                     Estado do Bot
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-slate-300">
+                    <span className="text-sm font-medium text-muted-foreground">
                       {botEnabled ? "✅ Bot Ativo" : "❌ Bot Desativado"}
                     </span>
                     <Button
@@ -529,23 +529,23 @@ export default function DevsPage() {
                       {botEnabled ? "Desativar" : "Ativar"}
                     </Button>
                   </div>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-muted-foreground">
                     Desative o bot para parar todas as suas funcionalidades temporariamente.
                   </p>
                 </CardContent>
               </Card>
 
               {/* Maintenance Mode */}
-              <Card className={`bg-slate-800 border-2 ${maintenanceMode ? "border-yellow-500/50" : "border-slate-700"}`}>
+              <Card className={`bg-secondary border-2 ${maintenanceMode ? "border-primary/50" : "border-muted"}`}>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-white">
-                    <AlertTriangle size={20} className={maintenanceMode ? "text-yellow-400" : "text-slate-400"} />
+                  <CardTitle className="flex items-center gap-2 text-foreground">
+                    <AlertTriangle size={20} className={maintenanceMode ? "text-primary" : "text-muted-foreground"} />
                     Modo de Manutenção
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-slate-300">
+                    <span className="text-sm font-medium text-muted-foreground">
                       {maintenanceMode ? "🔧 Manutenção Ativa" : "✅ Operacional"}
                     </span>
                     <Button
@@ -558,40 +558,40 @@ export default function DevsPage() {
                     </Button>
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-slate-400 mb-2 block">
+                    <label className="text-xs font-medium text-muted-foreground mb-2 block">
                       Descrição da Manutenção
                     </label>
                     <Textarea
                       value={maintenanceReason}
                       onChange={(e) => setMaintenanceReason(e.target.value)}
                       placeholder="Ex: Atualizações de segurança em andamento..."
-                      className="bg-slate-700 border-slate-600 text-white min-h-[80px]"
+                      className="bg-muted border-muted text-foreground min-h-[80px]"
                     />
                   </div>
                 </CardContent>
               </Card>
 
               {/* Test Message */}
-              <Card className="bg-slate-800 border-slate-700">
+              <Card className="bg-secondary border-muted">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-white">
+                  <CardTitle className="flex items-center gap-2 text-foreground">
                     <Send size={20} />
                     Enviar Mensagem de Teste
                   </CardTitle>
-                  <CardDescription className="text-slate-400">
+                  <CardDescription className="text-muted-foreground">
                     Selecione um canal e envie uma mensagem para testar o bot
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-300">Selecione um Canal</label>
+                    <label className="text-sm font-medium text-muted-foreground">Selecione um Canal</label>
                     <Select value={testChannel} onValueChange={setTestChannel}>
-                      <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                      <SelectTrigger className="bg-muted border-muted text-foreground">
                         <SelectValue placeholder="Escolha um canal..." />
                       </SelectTrigger>
-                      <SelectContent className="bg-slate-700 border-slate-600">
+                      <SelectContent className="bg-muted border-muted">
                         {channels.map(channel => (
-                          <SelectItem key={channel.id} value={channel.id} className="text-white">
+                          <SelectItem key={channel.id} value={channel.id} className="text-foreground">
                             #{channel.name}
                           </SelectItem>
                         ))}
@@ -600,18 +600,18 @@ export default function DevsPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-300">Mensagem</label>
+                    <label className="text-sm font-medium text-muted-foreground">Mensagem</label>
                     <Textarea
                       value={testMessage}
                       onChange={(e) => setTestMessage(e.target.value)}
                       placeholder="Digite a mensagem de teste..."
-                      className="bg-slate-700 border-slate-600 text-white min-h-[100px]"
+                      className="bg-muted border-muted text-foreground min-h-[100px]"
                     />
                     <div className="flex justify-between items-center">
-                      <p className="text-xs text-slate-400">
+                      <p className="text-xs text-muted-foreground">
                         Máximo de 2000 caracteres
                       </p>
-                      <p className="text-xs text-slate-400">
+                      <p className="text-xs text-muted-foreground">
                         {testMessage.length}/2000
                       </p>
                     </div>
@@ -643,38 +643,38 @@ export default function DevsPage() {
           {activeTab === "local" && (
             <div className="space-y-6">
               {/* Server Info */}
-              <Card className="bg-slate-800 border-slate-700">
+              <Card className="bg-secondary border-muted">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-white">
+                  <CardTitle className="flex items-center gap-2 text-foreground">
                     <Send size={20} />
                     Mensagem Local
                   </CardTitle>
-                  <CardDescription className="text-slate-400">
+                  <CardDescription className="text-muted-foreground">
                     Envie uma mensagem para um canal específco do servidor ativo
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {/* Server Display */}
-                  <div className="p-3 rounded bg-slate-700/50 border border-slate-600">
-                    <p className="text-xs text-slate-400 mb-1">Enviando para:</p>
-                    <p className="text-lg font-semibold text-white">
+                  <div className="p-3 rounded bg-muted/50 border border-muted">
+                    <p className="text-xs text-muted-foreground mb-1">Enviando para:</p>
+                    <p className="text-lg font-semibold text-foreground">
                       {activeGuild?.name || "Nenhum servidor selecionado"}
                     </p>
                   </div>
 
                   {/* Channel Selection */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-300">Selecione um Canal</label>
+                    <label className="text-sm font-medium text-muted-foreground">Selecione um Canal</label>
                     <Select value={localChannel} onValueChange={(value) => {
                       setLocalChannel(value);
                       setLocalMessageError("");
                     }}>
-                      <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                      <SelectTrigger className="bg-muted border-muted text-foreground">
                         <SelectValue placeholder="Escolha um canal de texto..." />
                       </SelectTrigger>
-                      <SelectContent className="bg-slate-700 border-slate-600">
+                      <SelectContent className="bg-muted border-muted">
                         {channels.filter(ch => ch.type === "text").map(channel => (
-                          <SelectItem key={channel.id} value={channel.id} className="text-white">
+                          <SelectItem key={channel.id} value={channel.id} className="text-foreground">
                             #{channel.name}
                           </SelectItem>
                         ))}
@@ -687,7 +687,7 @@ export default function DevsPage() {
 
                   {/* Message Input */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-300">Mensagem</label>
+                    <label className="text-sm font-medium text-muted-foreground">Mensagem</label>
                     <Textarea
                       value={localMessage}
                       onChange={(e) => {
@@ -695,14 +695,14 @@ export default function DevsPage() {
                         setLocalMessageError("");
                       }}
                       placeholder="Digite a mensagem para enviar neste canal..."
-                      className="bg-slate-700 border-slate-600 text-white min-h-[120px]"
+                      className="bg-muted border-muted text-foreground min-h-[120px]"
                     />
                     <div className="flex justify-between items-center">
-                      <p className="text-xs text-slate-400">
+                      <p className="text-xs text-muted-foreground">
                         Máximo de 2000 caracteres
                       </p>
                       <p className={`text-xs ${
-                        localMessage.length > 2000 ? "text-red-400" : "text-slate-400"
+                        localMessage.length > 2000 ? "text-red-400" : "text-muted-foreground"
                       }`}>
                         {localMessage.length}/2000
                       </p>
@@ -734,13 +734,13 @@ export default function DevsPage() {
 
           {/* Broadcast Tab */}
           {activeTab === "broadcast" && (
-            <Card className="bg-slate-800 border-slate-700">
+            <Card className="bg-secondary border-muted">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-white">
+                <CardTitle className="flex items-center gap-2 text-foreground">
                   <Globe size={20} />
                   Mensagem Global
                 </CardTitle>
-                <CardDescription className="text-slate-400">
+                <CardDescription className="text-muted-foreground">
                   Envie uma mensagem para todos os {guilds.length} servidor(es)
                 </CardDescription>
               </CardHeader>
@@ -756,18 +756,18 @@ export default function DevsPage() {
 
                 {/* Message Input */}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-300">Mensagem</label>
+                  <label className="text-sm font-medium text-muted-foreground">Mensagem</label>
                   <Textarea
                     value={globalMessage}
                     onChange={(e) => setGlobalMessage(e.target.value)}
                     placeholder="Digite a mensagem global (máximo 2000 caracteres)..."
-                    className="bg-slate-700 border-slate-600 text-white min-h-[120px]"
+                    className="bg-muted border-muted text-foreground min-h-[120px]"
                   />
                   <div className="flex justify-between items-center">
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs text-muted-foreground">
                       Será enviada para todos os servidores
                     </p>
-                    <p className={`text-xs ${globalMessage.length > 2000 ? "text-red-400" : "text-slate-400"}`}>
+                    <p className={`text-xs ${globalMessage.length > 2000 ? "text-red-400" : "text-muted-foreground"}`}>
                       {globalMessage.length}/2000
                     </p>
                   </div>
@@ -796,8 +796,8 @@ export default function DevsPage() {
                 {isSendingGlobal && (
                   <div className="space-y-2">
                     <div className="flex justify-between items-center text-sm">
-                      <span className="text-slate-300">Progresso</span>
-                      <span className="text-slate-400">{broadcastProgress}%</span>
+                      <span className="text-muted-foreground">Progresso</span>
+                      <span className="text-muted-foreground">{broadcastProgress}%</span>
                     </div>
                     <Progress value={broadcastProgress} className="h-2" />
                   </div>
@@ -806,7 +806,7 @@ export default function DevsPage() {
                 {/* Results */}
                 {broadcastResults.length > 0 && (
                   <div className="space-y-2">
-                    <h4 className="font-medium text-white">Resultados:</h4>
+                    <h4 className="font-medium text-foreground">Resultados:</h4>
                     <div className="space-y-1 max-h-64 overflow-y-auto">
                       {broadcastResults.map(result => (
                         <div
@@ -837,21 +837,21 @@ export default function DevsPage() {
 
           {/* Logs Tab */}
           {activeTab === "logs" && (
-            <Card className="bg-slate-800 border-slate-700">
+            <Card className="bg-secondary border-muted">
               <CardHeader>
-                <CardTitle className="text-white">Histórico de Mudanças</CardTitle>
+                <CardTitle className="text-foreground">Histórico de Mudanças</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2 max-h-96 overflow-y-auto">
                   {changeHistory.length === 0 ? (
-                    <p className="text-slate-400 text-sm">Nenhuma mudança registrada</p>
+                    <p className="text-muted-foreground text-sm">Nenhuma mudança registrada</p>
                   ) : (
                     changeHistory.map((entry, idx) => (
-                      <div key={idx} className="flex gap-3 p-2 rounded bg-slate-700/50 border border-slate-600">
-                        <span className="text-xs text-slate-400 min-w-fit">{entry.timestamp}</span>
+                      <div key={idx} className="flex gap-3 p-2 rounded bg-muted/50 border border-muted">
+                        <span className="text-xs text-muted-foreground min-w-fit">{entry.timestamp}</span>
                         <div className="flex-1">
-                          <p className="text-sm font-medium text-white">{entry.action}</p>
-                          <p className="text-xs text-slate-400">{entry.details}</p>
+                          <p className="text-sm font-medium text-foreground">{entry.action}</p>
+                          <p className="text-xs text-muted-foreground">{entry.details}</p>
                         </div>
                       </div>
                     ))
@@ -863,14 +863,14 @@ export default function DevsPage() {
 
           {/* Settings Tab */}
           {activeTab === "settings" && (
-            <Card className="bg-slate-800 border-slate-700">
+            <Card className="bg-secondary border-muted">
               <CardHeader>
-                <CardTitle className="text-white">Configurações do Dev</CardTitle>
+                <CardTitle className="text-foreground">Configurações do Dev</CardTitle>
               </CardHeader>
               <CardContent>
-                <Alert className="bg-slate-700/50 border-slate-600">
+                <Alert className="bg-muted/50 border-muted">
                   <AlertCircle className="h-4 w-4" />
-                  <AlertDescription className="text-slate-300">
+                  <AlertDescription className="text-muted-foreground">
                     Configurações adicionais virão em breve.
                   </AlertDescription>
                 </Alert>

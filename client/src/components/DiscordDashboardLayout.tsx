@@ -248,9 +248,9 @@ export default function DiscordDashboardLayout({
   );
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
+    <div className="flex h-screen bg-background overflow-hidden" style={{ backgroundColor: 'var(--background)' }}>
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex w-60 flex-col bg-sidebar border-r border-sidebar-border flex-shrink-0">
+      <aside className="hidden lg:flex w-60 flex-col bg-sidebar border-r border-sidebar-border flex-shrink-0" style={{ backgroundColor: 'var(--secondary)' }}>
         <SidebarContent />
       </aside>
 
@@ -305,7 +305,7 @@ export default function DiscordDashboardLayout({
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6">{children}</main>
+        <main className="flex-1 overflow-y-auto p-4 lg:p-6 w-full" style={{ backgroundColor: 'var(--background)' }}>{children}</main>
       </div>
     </div>
   );
