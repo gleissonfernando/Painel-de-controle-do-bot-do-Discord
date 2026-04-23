@@ -13,22 +13,11 @@ export default function LoginPage() {
   const [, navigate] = useLocation();
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get("code");
-    
-    if (code && !isAuthenticated && !isProcessing) {
-      setIsProcessing(true);
-      // O backend já tem a rota /api/oauth/callback que processa o code
-      // Vamos redirecionar para ela para completar o login
-      const state = btoa(window.location.origin + "/api/oauth/callback");
-      window.location.href = `/api/oauth/callback?code=${code}&state=${state}`;
-      return;
-    }
-
+    // Se o usuário já estiver logado, manda direto para os servidores
     if (!loading && isAuthenticated) {
       navigate("/servers");
     }
-  }, [isAuthenticated, loading, navigate, isProcessing]);
+  }, [isAuthenticated, loading, navigate]);
 
   if (loading || isProcessing) {
     return (
