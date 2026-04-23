@@ -18,10 +18,10 @@ interface AutoModerationPageProps {
 }
 
 const PUNISHMENT_OPTIONS = [
-  { value: "warn", label: "Warn", color: "text-yellow-400" },
-  { value: "mute", label: "Mute", color: "text-orange-400" },
-  { value: "kick", label: "Kick", color: "text-red-400" },
-  { value: "ban", label: "Ban", color: "text-red-600" },
+  { value: "warn", label: "Aviso", color: "text-yellow-400" },
+  { value: "mute", label: "Silenciar", color: "text-orange-400" },
+  { value: "kick", label: "Expulsar", color: "text-red-400" },
+  { value: "ban", label: "Banir", color: "text-red-600" },
 ];
 
 export default function AutoModerationPage({
@@ -171,10 +171,10 @@ export default function AutoModerationPage({
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Shield size={22} className="text-primary" />
-            Auto Moderation
+            Auto Moderação
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Configure automatic moderation rules for this server
+            Configure as regras de moderação automática para este servidor
           </p>
         </div>
         <Button
@@ -183,14 +183,14 @@ export default function AutoModerationPage({
           className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
         >
           <Save size={14} />
-          {updateMutation.isPending ? "Saving..." : "Save"}
+          {updateMutation.isPending ? "Salvando..." : "Salvar"}
         </Button>
       </div>
 
       {/* Anti-Spam */}
       <RuleCard
         title="Anti-Spam"
-        desc="Detect and punish users sending too many messages quickly"
+        desc="Detecta e pune usuários que enviam muitas mensagens rapidamente"
         icon={<MessageSquare size={16} />}
         enabled={form.antiSpamEnabled}
         onToggle={v => setForm({ ...form, antiSpamEnabled: v })}
@@ -198,7 +198,7 @@ export default function AutoModerationPage({
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="block text-xs font-medium text-foreground mb-1">
-              Max Messages
+              Máximo de Mensagens
             </label>
             <input
               type="number"
@@ -213,7 +213,7 @@ export default function AutoModerationPage({
           </div>
           <div>
             <label className="block text-xs font-medium text-foreground mb-1">
-              Interval (seconds)
+              Intervalo (segundos)
             </label>
             <input
               type="number"
@@ -232,14 +232,14 @@ export default function AutoModerationPage({
       {/* Anti-Link */}
       <RuleCard
         title="Anti-Link"
-        desc="Block users from posting unauthorized links"
+        desc="Bloqueia usuários de postarem links não autorizados"
         icon={<Ban size={16} />}
         enabled={form.antiLinkEnabled}
         onToggle={v => setForm({ ...form, antiLinkEnabled: v })}
       >
         <div>
           <label className="block text-xs font-medium text-foreground mb-2">
-            Whitelisted Domains
+            Domínios Permitidos
           </label>
           <div className="flex flex-wrap gap-2 mb-2">
             {form.antiLinkWhitelist.map(link => (
@@ -306,8 +306,8 @@ export default function AutoModerationPage({
 
       {/* Word Filter */}
       <RuleCard
-        title="Word Filter"
-        desc="Automatically delete messages containing banned words"
+        title="Filtro de Palavras"
+        desc="Deleta automaticamente mensagens contendo palavras proibidas"
         icon={<AlertTriangle size={16} />}
         enabled={form.wordFilterEnabled}
         onToggle={v => setForm({ ...form, wordFilterEnabled: v })}

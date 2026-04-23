@@ -52,7 +52,7 @@ export default function DevActivationPage(props?: DevActivationPageProps) {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-background to-background/50 p-4">
+    <div className="flex items-center justify-center min-h-screen bg-[#050505] p-4">
       <Card className="w-full max-w-md border-primary/20 shadow-2xl">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">

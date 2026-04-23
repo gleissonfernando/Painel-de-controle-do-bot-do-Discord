@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 
-export type ThemeVariant = "dark-red" | "dark-orange" | "light-orange";
+export type ThemeVariant = "dark-red";
 
 interface ThemeConfig {
   variant: ThemeVariant;
@@ -16,33 +16,13 @@ interface ThemeConfig {
 const THEME_CONFIGS: Record<ThemeVariant, ThemeConfig> = {
   "dark-red": {
     variant: "dark-red",
-    primary: "#DC2626", // Vermelho
-    secondary: "#1F2937", // Cinza escuro
-    accent: "#EF4444", // Vermelho claro
-    background: "#111827", // Preto
-    foreground: "#F3F4F6", // Branco
-    muted: "#374151", // Cinza
-    mutedForeground: "#9CA3AF", // Cinza claro
-  },
-  "dark-orange": {
-    variant: "dark-orange",
-    primary: "#EA580C", // Laranja
-    secondary: "#1F2937", // Cinza escuro
-    accent: "#FB923C", // Laranja claro
-    background: "#111827", // Preto
-    foreground: "#F3F4F6", // Branco
-    muted: "#374151", // Cinza
-    mutedForeground: "#9CA3AF", // Cinza claro
-  },
-  "light-orange": {
-    variant: "light-orange",
-    primary: "#EA580C", // Laranja
-    secondary: "#F3F4F6", // Branco
-    accent: "#FB923C", // Laranja claro
-    background: "#FFFFFF", // Branco
-    foreground: "#111827", // Preto
-    muted: "#E5E7EB", // Cinza claro
-    mutedForeground: "#6B7280", // Cinza
+    primary: "#FF0000", // Vermelho Puro
+    secondary: "#0A0A0A", // Preto quase puro
+    accent: "#CC0000", // Vermelho Escuro
+    background: "#050505", // Preto Profundo
+    foreground: "#FFFFFF", // Branco Puro
+    muted: "#1A1A1A", // Cinza muito escuro
+    mutedForeground: "#A0A0A0", // Cinza
   },
 };
 
@@ -96,7 +76,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     root.style.setProperty("--muted-foreground", config.mutedForeground);
 
     // Atualizar classe do documento
-    root.classList.remove("dark-red", "dark-orange", "light-orange");
+    root.classList.remove("dark-red");
     root.classList.add(themeVariant);
   };
 

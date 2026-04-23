@@ -9,12 +9,12 @@ interface GeneralSettingsPageProps {
 }
 
 const LANGUAGES = [
-  { value: "en", label: "English" },
-  { value: "pt", label: "Portuguese" },
-  { value: "es", label: "Spanish" },
-  { value: "fr", label: "French" },
-  { value: "de", label: "German" },
-  { value: "ja", label: "Japanese" },
+  { value: "en", label: "Inglês" },
+  { value: "pt", label: "Português" },
+  { value: "es", label: "Espanhol" },
+  { value: "fr", label: "Francês" },
+  { value: "de", label: "Alemão" },
+  { value: "ja", label: "Japonês" },
 ];
 
 const TIMEZONES = [
@@ -119,10 +119,10 @@ export default function GeneralSettingsPage({
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Settings size={22} className="text-primary" />
-            General Settings
+            Configurações Gerais
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Configure your bot's basic settings for this server
+            Configure as definições básicas do seu bot para este servidor
           </p>
         </div>
         <Button
@@ -131,7 +131,7 @@ export default function GeneralSettingsPage({
           className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
         >
           <Save size={14} />
-          {updateMutation.isPending ? "Saving..." : "Save Changes"}
+          {updateMutation.isPending ? "Salvando..." : "Salvar Alterações"}
         </Button>
       </div>
 
@@ -139,14 +139,14 @@ export default function GeneralSettingsPage({
       <div className="bg-card border border-border rounded-xl p-6">
         <div className="flex items-center gap-2 mb-5">
           <Bot size={18} className="text-primary" />
-          <h2 className="font-semibold text-foreground">Bot Configuration</h2>
+          <h2 className="font-semibold text-foreground">Configuração do Bot</h2>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           {/* Prefix */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-1.5">
               <Hash size={14} className="inline mr-1.5 text-muted-foreground" />
-              Command Prefix
+              Prefixo de Comando
             </label>
             <input
               type="text"
@@ -159,7 +159,7 @@ export default function GeneralSettingsPage({
               className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors"
             />
             <p className="text-xs text-muted-foreground mt-1">
-              The prefix used to trigger bot commands (e.g., ! or /)
+              O prefixo usado para acionar comandos do bot (ex: ! ou /)
             </p>
           </div>
 
@@ -167,7 +167,7 @@ export default function GeneralSettingsPage({
           <div className="col-span-1 sm:col-span-2">
             <label className="block text-sm font-medium text-foreground mb-1.5">
               <Save size={14} className="inline mr-1.5 text-muted-foreground" />
-              Bot Token (Overrides Environment Variable)
+              Token do Bot (Substitui Variável de Ambiente)
             </label>
             <input
               type="password"
@@ -177,14 +177,14 @@ export default function GeneralSettingsPage({
               className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors"
             />
             <p className="text-xs text-muted-foreground mt-1">
-              If your bot is not connecting, paste your bot token here. This will be used specifically for this server.
+              Se o seu bot não estiver conectando, cole o token do bot aqui. Isso será usado especificamente para este servidor.
             </p>
           </div>
 
           {/* Bot Enabled */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-1.5">
-              Bot Status
+              Status do Bot
             </label>
             <div className="flex items-center gap-3 p-3 bg-input border border-border rounded-lg">
               <button
@@ -203,13 +203,13 @@ export default function GeneralSettingsPage({
                 />
               </button>
               <span
-                className={`text-sm font-medium ${form.botEnabled ? "text-green-400" : "text-muted-foreground"}`}
+                className={`text-sm font-medium ${form.botEnabled ? "text-primary" : "text-muted-foreground"}`}
               >
-                {form.botEnabled ? "Enabled" : "Disabled"}
+                {form.botEnabled ? "Ativado" : "Desativado"}
               </span>
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Enable or disable the bot in this server
+              Ative ou desative o bot neste servidor
             </p>
           </div>
         </div>
@@ -219,13 +219,13 @@ export default function GeneralSettingsPage({
       <div className="bg-card border border-border rounded-xl p-6">
         <div className="flex items-center gap-2 mb-5">
           <Globe size={18} className="text-primary" />
-          <h2 className="font-semibold text-foreground">Localization</h2>
+          <h2 className="font-semibold text-foreground">Localização</h2>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           {/* Language */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-1.5">
-              Language
+              Idioma
             </label>
             <select
               value={form.language}
@@ -247,7 +247,7 @@ export default function GeneralSettingsPage({
                 size={14}
                 className="inline mr-1.5 text-muted-foreground"
               />
-              Timezone
+              Fuso Horário
             </label>
             <select
               value={form.timezone}
@@ -268,13 +268,13 @@ export default function GeneralSettingsPage({
       <div className="bg-card border border-border rounded-xl p-6">
         <div className="flex items-center gap-2 mb-5">
           <Hash size={18} className="text-primary" />
-          <h2 className="font-semibold text-foreground">Channels & Roles</h2>
+          <h2 className="font-semibold text-foreground">Canais e Cargos</h2>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           {/* Admin Role */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-1.5">
-              Admin Role
+              Cargo Admin
             </label>
             <select
               value={form.adminRoleId}
@@ -289,14 +289,14 @@ export default function GeneralSettingsPage({
               ))}
             </select>
             <p className="text-xs text-muted-foreground mt-1">
-              Role that can manage the bot
+              Cargo que pode gerenciar o bot
             </p>
           </div>
 
           {/* Welcome Channel */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-1.5">
-              Welcome Channel
+              Canal de Boas-vindas
             </label>
             <select
               value={form.welcomeChannelId}
@@ -317,7 +317,7 @@ export default function GeneralSettingsPage({
           {/* Logs Channel */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-1.5">
-              Logs Channel
+              Canal de Logs
             </label>
             <select
               value={form.logsChannelId}
@@ -345,7 +345,7 @@ export default function GeneralSettingsPage({
           className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
         >
           <Save size={14} />
-          {updateMutation.isPending ? "Saving..." : "Save Changes"}
+          {updateMutation.isPending ? "Salvando..." : "Salvar Alterações"}
         </Button>
       </div>
     </div>

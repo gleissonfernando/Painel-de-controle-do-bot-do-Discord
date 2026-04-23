@@ -121,7 +121,7 @@ export default function MaintenancePanelPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-background/50 p-6">
+    <div className="min-h-screen bg-[#050505] p-6">
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
         <div>
@@ -152,7 +152,7 @@ export default function MaintenancePanelPage() {
               <Button
                 onClick={handleToggleMaintenance}
                 disabled={isSaving}
-                className={maintenanceEnabled ? "bg-yellow-600 hover:bg-yellow-700" : "bg-green-600 hover:bg-green-700"}
+                className={maintenanceEnabled ? "bg-yellow-600 hover:bg-yellow-700" : "bg-primary hover:bg-primary/90"}
               >
                 {isSaving ? (
                   <>

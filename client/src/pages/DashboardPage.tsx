@@ -23,38 +23,38 @@ interface DashboardPageProps {
 const RECENT_EVENTS = [
   {
     type: "member_join",
-    user: "CoolUser#1234",
-    time: "2 min ago",
+    user: "UsuarioLegal#1234",
+    time: "2 min atrás",
     icon: <Users size={14} />,
-    color: "text-green-400 bg-green-500/10",
+    color: "text-primary bg-primary/10",
   },
   {
     type: "command_used",
-    user: "AnotherUser#5678",
-    time: "5 min ago",
+    user: "OutroUsuario#5678",
+    time: "5 min atrás",
     icon: <Terminal size={14} />,
-    color: "text-blue-400 bg-blue-500/10",
+    color: "text-primary bg-primary/10",
     detail: "!help",
   },
   {
     type: "member_ban",
-    user: "BadActor#0001",
-    time: "12 min ago",
+    user: "Malfeitor#0001",
+    time: "12 min atrás",
     icon: <Shield size={14} />,
-    color: "text-red-400 bg-red-500/10",
+    color: "text-red-500 bg-red-500/10",
     detail: "Spam",
   },
   {
     type: "message_delete",
-    user: "SomeUser#9999",
-    time: "18 min ago",
+    user: "AlgumUsuario#9999",
+    time: "18 min atrás",
     icon: <MessageSquare size={14} />,
-    color: "text-yellow-400 bg-yellow-500/10",
+    color: "text-red-400 bg-red-400/10",
   },
   {
     type: "live_notification",
     user: "StreamerXYZ",
-    time: "1 hr ago",
+    time: "1 h atrás",
     icon: <Activity size={14} />,
     color: "text-primary bg-primary/10",
     detail: "Twitch",
@@ -62,11 +62,11 @@ const RECENT_EVENTS = [
 ];
 
 const EVENT_LABELS: Record<string, string> = {
-  member_join: "Member Joined",
-  command_used: "Command Used",
-  member_ban: "Member Banned",
-  message_delete: "Message Deleted",
-  live_notification: "Live Notification",
+  member_join: "Entrada de Membro",
+  command_used: "Comando Utilizado",
+  member_ban: "Membro Banido",
+  message_delete: "Mensagem Deletada",
+  live_notification: "Notificação ao Vivo",
 };
 
 export default function DashboardPage({ guildId }: DashboardPageProps) {
@@ -96,38 +96,38 @@ export default function DashboardPage({ guildId }: DashboardPageProps) {
     { refetchInterval: 30000 }
   );
 
-  const guildName = guildDetails?.name ?? settings?.guildName ?? "Your Server";
+  const guildName = guildDetails?.name ?? settings?.guildName ?? "Seu Servidor";
   const isBotPresent = botStatus?.botInGuild ?? false;
 
   const STAT_CARDS = [
     {
-      label: "Total Members",
+      label: "Total de Membros",
       value: guildDetails?.member_count?.toLocaleString() || "0",
-      change: isBotPresent ? "Real-time" : "Bot Required",
+      change: isBotPresent ? "Tempo Real" : "Bot Necessário",
       icon: <Users size={20} />,
-      color: "text-blue-400",
-      bg: "bg-blue-500/10 border-blue-500/20",
+      color: "text-primary",
+      bg: "bg-primary/10 border-primary/20",
     },
     {
-      label: "Text Channels",
+      label: "Canais de Texto",
       value: (settings as any)?.channelsCount?.toString() || "0",
-      change: "Active",
+      change: "Ativo",
       icon: <Hash size={20} />,
-      color: "text-green-400",
-      bg: "bg-green-500/10 border-green-500/20",
+      color: "text-primary",
+      bg: "bg-primary/10 border-primary/20",
     },
     {
-      label: "Active Commands",
+      label: "Comandos Ativos",
       value: (settings as any)?.commandsCount?.toString() || "0",
       change: "Total",
       icon: <Terminal size={20} />,
-      color: "text-yellow-400",
-      bg: "bg-yellow-500/10 border-yellow-500/20",
+      color: "text-primary",
+      bg: "bg-primary/10 border-primary/20",
     },
     {
       label: "Status",
       value: isBotPresent ? "Online" : "Offline",
-      change: isConnected ? "WS Connected" : "Polling Active",
+      change: isConnected ? "WS Conectado" : "Polling Ativo",
       icon: <Activity size={20} />,
       color: isBotPresent ? "text-primary" : "text-muted-foreground",
       bg: isBotPresent ? "bg-primary/10 border-primary/20" : "bg-muted/10 border-muted/20",
@@ -190,13 +190,13 @@ export default function DashboardPage({ guildId }: DashboardPageProps) {
         <div>
           <h1 className="text-2xl font-bold text-foreground">{guildName}</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Server overview and statistics
+            Visão geral e estatísticas do servidor
           </p>
         </div>
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-card border border-border">
           <Clock size={14} className="text-muted-foreground" />
           <span className="text-xs text-muted-foreground">
-            {new Date().toLocaleDateString("en-US", {
+            {new Date().toLocaleDateString("pt-BR", {
               weekday: "short",
               month: "short",
               day: "numeric",
@@ -232,9 +232,9 @@ export default function DashboardPage({ guildId }: DashboardPageProps) {
         <div className="lg:col-span-2 bg-card border border-border rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-foreground text-sm">
-              Recent Events
+              Eventos Recentes
             </h2>
-            <span className="text-xs text-muted-foreground">Last 24h</span>
+            <span className="text-xs text-muted-foreground">Últimas 24h</span>
           </div>
           <div className="space-y-2">
             {(logs && logs.length > 0 ? logs : RECENT_EVENTS).map(
@@ -250,7 +250,7 @@ export default function DashboardPage({ guildId }: DashboardPageProps) {
                 const time = isLog
                   ? new Date(
                       (event as { createdAt: Date }).createdAt
-                    ).toLocaleTimeString("en-US", {
+                    ).toLocaleTimeString("pt-BR", {
                       hour: "2-digit",
                       minute: "2-digit",
                     })
@@ -260,13 +260,13 @@ export default function DashboardPage({ guildId }: DashboardPageProps) {
                   : (event as { detail?: string }).detail;
 
                 const colorMap: Record<string, string> = {
-                  member_join: "text-green-400 bg-green-500/10",
-                  member_leave: "text-yellow-400 bg-yellow-500/10",
-                  member_ban: "text-red-400 bg-red-500/10",
-                  member_unban: "text-blue-400 bg-blue-500/10",
-                  message_delete: "text-orange-400 bg-orange-500/10",
-                  message_edit: "text-purple-400 bg-purple-500/10",
-                  command_used: "text-blue-400 bg-blue-500/10",
+                  member_join: "text-primary bg-primary/10",
+                  member_leave: "text-muted-foreground bg-muted/10",
+                  member_ban: "text-red-500 bg-red-500/10",
+                  member_unban: "text-primary bg-primary/10",
+                  message_delete: "text-red-400 bg-red-400/10",
+                  message_edit: "text-primary bg-primary/10",
+                  command_used: "text-primary bg-primary/10",
                   live_notification: "text-primary bg-primary/10",
                 };
 

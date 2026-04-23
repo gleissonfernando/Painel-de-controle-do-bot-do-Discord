@@ -244,7 +244,7 @@ export default function WelcomeGoodbyePage() {
 
                   {/* Preview */}
                   <div className="space-y-2">
-                    <Label>Preview</Label>
+                    <Label>Pré-visualização</Label>
                     <div className="bg-card border border-border rounded-lg p-4">
                       <p className="text-sm text-foreground whitespace-pre-wrap">
                         {replaceVariables(config.welcomeMessage)}
@@ -336,7 +336,7 @@ export default function WelcomeGoodbyePage() {
 
                   {/* Preview */}
                   <div className="space-y-2">
-                    <Label>Preview</Label>
+                    <Label>Pré-visualização</Label>
                     <div className="bg-card border border-border rounded-lg p-4">
                       <p className="text-sm text-foreground whitespace-pre-wrap">
                         {replaceVariables(config.goodbyeMessage)}

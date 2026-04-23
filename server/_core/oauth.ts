@@ -44,19 +44,23 @@ export function registerOAuthRoutes(app: Express) {
         console.warn("[OAuth] Using direct Discord exchange (SDK fallback/no state).");
         
         // FALLBACK: Troca de código direta com o Discord
-        // De acordo com a documentação, client_id e client_secret podem ser enviados no body ou via Basic Auth
+        const protocol = req.headers["x-forwarded-proto"] || req.protocol;
+        const host = req.headers["x-forwarded-host"] || req.get("host");
+        const redirectUri = `${protocol}://${host}/api/oauth/callback`;
+
+        console.log(`[OAuth] Exchanging code for token with redirect_uri: ${redirectUri}`);
+
         const discordResponse = await fetch("https://discord.com/api/v10/oauth2/token", {
           method: "POST",
           headers: { 
             "Content-Type": "application/x-www-form-urlencoded",
-            // Algumas implementações preferem Basic Auth, mas o body é padrão para x-www-form-urlencoded
           },
           body: new URLSearchParams({
             client_id: process.env.VITE_DISCORD_CLIENT_ID || "1492325134550302952",
             client_secret: process.env.DISCORD_CLIENT_SECRET || "",
             grant_type: "authorization_code",
             code: code,
-            redirect_uri: `https://magnatas-dashboard.shardweb.app/api/oauth/callback`,
+            redirect_uri: redirectUri,
           }),
         });
 

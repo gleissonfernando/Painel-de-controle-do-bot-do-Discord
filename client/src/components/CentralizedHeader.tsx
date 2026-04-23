@@ -1,7 +1,5 @@
 import React from "react";
-import { useTheme } from "@/contexts/ThemeProviderContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { getAvailableThemes } from "@/config/theme.config";
 import { getAvailableLanguages } from "@/config/language.config";
 import { Palette, Globe, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,14 +22,11 @@ export default function CentralizedHeader({
   showLogout = false,
   onLogout,
 }: CentralizedHeaderProps) {
-  const { theme, setTheme } = useTheme();
   const { language, setLanguage } = useLanguage();
-
-  const themes = getAvailableThemes();
   const languages = getAvailableLanguages();
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-secondary border-b border-muted">
+    <header className="sticky top-0 z-40 w-full bg-[#0A0A0A] border-b border-border">
       <div className="flex h-16 items-center justify-between px-4 md:px-6 gap-4">
         {/* Title */}
         <div className="flex-1">
@@ -40,24 +35,10 @@ export default function CentralizedHeader({
 
         {/* Controls */}
         <div className="flex items-center gap-3">
-          {/* Theme Selector */}
-          <div className="flex items-center gap-2">
-            <Palette className="w-4 h-4 text-muted-foreground" />
-            <Select value={theme} onValueChange={setTheme}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {themes.map((t) => (
-                  <SelectItem key={t.variant} value={t.variant}>
-                    <div className="flex flex-col">
-                      <span className="font-medium">{t.label}</span>
-                      <span className="text-xs text-muted-foreground">{t.description}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          {/* Theme Display */}
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-primary/10 border border-primary/20">
+            <Palette className="w-4 h-4 text-primary" />
+            <span className="text-xs font-bold text-primary uppercase tracking-wider">Preto & Vermelho</span>
           </div>
 
           {/* Language Selector */}

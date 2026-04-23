@@ -38,14 +38,14 @@ interface NavItemWithPermission extends NavItem {
 }
 
 const navItems: NavItemWithPermission[] = [
-  { label: "Dashboard", icon: <LayoutDashboard size={18} />, path: "" },
-  { label: "General Settings", icon: <Settings size={18} />, path: "/general" },
-  { label: "Commands", icon: <Terminal size={18} />, path: "/commands" },
-  { label: "Messages", icon: <MessageSquare size={18} />, path: "/messages" },
-  { label: "Welcome/Goodbye", icon: <Activity size={18} />, path: "/welcome" },
-  { label: "Auto Moderation", icon: <Shield size={18} />, path: "/automod" },
+  { label: "Início", icon: <LayoutDashboard size={18} />, path: "" },
+  { label: "Configurações", icon: <Settings size={18} />, path: "/general" },
+  { label: "Comandos", icon: <Terminal size={18} />, path: "/commands" },
+  { label: "Mensagens", icon: <MessageSquare size={18} />, path: "/messages" },
+  { label: "Boas-vindas", icon: <Activity size={18} />, path: "/welcome" },
+  { label: "Auto Moderação", icon: <Shield size={18} />, path: "/automod" },
   {
-    label: "Social Notifications",
+    label: "Notificações",
     icon: <Bell size={18} />,
     path: "/notifications",
   },
@@ -81,9 +81,9 @@ export default function DiscordDashboardLayout({
   };
 
   const SidebarContent = () => (
-    <div className="flex flex-col h-full" translate="no">
+    <div className="flex flex-col h-full bg-[#0A0A0A]" translate="no">
       {/* Logo / Brand */}
-      <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border">
+      <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border bg-[#050505]">
         <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center shadow-lg shadow-primary/30">
           <Bot size={20} className="text-primary-foreground" />
         </div>
@@ -97,7 +97,7 @@ export default function DiscordDashboardLayout({
       <div className="px-3 py-3 border-b border-sidebar-border">
         <div className="space-y-1">
           <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-2 mb-1">
-            Current Server
+            Servidor Atual
           </p>
           <div className="relative group">
             <Link href="/servers">
@@ -117,7 +117,7 @@ export default function DiscordDashboardLayout({
                   <p className="text-xs font-semibold text-foreground truncate">
                     {guildName}
                   </p>
-                  <p className="text-[10px] text-muted-foreground">Switch server</p>
+                  <p className="text-[10px] text-muted-foreground">Trocar servidor</p>
                 </div>
                 <ChevronLeft size={14} className="text-muted-foreground group-hover:text-primary transition-colors" />
               </div>
@@ -132,7 +132,7 @@ export default function DiscordDashboardLayout({
         {guilds && guilds.length > 1 && (
           <div className="mb-6">
             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-2 mb-2">
-              Your Other Servers
+              Seus Outros Servidores
             </p>
             <div className="space-y-1">
               {guilds
@@ -163,7 +163,7 @@ export default function DiscordDashboardLayout({
         )}
 
         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2 mb-2">
-          Management
+          Gerenciamento
         </p>
         {navItems.map(item => {
           // Esconder itens exclusivos de dev se o usuário não for o desenvolvedor
@@ -229,8 +229,8 @@ export default function DiscordDashboardLayout({
               {user?.name ?? "User"}
             </p>
             <div className="flex items-center gap-1">
-              <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-              <p className="text-[10px] text-muted-foreground">Logged in</p>
+              <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+              <p className="text-[10px] text-muted-foreground">Conectado</p>
             </div>
           </div>
           <Button
@@ -238,7 +238,7 @@ export default function DiscordDashboardLayout({
             size="icon"
             className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
             onClick={logout}
-            title="Logout"
+            title="Sair"
           >
             <LogOut size={14} />
           </Button>
@@ -248,9 +248,9 @@ export default function DiscordDashboardLayout({
   );
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden" style={{ backgroundColor: 'var(--background)' }}>
+    <div className="flex h-screen bg-[#050505] overflow-hidden">
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex w-60 flex-col bg-sidebar border-r border-sidebar-border flex-shrink-0" style={{ backgroundColor: 'var(--secondary)' }}>
+      <aside className="hidden lg:flex w-60 flex-col bg-[#0A0A0A] border-r border-sidebar-border flex-shrink-0">
         <SidebarContent />
       </aside>
 
@@ -276,7 +276,7 @@ export default function DiscordDashboardLayout({
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden" translate="no">
         {/* Top Header */}
-        <header className="flex items-center justify-between px-4 lg:px-6 py-3 border-b border-border bg-card/50 backdrop-blur-sm flex-shrink-0">
+        <header className="flex items-center justify-between px-4 lg:px-6 py-3 border-b border-border bg-[#0A0A0A]/80 backdrop-blur-sm flex-shrink-0">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
@@ -295,9 +295,9 @@ export default function DiscordDashboardLayout({
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-500/10 border border-green-500/20">
-              <Activity size={12} className="text-green-500" />
-              <span className="text-xs font-medium text-green-500">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20">
+              <Activity size={12} className="text-primary" />
+              <span className="text-xs font-medium text-primary">
                 Bot Online
               </span>
             </div>
@@ -305,7 +305,7 @@ export default function DiscordDashboardLayout({
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6 w-full" style={{ backgroundColor: 'var(--background)' }}>{children}</main>
+        <main className="flex-1 overflow-y-auto p-4 lg:p-6 w-full bg-[#050505]">{children}</main>
       </div>
     </div>
   );

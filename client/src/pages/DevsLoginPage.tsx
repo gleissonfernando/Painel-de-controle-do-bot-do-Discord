@@ -73,7 +73,7 @@ export default function DevsLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4">
       <Card className="w-full max-w-md border-primary/20 shadow-2xl backdrop-blur-sm">
         <CardHeader className="text-center space-y-4">
           <div className="flex justify-center">

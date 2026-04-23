@@ -44,7 +44,7 @@ export default function BotControlPage() {
 
   if (!isDeveloper) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-[#050505]">
         <Card className="w-full max-w-md border-destructive/50 bg-destructive/5">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-destructive">
@@ -162,7 +162,7 @@ export default function BotControlPage() {
       {/* Status Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Bot Status */}
-        <Card className={botEnabled ? "border-green-500" : "border-red-500"}>
+        <Card className={botEnabled ? "border-primary" : "border-red-500"}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Power size={20} />
@@ -172,7 +172,7 @@ export default function BotControlPage() {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">
-                {botEnabled ? "✅ Bot Ativo" : "❌ Bot Desativado"}
+                {botEnabled ? "✅ Bot Ativado" : "❌ Bot Desativado"}
               </span>
               <Button
                 onClick={handleToggleBot}
@@ -252,11 +252,11 @@ export default function BotControlPage() {
               </SelectContent>
             </Select>
             {selectedChannel && (
-              <div className="p-2 rounded bg-green-500/10 border border-green-500/30">
-                <p className="text-xs text-green-600 font-medium">
+              <div className="p-2 rounded bg-primary/10 border border-primary/30">
+                <p className="text-xs text-primary font-medium">
                   ✓ Canal selecionado: <strong>#{channels?.find(ch => ch.id === selectedChannel)?.name}</strong>
                 </p>
-                <p className="text-[10px] text-green-600/70 mt-1">
+                <p className="text-[10px] text-primary/70 mt-1">
                   ID: {selectedChannel}
                 </p>
               </div>
