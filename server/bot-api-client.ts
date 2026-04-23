@@ -135,3 +135,18 @@ export async function checkBotAvailability() {
     return false;
   }
 }
+
+/**
+ * Lista todos os servidores onde o bot está presente
+ */
+export async function fetchBotGuilds() {
+  try {
+    const response = await axios.get(`${BOT_API_URL}/api/panel/guilds`, {
+      timeout: 10000,
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error("[Bot API Client] Erro ao listar servidores do bot:", error.message);
+    return { success: false, guilds: [] };
+  }
+}

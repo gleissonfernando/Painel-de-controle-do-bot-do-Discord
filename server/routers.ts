@@ -90,10 +90,16 @@ const guildsRouter = router({
 
       console.log(`[Guilds] User is admin in ${adminGuilds.length} guilds. Checking bot presence for each...`);
 
+      // Busca a lista de servidores onde o bot está presente via API do Bot
+      const { fetchBotGuilds } = await import("./bot-api-client");
+      const botGuildsData = await fetchBotGuilds();
+      const botGuildIds = new Set(botGuildsData.success ? botGuildsData.guilds.map((g: any) => g.id) : []);
+
       // Check which of these guilds the bot is actually in
       const results = await Promise.all(
         adminGuilds.map(async (guild) => {
-          const isBotPresent = await checkBotInGuild(guild.id);
+          // Verifica a presença do bot (usando a lista da API do bot como fonte primária)
+          const isBotPresent = botGuildIds.has(guild.id) || await checkBotInGuild(guild.id);
 
           try {
             // Se o bot estiver presente, pegamos detalhes reais, senão usamos dados básicos do usuário
