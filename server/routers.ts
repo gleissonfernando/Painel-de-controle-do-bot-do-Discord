@@ -143,7 +143,10 @@ const guildsRouter = router({
         })
       );
 
-      return results;
+      // Filtrar apenas servidores onde o bot está presente
+      const botOnlyGuilds = results.filter(g => g.botPresent);
+      console.log(`[Guilds] Retornando ${botOnlyGuilds.length} servidores onde o bot está presente`);
+      return botOnlyGuilds;
     } catch (error) {
       console.error("Error fetching guild data:", error);
       return [];
