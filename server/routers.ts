@@ -48,18 +48,8 @@ const guildsRouter = router({
     
     // Fallback to demo guilds if no Discord access token
     if (!user || !user.accessToken) {
-      return [
-        {
-          id: "1001",
-          name: "My Awesome Server (Demo)",
-          icon: null,
-          owner: true,
-          permissions: "8",
-          memberCount: 1247,
-          channels: 5,
-          roles: 4,
-        },
-      ];
+      console.log("[Guilds] No access token for user, returning empty list.");
+      return [];
     }
 
     try {
