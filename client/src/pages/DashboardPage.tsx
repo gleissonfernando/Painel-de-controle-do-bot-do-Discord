@@ -1,5 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { trpc } from "@/lib/trpc";
+import { useSocket } from "@/hooks/useSocket";
 import { getBotInviteUrl } from "@/const";
 import {
   Activity,
@@ -69,7 +70,14 @@ const EVENT_LABELS: Record<string, string> = {
 };
 
 export default function DashboardPage({ guildId }: DashboardPageProps) {
-  // Busca detalhes do servidor com atualização automática a cada 15 segundos (Polling)
+  const utils = trpc.useUtils();
+  const { isConnected, botStatus: socketBotStatus } = useSocket(guildId, (data) => {
+    console.log("[WebSocket] Real-time update received:", data);
+    utils.guilds.details.invalidate({ guildId });
+    utils.logs.list.invalidate({ guildId });
+  });
+
+  // Busca detalhes do servidor com atualização automática a cada 15 segundos (Polling como fallback)
   const { data: guildDetails } = trpc.guilds.details.useQuery(
     { guildId },
     { refetchInterval: 15000, staleTime: 10000 }
@@ -119,12 +127,17 @@ export default function DashboardPage({ guildId }: DashboardPageProps) {
     {
       label: "Status",
       value: isBotPresent ? "Online" : "Offline",
-      change: isBotPresent ? "Connected" : "Not Linked",
+      change: isConnected ? "WS Connected" : "Polling Active",
       icon: <Activity size={20} />,
       color: isBotPresent ? "text-primary" : "text-muted-foreground",
       bg: isBotPresent ? "bg-primary/10 border-primary/20" : "bg-muted/10 border-muted/20",
     },
   ];
+
+  // WebSocket Event Listeners
+  useEffect(() => {
+    // O hook useSocket agora gerencia os listeners automaticamente
+  }, [guildId, utils]);
 
   // Redirecionamento automático desativado para permitir navegação mesmo sem o bot ou banco de dados
   useEffect(() => {
