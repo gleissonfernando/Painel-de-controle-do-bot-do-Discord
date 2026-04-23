@@ -398,7 +398,7 @@ const settingsRouter = router({
         const { sendAuditLog } = await import("./discord");
         await sendAuditLog(input.guildId, {
           title: "📨 Mensagem Local Enviada",
-          description: `O desenvolvedor **${ctx.user.name}** enviou uma mensagem no canal <#${input.channelId}>.",
+          description: `O desenvolvedor **${ctx.user.name}** enviou uma mensagem no canal <#${input.channelId}>.`,
           color: 0x3498DB
         });
 
