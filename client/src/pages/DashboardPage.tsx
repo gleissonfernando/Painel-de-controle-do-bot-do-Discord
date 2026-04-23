@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { trpc } from "@/lib/trpc";
+import { getBotInviteUrl } from "@/const";
 import {
   Activity,
   Bell,
@@ -157,17 +158,8 @@ export default function DashboardPage({ guildId }: DashboardPageProps) {
       value: isBotPresent ? "Online" : "Offline",
       change: isBotPresent ? "Connected" : "Not Linked",
       icon: <Activity size={20} />,
-      color: isBotPresent ? "text-primary" : "text-red-400",
-      bg: isBotPresent ? "bg-primary/10 border-primary/20" : "bg-red-500/10 border-red-500/20",
-    },
-  ];
-
-  const getBotInviteUrl = () => {
-    const clientId = "1492325134550302952";
-    const redirectUri = encodeURIComponent(`${window.location.origin}/api/discord/callback`);
-    return `https://discord.com/oauth2/authorize?client_id=${clientId}&permissions=8&response_type=code&redirect_uri=${redirectUri}&integration_type=0&scope=identify+bot&guild_id=${guildId}`;
-  };
-
+      color: isBotPresent ? "text-p  const guildName = guildDetails?.name ?? settings?.guildName ?? "Your Server";
+  const isBotPresent = botStatus?.botInGuild ?? false;
   // Redirecionamento automático desativado para permitir navegação mesmo sem o bot ou banco de dados
   useEffect(() => {
     console.log("Verificação de bot ativa, mas redirecionamento automático desativado por solicitação do usuário.");
@@ -186,7 +178,7 @@ export default function DashboardPage({ guildId }: DashboardPageProps) {
               <p className="text-xs text-amber-500/80">O bot precisa estar no servidor para que as configurações funcionem.</p>
             </div>
           </div>
-          <a href={getBotInviteUrl()} className="w-full md:w-auto">
+          <a href={getBotInviteUrl(guildId)} className="w-full md:w-auto">
             <button className="w-full px-4 py-2 bg-amber-500 text-black text-xs font-bold rounded-lg hover:bg-amber-600 transition-colors">
               Adicionar Bot Agora
             </button>
