@@ -46,12 +46,10 @@ export default function ServerSelectPage() {
     }
   }, [refetchGuilds]);
 
-  // Redireciona para login se não autenticado
+  // Redirecionamento automático desativado
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      navigate("/");
-    }
-  }, [isAuthenticated, loading, navigate]);
+    console.log("Redirecionamentos automáticos desativados.");
+  }, []);
 
   if (loading) {
     return (
