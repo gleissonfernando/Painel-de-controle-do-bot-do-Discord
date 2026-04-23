@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,11 +13,21 @@ const DEV_PASSWORD = "04042003";
 
 export default function DevsLoginPage() {
   const [, setLocation] = useLocation();
+  const { user } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Verificar se o usuário está autenticado via Discord OAuth2
+  useEffect(() => {
+    if (!user) {
+      toast.error("❌ Você precisa fazer login com o Discord primeiro");
+      setLocation("/");
+      return;
+    }
+  }, [user, setLocation]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,9 +52,11 @@ export default function DevsLoginPage() {
         return;
       }
 
-      // Armazenar sessão dev no localStorage
+      // Armazenar sessão dev no localStorage com validação de usuário Discord
       localStorage.setItem("dev_session", JSON.stringify({
         username: DEV_USERNAME,
+        discordUserId: user?.openId,
+        discordUsername: user?.name,
         timestamp: Date.now(),
         expiresIn: 24 * 60 * 60 * 1000, // 24 horas
       }));

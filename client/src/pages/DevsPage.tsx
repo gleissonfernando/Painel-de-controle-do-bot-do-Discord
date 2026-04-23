@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -25,9 +26,18 @@ interface DevSession {
 
 export default function DevsPage() {
   const [, setLocation] = useLocation();
+  const { user } = useAuth();
   const [session, setSession] = useState<DevSession | null>(null);
   const [timeRemaining, setTimeRemaining] = useState<string>("");
   const [activeTab, setActiveTab] = useState<"overview" | "logs" | "stats" | "settings">("overview");
+
+  // Verificar se o usuario esta autenticado via Discord OAuth2
+  useEffect(() => {
+    if (!user) {
+      setLocation("/");
+      return;
+    }
+  }, [user, setLocation]);
 
   useEffect(() => {
     // Verificar sessão dev
