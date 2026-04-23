@@ -344,3 +344,63 @@ const DevUserSchema = new Schema<IDevUser>(
 );
 
 export const DevUser = mongoose.model<IDevUser>("DevUser", DevUserSchema);
+
+// --- Log Configuration ---
+export interface ILogConfig extends Document {
+  guildId: string;
+  messageDeleteChannelId?: string;
+  messageEditChannelId?: string;
+  memberJoinChannelId?: string;
+  memberLeaveChannelId?: string;
+  botMessageChannelId?: string;
+  moderationChannelId?: string;
+  logsEnabled: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const LogConfigSchema = new Schema<ILogConfig>(
+  {
+    guildId: { type: String, required: true, unique: true },
+    messageDeleteChannelId: String,
+    messageEditChannelId: String,
+    memberJoinChannelId: String,
+    memberLeaveChannelId: String,
+    botMessageChannelId: String,
+    moderationChannelId: String,
+    logsEnabled: { type: Boolean, default: true },
+  },
+  { timestamps: true }
+);
+
+export const LogConfig = mongoose.model<ILogConfig>("LogConfig", LogConfigSchema);
+
+// --- Guild Event Logs ---
+export interface IGuildEventLog extends Document {
+  guildId: string;
+  eventType: "MESSAGE_DELETE" | "MESSAGE_EDIT" | "MEMBER_JOIN" | "MEMBER_LEAVE" | "BOT_MESSAGE";
+  userId?: string;
+  userName?: string;
+  userAvatar?: string;
+  details: Record<string, any>;
+  timestamp: Date;
+}
+
+const GuildEventLogSchema = new Schema<IGuildEventLog>(
+  {
+    guildId: { type: String, required: true, index: true },
+    eventType: {
+      type: String,
+      enum: ["MESSAGE_DELETE", "MESSAGE_EDIT", "MEMBER_JOIN", "MEMBER_LEAVE", "BOT_MESSAGE"],
+      index: true,
+    },
+    userId: String,
+    userName: String,
+    userAvatar: String,
+    details: { type: Schema.Types.Mixed, default: {} },
+    timestamp: { type: Date, default: Date.now, index: true },
+  },
+  { timestamps: false }
+);
+
+export const GuildEventLog = mongoose.model<IGuildEventLog>("GuildEventLog", GuildEventLogSchema);

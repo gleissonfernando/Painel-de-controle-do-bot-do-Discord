@@ -43,6 +43,14 @@ import {
   isUserMaster,
 } from "./db-devs";
 import { removeGuildBot, getGuildInfo } from "./discord-guild-management";
+import {
+  getLogConfig,
+  updateLogConfig,
+  logGuildEvent,
+  getGuildLogs,
+  getLogsByType,
+  getLogStats,
+} from "./db-logs";
 
 // ─── Auth Router ──────────────────────────────────────────────────────────────
 
@@ -977,6 +985,7 @@ export const appRouter = router({
   autoMod: autoModRouter,
   notifications: notificationsRouter,
   logs: logsRouter,
+  logsConfig: logsConfigRouter,
   commands: commandsRouter,
   messages: messagesRouter,
   welcomeGoodbye: welcomeGoodbyeRouter,
@@ -1137,5 +1146,64 @@ const guildManagementRouter = router({
           message: "Servidor não encontrado",
         });
       }
+    }),
+});
+
+// ─── Logs Configuration Router ────────────────────────────────────────────────
+
+const logsConfigRouter = router({
+  getConfig: protectedProcedure
+    .input(z.object({ guildId: z.string() }))
+    .query(async ({ input }) => {
+      const config = await getLogConfig(input.guildId);
+      return config || {
+        guildId: input.guildId,
+        logsEnabled: true,
+        messageDeleteChannelId: null,
+        messageEditChannelId: null,
+        memberJoinChannelId: null,
+        memberLeaveChannelId: null,
+        botMessageChannelId: null,
+        moderationChannelId: null,
+      };
+    }),
+
+  updateConfig: protectedProcedure
+    .input(
+      z.object({
+        guildId: z.string(),
+        logsEnabled: z.boolean().optional(),
+        messageDeleteChannelId: z.string().optional(),
+        messageEditChannelId: z.string().optional(),
+        memberJoinChannelId: z.string().optional(),
+        memberLeaveChannelId: z.string().optional(),
+        botMessageChannelId: z.string().optional(),
+        moderationChannelId: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const updated = await updateLogConfig(input.guildId, input);
+      return updated;
+    }),
+
+  getLogs: protectedProcedure
+    .input(
+      z.object({
+        guildId: z.string(),
+        eventType: z.string().optional(),
+        limit: z.number().default(50),
+      })
+    )
+    .query(async ({ input }) => {
+      if (input.eventType) {
+        return await getLogsByType(input.guildId, input.eventType, input.limit);
+      }
+      return await getGuildLogs(input.guildId, undefined, input.limit);
+    }),
+
+  getStats: protectedProcedure
+    .input(z.object({ guildId: z.string() }))
+    .query(async ({ input }) => {
+      return await getLogStats(input.guildId);
     }),
 });
