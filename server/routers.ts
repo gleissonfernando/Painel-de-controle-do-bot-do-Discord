@@ -385,32 +385,30 @@ const settingsRouter = router({
       }
 
       try {
-        const { sendMessageToChannel, sendAuditLog } = await import("./discord");
-        await sendMessageToChannel(input.channelId, input.message);
+        // Usar a API do bot em vez de chamar o Discord diretamente
+        const { sendMessageViaBot } = await import("./bot-api-client");
+        const result = await sendMessageViaBot({
+          guildId: input.guildId,
+          channelId: input.channelId,
+          message: input.message,
+        });
         
         // Log de Auditoria
         const channelName = channels.find(ch => ch.id === input.channelId)?.name || "desconhecido";
+        const { sendAuditLog } = await import("./discord");
         await sendAuditLog(input.guildId, {
           title: "📨 Mensagem Local Enviada",
-          description: `O desenvolvedor **${ctx.user.name}** enviou uma mensagem no canal <#${input.channelId}>.`,
+          description: `O desenvolvedor **${ctx.user.name}** enviou uma mensagem no canal <#${input.channelId}>.",
           color: 0x3498DB
         });
 
-        return { success: true, channelName };
+        return { success: true, channelName, messageId: result.messageId };
       } catch (error: any) {
         console.error("Error sending local message:", error);
         
-        // Verificar se é erro de permissão do Discord
-        if (error.response?.status === 403) {
-          throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "O bot não tem permissão para enviar mensagens neste canal.",
-          });
-        }
-        
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: error.response?.data?.message || "Erro ao enviar mensagem",
+          message: error.message || "Erro ao enviar mensagem através do bot",
         });
       }
     }),
@@ -453,23 +451,32 @@ const settingsRouter = router({
         });
       }
 
-      try {
-        const { sendMessageToChannel, sendAuditLog } = await import("./discord");
-        await sendMessageToChannel(input.channelId, input.message);
+       try {
+        // Usar a API do bot em vez de chamar o Discord diretamente
+        const { sendMessageViaBot } = await import("./bot-api-client");
+        const result = await sendMessageViaBot({
+          guildId: input.guildId,
+          channelId: input.channelId,
+          message: input.message,
+        });
         
         // Log de Auditoria para o envio de teste
+        const { sendAuditLog } = await import("./discord");
         await sendAuditLog(input.guildId, {
           title: "🚀 Teste de Mensagem Enviado",
-          description: `O desenvolvedor **${ctx.user.name}** enviou uma mensagem de teste no canal <#${input.channelId}>.\n\n**Conteúdo:**\n${input.message}`,
+          description: `O desenvolvedor **${ctx.user.name}** enviou uma mensagem de teste no canal <#${input.channelId}>.
+
+**Conteúdo:**
+${input.message}`,
           color: 0x2ECC71
         });
 
-        return { success: true };
-      } catch (error) {
+        return { success: true, messageId: result.messageId };
+      } catch (error: any) {
         console.error("Error sending test message:", error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "FAILED_TO_SEND_MESSAGE",
+          message: error.message || "Erro ao enviar mensagem de teste",
         });
       }
     }),
