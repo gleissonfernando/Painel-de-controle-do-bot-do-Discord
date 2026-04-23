@@ -83,7 +83,7 @@ export default function DiscordDashboardLayout({
           <Bot size={20} className="text-primary-foreground" />
         </div>
         <div>
-          <p className="text-sm font-bold text-foreground">BotPanel</p>
+          <p className="text-sm font-bold text-foreground">Magnatas</p>
           <p className="text-xs text-muted-foreground">Dashboard</p>
         </div>
       </div>
@@ -193,11 +193,11 @@ export default function DiscordDashboardLayout({
 
       {/* User Profile */}
       <div className="px-3 py-3 border-t border-sidebar-border">
-        <div className="flex items-center gap-2 px-2 py-2 rounded-md bg-sidebar-accent">
-          <Avatar className="w-8 h-8">
-            {(user as { avatar?: string })?.avatar ? (
+        <div className="flex items-center gap-2 px-2 py-2 rounded-md bg-sidebar-accent/50 border border-sidebar-border/50">
+          <Avatar className="w-8 h-8 border border-primary/20">
+            {user?.avatar ? (
               <AvatarImage
-                src={(user as { avatar?: string }).avatar}
+                src={user.avatar}
                 alt={user?.name ?? ""}
               />
             ) : null}
@@ -206,12 +206,12 @@ export default function DiscordDashboardLayout({
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-foreground truncate">
+            <p className="text-[11px] font-bold text-foreground truncate">
               {user?.name ?? "User"}
             </p>
             <div className="flex items-center gap-1">
-              <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-              <p className="text-xs text-muted-foreground">Online</p>
+              <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+              <p className="text-[10px] text-muted-foreground">Logged in</p>
             </div>
           </div>
           <Button

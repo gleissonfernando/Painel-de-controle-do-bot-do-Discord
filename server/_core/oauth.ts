@@ -119,16 +119,16 @@ export function registerOAuthRoutes(app: Express) {
         console.error("[OAuth] Failed to fetch user guilds during login:", e);
       }
 
+      // Garante que o nome e avatar do usuário sejam salvos corretamente
       await db.upsertUser({
         openId: userInfo.openId,
         name: userInfo.name || null,
         email: userInfo.email ?? null,
-        avatar: (userInfo as any).avatar || null,
+        avatar: userInfo.avatar || (userInfo as any).avatar || null,
         accessToken: tokenResponse.accessToken,
         refreshToken: tokenResponse.refreshToken,
         loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
         lastSignedIn: new Date(),
-        // Opcional: Salvar guilds no banco se o modelo suportar, mas aqui focamos no token
       });
 
       const sessionToken = await sdk.createSessionToken(userInfo.openId, {
