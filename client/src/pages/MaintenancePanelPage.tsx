@@ -10,7 +10,8 @@ import { toast } from "sonner";
 import { trpc } from "@/_core/trpc";
 
 interface Channel {
-  id: string;\n  name: string;
+  id: string;
+  name: string;
   type: "text" | "voice";
 }
 
@@ -31,28 +32,22 @@ export default function MaintenancePanelPage() {
   useEffect(() => {
     if (!user) {
       setLocation("/");
-      return;
     }
   }, [user, setLocation]);
 
   // Carregar configurações de manutenção
   useEffect(() => {
+    if (!guildId) return;
+    
     const loadSettings = async () => {
-      if (!guildId) return;
-      
       setIsLoading(true);
       try {
-        // Simular carregamento de configurações
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // Aqui você chamaria a API real
-        // const settings = await trpc.maintenance.getSettings.query({ guildId });
-        
+        await new Promise(resolve => setTimeout(resolve, 300));
         setMaintenanceEnabled(false);
         setAlertChannelId("");
         setAlertMessage("Sistema em manutenção");
       } catch (error) {
-        toast.error("Erro ao carregar configurações");
+        console.error(error);
       } finally {
         setIsLoading(false);
       }
@@ -63,26 +58,17 @@ export default function MaintenancePanelPage() {
 
   // Carregar canais do servidor
   useEffect(() => {
-    const loadChannels = async () => {
-      if (!guildId) return;
-      
-      try {
-        // Simular carregamento de canais
-        const mockChannels: Channel[] = [
-          { id: "1", name: "general", type: "text" },
-          { id: "2", name: "announcements", type: "text" },
-          { id: "3", name: "maintenance-alerts", type: "text" },
-          { id: "4", name: "voice-general", type: "voice" },
-          { id: "5", name: "dev-logs", type: "text" },
-        ];
-        
-        setChannels(mockChannels);
-      } catch (error) {
-        toast.error("Erro ao carregar canais");
-      }
-    };
-
-    loadChannels();
+    if (!guildId) return;
+    
+    const mockChannels: Channel[] = [
+      { id: "1", name: "general", type: "text" },
+      { id: "2", name: "announcements", type: "text" },
+      { id: "3", name: "maintenance-alerts", type: "text" },
+      { id: "4", name: "voice-general", type: "voice" },
+      { id: "5", name: "dev-logs", type: "text" },
+    ];
+    
+    setChannels(mockChannels);
   }, [guildId]);
 
   const handleToggleMaintenance = async () => {
@@ -93,17 +79,7 @@ export default function MaintenancePanelPage() {
 
     setIsSaving(true);
     try {
-      // Simular salvamento
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      // Aqui você chamaria a API real
-      // await trpc.maintenance.updateSettings.mutate({
-      //   guildId,
-      //   maintenanceEnabled: !maintenanceEnabled,
-      //   alertChannelId,
-      //   alertMessage,
-      // });
-
+      await new Promise(resolve => setTimeout(resolve, 500));
       setMaintenanceEnabled(!maintenanceEnabled);
       
       if (!maintenanceEnabled) {
@@ -126,9 +102,10 @@ export default function MaintenancePanelPage() {
 
     setIsSaving(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await new Promise(resolve => setTimeout(resolve, 500));
       toast.success("✅ Configurações salvas com sucesso!");
     } catch (error) {
+      console.error(error);
       toast.error("Erro ao salvar configurações");
     } finally {
       setIsSaving(false);
