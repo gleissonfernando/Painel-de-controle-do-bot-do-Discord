@@ -24,6 +24,7 @@ import RealTimeLogsPage from "./pages/RealTimeLogsPage";
 import RealTimeLogConfigPage from "./pages/RealTimeLogConfigPage";
 import WelcomeMagnatasPage from "./pages/WelcomeMagnatasPage";
 import ExitMagnatasPage from "./pages/ExitMagnatasPage";
+import MonitorPage from "./pages/MonitorPage";
 
 import DevActivationPage from "./pages/DevActivationPage";
 import DevsLoginPage from "./pages/DevsLoginPage";
@@ -124,6 +125,13 @@ function Router() {
         {params => (
           <DashboardLayout guildId={params.guildId}>
             <ExitMagnatasPage />
+          </DashboardLayout>
+        )}
+      </Route>
+      <Route path="/dashboard/:guildId/monitor">
+        {params => (
+          <DashboardLayout guildId={params.guildId}>
+            <MonitorPage />
           </DashboardLayout>
         )}
       </Route>

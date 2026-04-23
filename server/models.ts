@@ -446,3 +446,45 @@ const RealTimeLogConfigSchema = new Schema<IRealTimeLogConfig>(
 );
 
 export const RealTimeLogConfig = mongoose.model<IRealTimeLogConfig>("RealTimeLogConfig", RealTimeLogConfigSchema);
+
+// --- Monitor Config ---
+export interface IMonitorConfig extends Document {
+  guildId: string;
+  alertChannelId: string | null;
+  enabled: boolean;
+  updatedBy: string;
+  updatedAt: Date;
+}
+
+const MonitorConfigSchema = new Schema<IMonitorConfig>(
+  {
+    guildId: { type: String, required: true, unique: true },
+    alertChannelId: { type: String, default: null },
+    enabled: { type: Boolean, default: true },
+    updatedBy: { type: String, default: "N/A" },
+  },
+  { timestamps: true }
+);
+
+export const MonitorConfig = mongoose.model<IMonitorConfig>("MonitorConfig", MonitorConfigSchema);
+
+// --- Monitor Log ---
+export interface IMonitorLog extends Document {
+  guildId: string;
+  service: string;
+  status: string;
+  message?: string;
+  createdAt: Date;
+}
+
+const MonitorLogSchema = new Schema<IMonitorLog>(
+  {
+    guildId: { type: String, required: true },
+    service: { type: String, required: true },
+    status: { type: String, required: true },
+    message: String,
+    createdAt: { type: Date, default: Date.now },
+  }
+);
+
+export const MonitorLog = mongoose.model<IMonitorLog>("MonitorLog", MonitorLogSchema);

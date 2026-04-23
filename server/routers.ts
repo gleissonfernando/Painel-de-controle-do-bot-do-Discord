@@ -425,6 +425,80 @@ const realTimeLogsRouter = router({
     }),
 });
 
+// --- Monitor Router ---
+const monitorRouter = router({
+  getConfig: protectedProcedure
+    .input(z.object({ guildId: z.string() }))
+    .query(async ({ input }) => {
+      const { MonitorConfig } = await import("./models");
+      const config = await MonitorConfig.findOne({ guildId: input.guildId });
+      return config || {
+        guildId: input.guildId,
+        alertChannelId: null,
+        enabled: true,
+        updatedBy: "N/A",
+      };
+    }),
+
+  updateConfig: protectedProcedure
+    .input(z.object({
+      guildId: z.string(),
+      alertChannelId: z.string(),
+      enabled: z.boolean(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const { MonitorConfig } = await import("./models");
+      const config = await MonitorConfig.findOneAndUpdate(
+        { guildId: input.guildId },
+        { ...input, updatedBy: ctx.user?.name || "Desconhecido" },
+        { upsert: true, new: true }
+      );
+      return config;
+    }),
+
+  getStatus: protectedProcedure.query(async () => {
+    const { getServicesStatus } = await import("./monitor-service");
+    return getServicesStatus();
+  }),
+
+  getLogs: protectedProcedure
+    .input(z.object({ guildId: z.string(), limit: z.number().default(20) }))
+    .query(async ({ input }) => {
+      const { MonitorLog } = await import("./models");
+      return await MonitorLog.find({ guildId: input.guildId })
+        .sort({ createdAt: -1 })
+        .limit(input.limit);
+    }),
+
+  sendTest: protectedProcedure
+    .input(z.object({
+      guildId: z.string(),
+      channelId: z.string(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const { sendMessageViaBot } = await import("./bot-api-client");
+      const now = new Date().toLocaleString("pt-BR");
+      
+      try {
+        await sendMessageViaBot({
+          guildId: input.guildId,
+          channelId: input.channelId,
+          message: "",
+          embeds: [{
+            title: "🧪 TESTE DE MONITORAMENTO MAGNATAS",
+            description: `**Status:** Sistema funcionando corretamente\n**Horário:** ${now}\n**Configurado por:** ${ctx.user?.name || "Admin"}`,
+            color: 0x00FFFF,
+            footer: { text: "Magnatas.gg • Teste de Sistema" },
+            timestamp: new Date(),
+          }]
+        });
+        return { success: true };
+      } catch (err: any) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: err.message });
+      }
+    }),
+});
+
 // --- Broadcast Router ---
 const broadcastRouter = router({
   sendGlobal: protectedProcedure
@@ -789,6 +863,7 @@ export const appRouter = router({
   devManagement: devManagementRouter,
   guildManagement: guildManagementRouter,
   realTimeLogs: realTimeLogsRouter,
+  monitor: monitorRouter,
 });
 
 export type AppRouter = typeof appRouter;
