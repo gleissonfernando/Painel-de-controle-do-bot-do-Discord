@@ -10,7 +10,11 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 
-export default function DevActivationPage() {
+interface DevActivationPageProps {
+  guildId?: string;
+}
+
+export default function DevActivationPage(props?: DevActivationPageProps) {
   const { guildId } = useParams<{ guildId: string }>();
   const { user } = useAuth();
   const { t } = useLanguage();

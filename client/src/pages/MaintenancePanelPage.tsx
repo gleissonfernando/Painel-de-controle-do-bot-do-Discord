@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { AlertCircle, CheckCircle2, AlertTriangle, Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
-import { trpc } from "@/_core/trpc";
+import { trpc } from "@/lib/trpc";
 
 interface Channel {
   id: string;

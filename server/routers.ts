@@ -294,7 +294,7 @@ const settingsRouter = router({
         });
       }
 
-      await upsertGuildSettings({ guildId, ...rest }, ctx.user.id, ctx.user.name);
+      await upsertGuildSettings({ guildId, ...rest }, ctx.user.openId, ctx.user.name);
       return { success: true };
     }),
 
@@ -405,7 +405,7 @@ const settingsRouter = router({
     .mutation(async ({ input, ctx }) => {
       // APENAS O DESENVOLVEDOR PODE ENVIAR MENSAGENS DE TESTE
       const DEVELOPER_ID = "761011766440230932";
-      if (ctx.user.id !== DEVELOPER_ID) {
+      if (ctx.user.openId !== DEVELOPER_ID && ctx.user.discordId !== DEVELOPER_ID) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Apenas o Desenvolvedor Mestre pode realizar testes de mensagem.",

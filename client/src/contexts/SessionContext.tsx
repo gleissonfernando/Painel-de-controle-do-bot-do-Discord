@@ -5,7 +5,7 @@ import { trpc } from "@/lib/trpc";
 export interface Guild {
   id: string;
   name: string;
-  icon?: string;
+  icon?: string | null;
   owner: boolean;
   permissions: string;
   memberCount: number;
