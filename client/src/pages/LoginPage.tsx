@@ -13,9 +13,16 @@ export default function LoginPage() {
   const [, navigate] = useLocation();
 
   useEffect(() => {
-    // Se o usuário já estiver logado, manda direto para os servidores
+    // Se o usuário já estiver logado, manda direto para o painel
     if (!loading && isAuthenticated) {
-      navigate("/servers");
+      // Obter servidor salvo do localStorage
+      const savedGuildId = localStorage.getItem("active_guild_id");
+      if (savedGuildId) {
+        navigate(`/dashboard/${savedGuildId}`);
+      } else {
+        // Se não houver servidor salvo, ir para seleção de servidores
+        navigate("/servers");
+      }
     }
   }, [isAuthenticated, loading, navigate]);
 

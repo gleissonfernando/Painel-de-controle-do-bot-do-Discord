@@ -60,13 +60,15 @@ export const THEME_CONFIGS: Record<ThemeVariant, ThemeConfig> = {
 // Configuração de tema
 export const THEME_STORAGE_KEY = "magnatas_theme";
 export const DEFAULT_THEME: ThemeVariant = "dark-red";
+export const FORCED_DEFAULT_THEME: ThemeVariant = "dark-red"; // Tema forçado, não pode ser alterado
 
 /**
  * Obtém o tema salvo ou o padrão
  */
 export function getSavedTheme(): ThemeVariant {
-  const saved = localStorage.getItem(THEME_STORAGE_KEY) as ThemeVariant | null;
-  return (saved && THEME_CONFIGS[saved]) ? saved : DEFAULT_THEME;
+  // Sempre retornar o tema padrão (Preto/Vermelho)
+  // Ignorar qualquer tema salvo anteriormente
+  return DEFAULT_THEME;
 }
 
 /**
