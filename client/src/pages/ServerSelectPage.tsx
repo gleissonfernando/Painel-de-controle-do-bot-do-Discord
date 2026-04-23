@@ -3,23 +3,26 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { trpc } from "@/lib/trpc";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { ChevronRight, Plus, LogOut, CheckCircle, X } from "lucide-react";
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { ChevronRight, Plus, LogOut, CheckCircle, X, AlertCircle } from "lucide-react";
+import { useEffect, useState, useMemo } from "react";
 import { useLocation } from "wouter";
 
-const getBotInviteUrl = () => {
-  const clientId = "1492325134550302952";
-  const redirectUri = encodeURIComponent(`${window.location.origin}/api/discord/callback`);
-  // Permissões 0 conforme solicitado, e garantindo scopes corretos
-  return `https://discord.com/oauth2/authorize?client_id=${clientId}&permissions=0&response_type=code&redirect_uri=${redirectUri}&integration_type=0&scope=identify+bot+applications.commands`;
-};
+// ID FIXO E REAL DO BOT DO USUÁRIO
+const CLIENT_ID = "1492325134550302952";
 
 export default function ServerSelectPage() {
   const { isAuthenticated, loading, logout, user } = useAuth();
   const { t } = useLanguage();
   const [, navigate] = useLocation();
+  const [showSuccess, setShowSuccess] = useState(false);
   const [botVerified, setBotVerified] = useState(false);
-  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+
+  // Link de convite estático para evitar erros de geração dinâmica
+  const botInviteUrl = useMemo(() => {
+    const origin = typeof window !== "undefined" ? window.location.origin : "https://discord-verification.shardweb.app";
+    const redirectUri = encodeURIComponent(`${origin}/api/discord/callback`);
+    return `https://discord.com/oauth2/authorize?client_id=${CLIENT_ID}&permissions=0&response_type=code&redirect_uri=${redirectUri}&integration_type=0&scope=identify+bot+applications.commands`;
+  }, []);
 
   const { data: guilds, isLoading: guildsLoading, refetch: refetchGuilds } = trpc.guilds.list.useQuery(
     undefined,
@@ -29,255 +32,127 @@ export default function ServerSelectPage() {
     }
   );
 
-  // Memoize guilds para evitar re-renderizações problemáticas
-  const memoizedGuilds = useMemo(() => guilds ?? [], [guilds]);
-
-  const handleRefetch = useCallback(() => {
-    refetchGuilds();
-  }, [refetchGuilds]);
-
-  // Check for bot_added query parameter and verify bot status
+  // Lógica de retorno do Discord (Sucesso)
   useEffect(() => {
     if (typeof window === "undefined") return;
-    
     const params = new URLSearchParams(window.location.search);
-    const botAdded = params.get("bot_added");
-    const botVerifiedParam = params.get("bot_verified");
-
-    if (botAdded === "true") {
-      setShowSuccessMessage(true);
-      if (botVerifiedParam === "true") {
-        setBotVerified(true);
-      }
+    if (params.get("bot_added") === "true") {
+      setShowSuccess(true);
+      if (params.get("bot_verified") === "true") setBotVerified(true);
       
-      // Refetch guilds after bot is added
-      const timer = setTimeout(() => {
-        handleRefetch();
-      }, 1500);
-
-      // Limpa a URL de forma segura
+      // Limpa a URL e recarrega a lista
       window.history.replaceState({}, document.title, window.location.pathname);
-      
-      return () => clearTimeout(timer);
+      setTimeout(() => refetchGuilds(), 1000);
     }
-  }, [handleRefetch]);
+  }, [refetchGuilds]);
 
+  // Redireciona para login se não autenticado
   useEffect(() => {
     if (!loading && !isAuthenticated) {
       navigate("/");
     }
   }, [isAuthenticated, loading, navigate]);
 
-  // Redireciona se não houver servidores
-  useEffect(() => {
-    if (!guildsLoading && isAuthenticated && memoizedGuilds.length === 0) {
-      const timer = setTimeout(() => {
-        window.location.href = getBotInviteUrl();
-      }, 1500);
-      return () => clearTimeout(timer);
-    }
-  }, [memoizedGuilds, guildsLoading, isAuthenticated]);
-
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-          <p className="text-muted-foreground text-sm">Loading...</p>
-        </div>
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
-  const getInitials = (name: string) =>
-    name
-      .split(" ")
-      .map(w => w[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
+  const getInitials = (name: string) => name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
 
   return (
-    <div className="min-h-screen bg-background flex">
-      {/* Success Message */}
-      {showSuccessMessage && (
-        <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-top duration-300">
-          <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4 flex items-center gap-3 shadow-lg backdrop-blur-md">
-            <CheckCircle size={20} className="text-green-500" />
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-green-500">
-                {botVerified ? "Bot adicionado com sucesso!" : "Bot adicionado!"}
-              </p>
-              {botVerified && (
-                <p className="text-xs text-green-400">Seu acesso foi liberado automaticamente</p>
-              )}
-            </div>
-            <button 
-              onClick={() => setShowSuccessMessage(false)}
-              className="text-green-500/50 hover:text-green-500 transition-colors"
-            >
-              <X size={16} />
-            </button>
+    <div className="min-h-screen bg-background flex flex-col md:flex-row">
+      {/* Mensagem de Sucesso */}
+      {showSuccess && (
+        <div className="fixed top-4 right-4 z-50 bg-green-600 text-white p-4 rounded-lg shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4">
+          <CheckCircle size={20} />
+          <div>
+            <p className="font-bold text-sm">Bot Adicionado!</p>
+            {botVerified && <p className="text-xs opacity-90">Acesso liberado com sucesso.</p>}
           </div>
+          <button onClick={() => setShowSuccess(false)} className="ml-2 hover:bg-white/20 rounded p-1">
+            <X size={16} />
+          </button>
         </div>
       )}
 
       {/* Sidebar */}
-      <div className="w-80 border-r border-border bg-card/30 backdrop-blur-sm flex flex-col">
-        {/* Header */}
-        <div className="p-4 border-b border-border">
-          <div className="flex items-center gap-3 mb-4">
-            <Avatar className="w-10 h-10">
-              {user?.avatar && (
-                <AvatarImage src={user.avatar} alt={user?.name || "User"} />
-              )}
-              <AvatarFallback className="bg-primary/10 text-primary font-bold">
-                {getInitials(user?.name || "User")}
-              </AvatarFallback>
+      <div className="w-full md:w-80 border-r border-border bg-card flex flex-col h-screen">
+        <div className="p-4 border-b border-border flex items-center justify-between">
+          <div className="flex items-center gap-3 overflow-hidden">
+            <Avatar className="h-9 w-9">
+              <AvatarImage src={user?.avatar || ""} />
+              <AvatarFallback>{getInitials(user?.name || "U")}</AvatarFallback>
             </Avatar>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs text-muted-foreground">
-                {t("servers.loggedInAs")}
-              </p>
-              <p className="text-sm font-semibold text-foreground truncate">
-                {user?.name || "User"}
-              </p>
+            <div className="truncate">
+              <p className="text-xs text-muted-foreground">Logado como</p>
+              <p className="text-sm font-bold truncate">{user?.name}</p>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={logout}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <LogOut size={16} />
-            </Button>
           </div>
+          <Button variant="ghost" size="icon" onClick={logout} title="Sair">
+            <LogOut size={18} />
+          </Button>
         </div>
 
-        {/* Servers List */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto p-2 space-y-1">
           {guildsLoading ? (
-            <div className="p-4 space-y-2">
-              {[1, 2, 3, 4, 5].map(i => (
-                <div key={i} className="h-12 bg-muted rounded animate-pulse" />
-              ))}
+            <div className="space-y-2 p-2">
+              {[1, 2, 3].map(i => <div key={i} className="h-14 bg-muted animate-pulse rounded-lg" />)}
             </div>
-          ) : memoizedGuilds.length > 0 ? (
-            <div className="p-2 space-y-1">
-              {memoizedGuilds.map(
-                (guild: { id: string; name: string; icon: string | null }) => (
-                  <button
-                    key={guild.id}
-                    onClick={() => (guild as any).botPresent ? navigate(`/dashboard/${guild.id}`) : window.location.href = getBotInviteUrl()}
-                    className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-primary/10 transition-colors text-left group"
-                  >
-                    <Avatar className="w-10 h-10 rounded-lg flex-shrink-0">
-                      {guild.icon && (
-                        <AvatarImage
-                          src={`https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png`}
-                          alt={guild.name}
-                        />
-                      )}
-                      <AvatarFallback className="rounded-lg bg-primary/10 text-primary font-bold text-xs">
-                        {getInitials(guild.name)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">
-                        {guild.name}
-                      </p>
-                      {!(guild as any).botPresent && (
-                        <p className="text-[10px] text-amber-500 font-medium">Clique para adicionar o bot</p>
-                      )}
-                    </div>
-                    {(guild as any).botPresent ? (
-                      <ChevronRight
-                        size={16}
-                        className="text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0"
-                      />
-                    ) : (
-                      <Plus
-                        size={16}
-                        className="text-amber-500 group-hover:scale-110 transition-transform flex-shrink-0"
-                      />
-                    )}
-                  </button>
-                )
-              )}
-            </div>
-          ) : (
-            <div className="p-4 text-center">
-              <p className="text-xs text-muted-foreground mb-3">
-                {t("servers.noServers")}
-              </p>
-                <a
-                  href={getBotInviteUrl()}
-                >
-                  <Button size="sm" variant="outline" className="w-full gap-2">
-                    <Plus size={14} />
-                    {t("servers.addServer")}
-                  </Button>
-                </a>
-              </div>
-            )}
-          </div>
-  
-          {/* Add Server Button */}
-          <div className="p-2 border-t border-border">
-            <a
-              href={getBotInviteUrl()}
-              className="block"
-            >
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full justify-center gap-2 text-primary hover:bg-primary/10"
+          ) : (guilds ?? []).length > 0 ? (
+            guilds?.map((guild: any) => (
+              <button
+                key={guild.id}
+                onClick={() => guild.botPresent ? navigate(`/dashboard/${guild.id}`) : window.location.href = botInviteUrl}
+                className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-primary/10 transition-all text-left group border border-transparent hover:border-primary/20"
               >
-                <Plus size={16} />
-                {t("servers.addAServer")}
+                <Avatar className="h-10 w-10 rounded-lg">
+                  <AvatarImage src={guild.icon ? `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png` : ""} />
+                  <AvatarFallback className="rounded-lg">{getInitials(guild.name)}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold truncate group-hover:text-primary">{guild.name}</p>
+                  {!guild.botPresent && <p className="text-[10px] text-amber-500 font-medium flex items-center gap-1"><AlertCircle size={10}/> Adicionar Bot</p>}
+                </div>
+                {guild.botPresent ? <ChevronRight size={16} className="text-muted-foreground" /> : <Plus size={16} className="text-amber-500" />}
+              </button>
+            ))
+          ) : (
+            <div className="p-6 text-center space-y-4">
+              <p className="text-sm text-muted-foreground">Nenhum servidor com o bot encontrado.</p>
+              <Button asChild className="w-full" variant="default">
+                <a href={botInviteUrl}>Adicionar Bot</a>
               </Button>
-            </a>
-          </div>
+            </div>
+          )}
         </div>
-  
-        {/* Main Content */}
-        <div className="flex-1 flex items-center justify-center px-4 py-12">
-          <div className="w-full max-w-md">
-            {memoizedGuilds.length > 0 ? (
-              <div className="text-center">
-                <h1 className="text-2xl font-bold text-foreground mb-2">
-                  {t("servers.selectServer")}
-                </h1>
-                <p className="text-muted-foreground text-sm mb-8">
-                  {t("servers.selectServerDesc")}
-                </p>
-                <div className="p-6 rounded-lg bg-card border border-border">
-                  <p className="text-muted-foreground text-sm">
-                    👈 Selecione um servidor ao lado para começar
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center">
-                <div className="w-16 h-16 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto mb-4">
-                  <Plus size={32} className="text-primary" />
-                </div>
-                <h1 className="text-2xl font-bold text-foreground mb-2">
-                  {t("servers.noServersYet")}
-                </h1>
-                <p className="text-muted-foreground text-sm mb-6">
-                  {t("servers.noServersDesc")}
-                </p>
-                <a
-                  href={getBotInviteUrl()}
-                >
-                  <Button className="gap-2">
-                    <Plus size={16} />
-                    {t("servers.addBotToServer")}
-                  </Button>
-                </a>
-              </div>
-            )}
+
+        <div className="p-4 border-t border-border">
+          <Button asChild variant="outline" className="w-full gap-2 border-primary/20 text-primary hover:bg-primary/5">
+            <a href={botInviteUrl}><Plus size={16} /> Adicionar a outro servidor</a>
+          </Button>
+        </div>
+      </div>
+
+      {/* Main Area */}
+      <div className="flex-1 flex items-center justify-center p-8 bg-muted/30">
+        <div className="max-w-md w-full text-center space-y-6">
+          <div className="bg-primary/10 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto border border-primary/20">
+            <CheckCircle size={40} className="text-primary" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Bem-vindo ao Painel</h1>
+            <p className="text-muted-foreground mt-2">Selecione um servidor na barra lateral para começar a configurar seu bot.</p>
+          </div>
+          {(guilds ?? []).length === 0 && !guildsLoading && (
+            <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-600 text-sm">
+              Parece que você ainda não tem o bot em nenhum servidor que administra. 
+              <a href={botInviteUrl} className="block mt-2 font-bold underline">Clique aqui para adicionar agora</a>
+            </div>
+          )}
         </div>
       </div>
     </div>
