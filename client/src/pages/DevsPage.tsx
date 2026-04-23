@@ -100,6 +100,36 @@ export default function DevsPage() {
     { enabled: !!activeGuildId }
   );
 
+  // Dev Management Queries
+  const { data: devsList } = trpc.devManagement.list.useQuery(undefined, {
+    retry: false,
+  });
+
+  const { data: auditLogs } = trpc.devManagement.auditLogs.useQuery(
+    { limit: 50 },
+    { enabled: !!session }
+  );
+
+  // Logs Config Queries
+  const { data: logsConfig } = trpc.logsConfig.getConfig.useQuery(
+    { guildId: activeGuildId || "" },
+    { enabled: !!activeGuildId }
+  );
+
+  const { data: guildLogs } = trpc.logsConfig.getLogs.useQuery(
+    { guildId: activeGuildId || "", limit: 50 },
+    { enabled: !!activeGuildId }
+  );
+
+  // Mutations
+  const createDevMutation = trpc.devManagement.create.useMutation();
+  const updateDevRoleMutation = trpc.devManagement.updateRole.useMutation();
+  const removeDevMutation = trpc.devManagement.remove.useMutation();
+  const removeBotMutation = trpc.guildManagement.removeBot.useMutation();
+  const updateLogsConfigMutation = trpc.logsConfig.updateConfig.useMutation();
+  const sendLocalMessageMutation = trpc.messages.sendLocal.useMutation();
+  const sendGlobalMessageMutation = trpc.broadcast.sendGlobal.useMutation();
+
   // Verificar se o usuario esta autenticado via Discord OAuth2
   useEffect(() => {
     if (!user) {
