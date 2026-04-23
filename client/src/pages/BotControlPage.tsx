@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Send, Power, AlertTriangle } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
 export default function BotControlPage() {
@@ -46,12 +46,22 @@ export default function BotControlPage() {
     }
   );
 
+  // Sincronizar estado do bot com as configurações salvas
+  useEffect(() => {
+    if (settings) {
+      setBotEnabled(settings.botEnabled ?? true);
+      setMaintenanceMode((settings as any).maintenanceMode ?? false);
+    }
+  }, [settings]);
+
   const sendTestMutation = trpc.settings.testMessage.useMutation({
     onSuccess: () => {
-      toast.success("✅ Mensagem de teste enviada com sucesso!");
+      const channelName = channels?.find(ch => ch.id === selectedChannel)?.name || "canal";
+      toast.success(`✅ Mensagem enviada para #${channelName}!`);
       setTestMessage("");
     },
     onError: (error: any) => {
+      console.error("Erro ao enviar mensagem:", error);
       toast.error(`❌ Erro ao enviar: ${error.message || "Tente novamente"}`);
     },
   });
@@ -71,6 +81,11 @@ export default function BotControlPage() {
       return;
     }
 
+    const selectedChannelName = channels?.find(ch => ch.id === selectedChannel)?.name || "desconhecido";
+    
+    console.log(`📤 Enviando mensagem para canal: #${selectedChannelName} (ID: ${selectedChannel})`);
+    console.log(`📝 Mensagem: ${testMessage}`);
+    
     sendTestMutation.mutate({
       guildId: guildId || "",
       channelId: selectedChannel,
@@ -80,19 +95,21 @@ export default function BotControlPage() {
 
   const handleToggleBot = () => {
     if (!guildId) return;
-    setBotEnabled(!botEnabled);
+    const newState = !botEnabled;
+    setBotEnabled(newState);
     updateSettingsMutation.mutate({
       guildId,
-      botEnabled: !botEnabled,
+      botEnabled: newState,
     });
   };
 
   const handleToggleMaintenance = () => {
     if (!guildId) return;
-    setMaintenanceMode(!maintenanceMode);
+    const newState = !maintenanceMode;
+    setMaintenanceMode(newState);
     updateSettingsMutation.mutate({
       guildId,
-      maintenanceMode: !maintenanceMode,
+      maintenanceMode: newState,
     });
   };
 
@@ -127,6 +144,7 @@ export default function BotControlPage() {
                 onClick={handleToggleBot}
                 variant={botEnabled ? "destructive" : "default"}
                 size="sm"
+                disabled={updateSettingsMutation.isPending}
               >
                 {botEnabled ? "Desativar" : "Ativar"}
               </Button>
@@ -154,6 +172,7 @@ export default function BotControlPage() {
                 onClick={handleToggleMaintenance}
                 variant={maintenanceMode ? "default" : "outline"}
                 size="sm"
+                disabled={updateSettingsMutation.isPending}
               >
                 {maintenanceMode ? "Desativar" : "Ativar"}
               </Button>
@@ -185,13 +204,29 @@ export default function BotControlPage() {
                 <SelectValue placeholder="Escolha um canal..." />
               </SelectTrigger>
               <SelectContent>
-                {channels?.map((channel) => (
-                  <SelectItem key={channel.id} value={channel.id}>
-                    #{channel.name}
-                  </SelectItem>
-                ))}
+                {!channels || channels.length === 0 ? (
+                  <div className="p-2 text-sm text-muted-foreground">
+                    Nenhum canal encontrado
+                  </div>
+                ) : (
+                  channels.map((channel) => (
+                    <SelectItem key={channel.id} value={channel.id}>
+                      #{channel.name}
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
+            {selectedChannel && (
+              <div className="p-2 rounded bg-green-500/10 border border-green-500/30">
+                <p className="text-xs text-green-600 font-medium">
+                  ✓ Canal selecionado: <strong>#{channels?.find(ch => ch.id === selectedChannel)?.name}</strong>
+                </p>
+                <p className="text-[10px] text-green-600/70 mt-1">
+                  ID: {selectedChannel}
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Message Textarea */}
@@ -204,15 +239,20 @@ export default function BotControlPage() {
               placeholder="Digite a mensagem de teste..."
               className="min-h-[100px]"
             />
-            <p className="text-xs text-muted-foreground">
-              Máximo de 2000 caracteres (limite do Discord)
-            </p>
+            <div className="flex justify-between items-center">
+              <p className="text-xs text-muted-foreground">
+                Máximo de 2000 caracteres (limite do Discord)
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {testMessage.length}/2000
+              </p>
+            </div>
           </div>
 
           {/* Send Button */}
           <Button
             onClick={handleSendTest}
-            disabled={sendTestMutation.isPending || !selectedChannel}
+            disabled={sendTestMutation.isPending || !selectedChannel || !testMessage.trim()}
             className="w-full gap-2"
           >
             <Send size={16} />
@@ -227,6 +267,8 @@ export default function BotControlPage() {
         <AlertDescription>
           <p className="font-semibold mb-2">💡 Dicas:</p>
           <ul className="text-sm space-y-1 list-disc list-inside">
+            <li>Selecione o canal onde deseja enviar a mensagem de teste</li>
+            <li>O ID do canal é capturado automaticamente e enviado ao bot</li>
             <li>Use o teste para validar que o bot está respondendo corretamente</li>
             <li>Desative o bot se precisar fazer manutenção ou atualizações</li>
             <li>O modo de manutenção notifica os usuários sobre indisponibilidade temporária</li>
