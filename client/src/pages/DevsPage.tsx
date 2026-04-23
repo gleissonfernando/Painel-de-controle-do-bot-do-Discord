@@ -25,6 +25,7 @@ import {
   Bell,
   Globe,
   ChevronDown,
+  Server,
 } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
