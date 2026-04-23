@@ -1,38 +1,56 @@
-import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
-import { useAuth } from "@/_core/hooks/useAuth";
-import { 
-  Bell, 
-  Save, 
-  AlertCircle, 
-  Hash, 
-  User, 
-  Clock,
-  CheckCircle2
-} from "lucide-react";
+import { useParams } from "wouter";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { 
+  AlertCircle, 
+  Bell, 
+  CheckCircle2, 
+  Info, 
+  ShieldCheck,
+  User,
+  Calendar
+} from "lucide-react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 
-interface AlertBotPageProps {
-  guildId: string;
-}
-
-export default function AlertBotPage({ guildId }: AlertBotPageProps) {
-  const { user } = useAuth();
+export default function AlertBotPage() {
+  const { guildId } = useParams<{ guildId: string }>();
+  const [alertChannelId, setAlertChannelId] = useState<string>("");
   const utils = trpc.useUtils();
 
-  const { data: settings, isLoading: settingsLoading } = trpc.settings.get.useQuery({ guildId });
-  const { data: channels, isLoading: channelsLoading } = trpc.guilds.channels.useQuery({ guildId });
+  const { data: settings, isLoading: settingsLoading } = trpc.settings.get.useQuery(
+    { guildId: guildId || "" },
+    { enabled: !!guildId }
+  );
 
-  const [alertChannelId, setAlertChannelId] = useState<string>("");
+  const { data: channels, isLoading: channelsLoading } = trpc.guilds.channels.useQuery(
+    { guildId: guildId || "" },
+    { enabled: !!guildId }
+  );
 
   const updateMutation = trpc.settings.update.useMutation({
     onSuccess: () => {
-      toast.success("Configurações de alerta atualizadas!");
+      toast.success("✅ Canal de alerta configurado com sucesso!");
       utils.settings.get.invalidate({ guildId });
     },
     onError: (error) => {
-      toast.error(`Erro ao salvar: ${error.message}`);
+      toast.error(`❌ Erro ao salvar: ${error.message}`);
     },
   });
 
@@ -43,8 +61,9 @@ export default function AlertBotPage({ guildId }: AlertBotPageProps) {
   }, [settings]);
 
   const handleSave = () => {
+    if (!guildId) return;
     if (!alertChannelId) {
-      toast.error("Selecione um canal de alerta!");
+      toast.error("⚠️ Selecione um canal de alerta!");
       return;
     }
 
@@ -58,7 +77,6 @@ export default function AlertBotPage({ guildId }: AlertBotPageProps) {
   };
 
   const isLoading = settingsLoading || channelsLoading;
-  const selectedChannel = channels?.find(c => c.id === alertChannelId);
 
   if (isLoading) {
     return (
@@ -70,124 +88,121 @@ export default function AlertBotPage({ guildId }: AlertBotPageProps) {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <Bell className="text-primary" size={24} />
+          <h1 className="text-3xl font-bold text-primary flex items-center gap-2">
+            <Bell size={32} />
             Alerta Bot
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Configure o canal onde o bot enviará avisos e notificações importantes.
-          </p>
+          <p className="text-muted-foreground">Configure onde o bot enviará avisos e notificações importantes</p>
         </div>
-        <Button 
-          onClick={handleSave} 
-          disabled={updateMutation.isLoading}
-          className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
-        >
-          <Save size={18} />
-          Salvar Alterações
-        </Button>
+        <Badge variant="outline" className="border-primary text-primary px-3 py-1">
+          Configuração de Canal
+        </Badge>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Config */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
-            <div className="flex items-center gap-2 mb-6">
-              <Hash size={18} className="text-primary" />
-              <h2 className="font-semibold text-foreground">Canal de Texto</h2>
-            </div>
+      {!settings?.alertChannelId && (
+        <Alert className="bg-yellow-500/10 border-yellow-500/50 text-yellow-600">
+          <AlertCircle className="h-5 w-5" />
+          <AlertTitle className="font-bold">Atenção!</AlertTitle>
+          <AlertDescription>
+            Este servidor ainda não possui canal de alerta configurado. Selecione um canal abaixo para receber avisos do bot.
+          </AlertDescription>
+        </Alert>
+      )}
 
+      <div className="grid gap-6 lg:grid-cols-3">
+        <Card className="lg:col-span-2 border-border bg-card shadow-sm">
+          <CardHeader className="border-b border-border/50">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-primary" />
+              Seleção de Canal
+            </CardTitle>
+            <CardDescription>Escolha o canal de texto oficial para o bot</CardDescription>
+          </Header>
+          <CardContent className="pt-6 space-y-6">
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1.5">
-                  Selecionar Canal
-                </label>
-                <select
-                  value={alertChannelId}
-                  onChange={(e) => setAlertChannelId(e.target.value)}
-                  className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors"
-                >
-                  <option value="">Selecione um canal...</option>
-                  {channels?.filter(c => c.type === 0).map((channel) => (
-                    <option key={channel.id} value={channel.id}>
-                      #{channel.name}
-                    </option>
-                  ))}
-                </select>
-                <p className="text-xs text-muted-foreground mt-2 flex items-start gap-1.5">
-                  <AlertCircle size={12} className="mt-0.5 shrink-0" />
-                  O bot enviará mensagens globais e alertas de manutenção apenas neste canal.
-                </p>
-              </div>
-
-              {alertChannelId && (
-                <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg flex items-center gap-3">
-                  <div className="p-2 bg-primary/10 rounded-full">
-                    <CheckCircle2 className="text-primary" size={20} />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-foreground">Canal Configurado</p>
-                    <p className="text-xs text-muted-foreground">
-                      O bot está pronto para enviar alertas em <span className="text-primary font-bold">#{selectedChannel?.name}</span>
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Info Card */}
-          <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-6">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="text-amber-500 shrink-0" size={20} />
               <div className="space-y-2">
-                <h3 className="text-sm font-bold text-amber-500 uppercase tracking-wider">Importante</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Se este canal não for configurado, este servidor será <span className="text-foreground font-bold">pulado</span> durante o envio de mensagens globais. Certifique-se de que o bot tenha permissão para enviar mensagens no canal selecionado.
+                <label className="text-sm font-medium">Canal de Texto</label>
+                <Select value={alertChannelId} onValueChange={setAlertChannelId}>
+                  <SelectTrigger className="bg-input border-border h-12">
+                    <SelectValue placeholder="Selecione um canal..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {channels?.filter(c => c.type === 0).map((channel) => (
+                      <SelectItem key={channel.id} value={channel.id}>
+                        #{channel.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  O bot enviará mensagens globais e avisos de manutenção neste canal.
                 </p>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Sidebar Info */}
+            <Button 
+              onClick={handleSave}
+              disabled={updateMutation.isPending}
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-12 text-lg font-bold shadow-lg shadow-primary/20"
+            >
+              {updateMutation.isPending ? "Salvando..." : "Salvar Configuração"}
+            </Button>
+          </CardContent>
+        </Card>
+
         <div className="space-y-6">
-          <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
-            <h3 className="font-semibold text-foreground mb-4">Informações do Registro</h3>
-            <div className="space-y-4">
+          <Card className="border-border bg-card shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                Status Atual
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-muted rounded-lg">
+                  <Bell size={16} className="text-muted-foreground" />
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold">Canal Ativo</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {settings?.alertChannelName ? `#${settings.alertChannelName}` : "Não configurado"}
+                  </p>
+                </div>
+              </div>
+
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-muted rounded-lg">
                   <User size={16} className="text-muted-foreground" />
                 </div>
                 <div>
                   <p className="text-[10px] text-muted-foreground uppercase font-bold">Configurado por</p>
-                  <p className="text-sm font-medium text-foreground">{settings?.configuredBy || "N/A"}</p>
+                  <p className="text-sm font-medium text-foreground">{settings?.updatedBy || "N/A"}</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-muted rounded-lg">
-                  <Clock size={16} className="text-muted-foreground" />
+                  <Calendar size={16} className="text-muted-foreground" />
                 </div>
                 <div>
                   <p className="text-[10px] text-muted-foreground uppercase font-bold">Última Atualização</p>
                   <p className="text-sm font-medium text-foreground">
-                    {settings?.updatedAt ? new Date(settings.updatedAt).toLocaleString('pt-BR') : "Nunca"}
+                    {settings?.updatedAt ? new Date(settings.updatedAt).toLocaleDateString("pt-BR") : "N/A"}
                   </p>
                 </div>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
-          <div className="bg-primary/5 border border-primary/10 rounded-xl p-6">
-            <h3 className="text-sm font-bold text-primary mb-2">Dica</h3>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Recomendamos criar um canal exclusivo chamado <code className="bg-primary/10 text-primary px-1 rounded">#avisos-bot</code> para manter seus membros informados sem poluir outros canais.
-            </p>
-          </div>
+          <Alert className="bg-primary/5 border-primary/20">
+            <Info className="h-5 w-5 text-primary" />
+            <AlertTitle className="text-primary font-bold">Importante</AlertTitle>
+            <AlertDescription className="text-xs text-muted-foreground leading-relaxed">
+              As mensagens globais e avisos de manutenção **só serão enviados** se este canal estiver configurado corretamente.
+            </AlertDescription>
+          </Alert>
         </div>
       </div>
     </div>

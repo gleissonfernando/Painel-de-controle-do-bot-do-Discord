@@ -34,55 +34,63 @@ const UserSchema = new Schema<IUser>(
 
 export const User = mongoose.model<IUser>("User", UserSchema);
 
-// --- Guild Settings ---
-export interface IGuildSettings extends Document {
+// --- Guild Config (Antigo GuildSettings) ---
+export interface IGuildConfig extends Document {
   guildId: string;
   guildName?: string;
   guildIcon?: string;
   ownerId?: string;
-  prefix: string;
-  language: string;
-  timezone: string;
-  adminRoleId?: string;
-  welcomeChannelId?: string;
-  logsChannelId?: string;
-  botToken?: string;
-  botEnabled: boolean;
-  maintenanceMode: boolean;
+  alertChannelId: string | null;
+  alertChannelName: string | null;
   maintenanceEnabled: boolean;
-  alertChannelId?: string;
-  alertChannelName?: string;
-  configuredBy?: string;
-  maintenanceMessage?: string;
-  createdAt: Date;
+  maintenanceMessage: string;
+  maintenanceVideoUrl: string | null;
+  updatedBy: string;
   updatedAt: Date;
 }
 
-const GuildSettingsSchema = new Schema<IGuildSettings>(
+const GuildConfigSchema = new Schema<IGuildConfig>(
   {
     guildId: { type: String, required: true, unique: true },
     guildName: String,
     guildIcon: String,
     ownerId: String,
-    prefix: { type: String, default: "!" },
-    language: { type: String, default: "en" },
-    timezone: { type: String, default: "UTC" },
-    adminRoleId: String,
-    welcomeChannelId: String,
-    logsChannelId: String,
-    botToken: String,
-    botEnabled: { type: Boolean, default: true },
-    maintenanceMode: { type: Boolean, default: false },
+    alertChannelId: { type: String, default: null },
+    alertChannelName: { type: String, default: null },
     maintenanceEnabled: { type: Boolean, default: false },
-    alertChannelId: String,
-    alertChannelName: String,
-    configuredBy: String,
-    maintenanceMessage: { type: String, default: "Sistema em manutenção" },
+    maintenanceMessage: { type: String, default: "⚠️ O bot está em manutenção. Aguarde, já voltamos." },
+    maintenanceVideoUrl: { type: String, default: null },
+    updatedBy: String,
   },
   { timestamps: true }
 );
 
-export const GuildSettings = mongoose.model<IGuildSettings>("GuildSettings", GuildSettingsSchema);
+export const GuildConfig = mongoose.model<IGuildConfig>("GuildConfig", GuildConfigSchema);
+
+// --- Global Config ---
+export interface IGlobalConfig extends Document {
+  maintenanceGlobalEnabled: boolean;
+  maintenanceMessage: string;
+  maintenanceVideoUrl: string | null;
+  updatedBy: string;
+  updatedAt: Date;
+}
+
+const GlobalConfigSchema = new Schema<IGlobalConfig>(
+  {
+    maintenanceGlobalEnabled: { type: Boolean, default: false },
+    maintenanceMessage: { type: String, default: "⚠️ O bot está em manutenção global. Aguarde, já voltamos." },
+    maintenanceVideoUrl: { type: String, default: null },
+    updatedBy: String,
+  },
+  { timestamps: true }
+);
+
+export const GlobalConfig = mongoose.model<IGlobalConfig>("GlobalConfig", GlobalConfigSchema);
+
+// --- Manter compatibilidade com modelos antigos se necessário ---
+export const GuildSettings = GuildConfig;
+export const MaintenanceSettings = GuildConfig;
 
 // --- Auto Moderation ---
 export interface IAutoModSettings extends Document {
@@ -128,40 +136,6 @@ const AutoModSettingsSchema = new Schema<IAutoModSettings>(
 
 export const AutoModSettings = mongoose.model<IAutoModSettings>("AutoModSettings", AutoModSettingsSchema);
 
-// --- Social Notifications ---
-export interface ISocialNotification extends Document {
-  guildId: string;
-  platform: "youtube" | "twitch" | "tiktok";
-  channelUsername: string;
-  channelId?: string;
-  channelDisplayName?: string;
-  discordChannelId: string;
-  message?: string;
-  enabled: boolean;
-  isLive: boolean;
-  lastNotifiedAt?: Date;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-const SocialNotificationSchema = new Schema<ISocialNotification>(
-  {
-    guildId: { type: String, required: true },
-    platform: { type: String, enum: ["youtube", "twitch", "tiktok"], required: true },
-    channelUsername: { type: String, required: true },
-    channelId: String,
-    channelDisplayName: String,
-    discordChannelId: { type: String, required: true },
-    message: String,
-    enabled: { type: Boolean, default: true },
-    isLive: { type: Boolean, default: false },
-    lastNotifiedAt: Date,
-  },
-  { timestamps: true }
-);
-
-export const SocialNotification = mongoose.model<ISocialNotification>("SocialNotification", SocialNotificationSchema);
-
 // --- Server Logs ---
 export interface IServerLog extends Document {
   guildId: string;
@@ -194,32 +168,6 @@ const ServerLogSchema = new Schema<IServerLog>(
 );
 
 export const ServerLog = mongoose.model<IServerLog>("ServerLog", ServerLogSchema);
-
-// --- Command Settings ---
-export interface ICommandSetting extends Document {
-  guildId: string;
-  commandName: string;
-  enabled: boolean;
-  cooldown: number;
-  requiredRoleId?: string;
-  allowedChannels: string[];
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-const CommandSettingSchema = new Schema<ICommandSetting>(
-  {
-    guildId: { type: String, required: true },
-    commandName: { type: String, required: true },
-    enabled: { type: Boolean, default: true },
-    cooldown: { type: Number, default: 0 },
-    requiredRoleId: String,
-    allowedChannels: { type: [String], default: [] },
-  },
-  { timestamps: true }
-);
-
-export const CommandSetting = mongoose.model<ICommandSetting>("CommandSetting", CommandSettingSchema);
 
 // --- Welcome Messages ---
 export interface IWelcomeMessage extends Document {
@@ -256,72 +204,6 @@ const WelcomeMessageSchema = new Schema<IWelcomeMessage>(
 );
 
 export const WelcomeMessage = mongoose.model<IWelcomeMessage>("WelcomeMessage", WelcomeMessageSchema);
-
-// --- Dev Audit Log ---
-export interface IDevAuditLog extends Document {
-  devUserId: string;
-  action: string;
-  details: Record<string, any>;
-  timestamp: Date;
-}
-
-const DevAuditLogSchema = new Schema<IDevAuditLog>(
-  {
-    devUserId: { type: String, required: true },
-    action: { type: String, required: true },
-    details: { type: Schema.Types.Mixed, default: {} },
-    timestamp: { type: Date, default: Date.now },
-  },
-  { timestamps: false }
-);
-
-export const DevAuditLog = mongoose.model<IDevAuditLog>("DevAuditLog", DevAuditLogSchema);
-
-// --- Guild Removal Log ---
-export interface IGuildRemovalLog extends Document {
-  guildId: string;
-  guildName?: string;
-  removedBy: string;
-  reason?: string;
-  timestamp: Date;
-}
-
-const GuildRemovalLogSchema = new Schema<IGuildRemovalLog>(
-  {
-    guildId: { type: String, required: true },
-    guildName: String,
-    removedBy: { type: String, required: true },
-    reason: String,
-    timestamp: { type: Date, default: Date.now },
-  },
-  { timestamps: false }
-);
-
-export const GuildRemovalLog = mongoose.model<IGuildRemovalLog>("GuildRemovalLog", GuildRemovalLogSchema);
-
-// --- Maintenance Settings ---
-export interface IMaintenanceSettings extends Document {
-  guildId: string;
-  maintenanceEnabled: boolean;
-  alertChannelId?: string;
-  alertMessage?: string;
-  mediaUrl?: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-const MaintenanceSettingsSchema = new Schema<IMaintenanceSettings>(
-  {
-    guildId: { type: String, required: true, unique: true },
-    maintenanceEnabled: { type: Boolean, default: false },
-    alertChannelId: String,
-    alertMessage: { type: String, default: "Sistema em manutenção" },
-    mediaUrl: String,
-  },
-  { timestamps: true }
-);
-
-export const MaintenanceSettings = mongoose.model<IMaintenanceSettings>("MaintenanceSettings", MaintenanceSettingsSchema);
 
 // --- Dev Users ---
 export type DevRole = "master" | "creator" | "helper";

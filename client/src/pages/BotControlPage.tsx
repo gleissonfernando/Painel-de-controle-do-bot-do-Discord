@@ -1,4 +1,3 @@
-import { useLanguage } from "@/contexts/LanguageContext";
 import { trpc } from "@/lib/trpc";
 import { useParams } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -29,8 +28,9 @@ import {
   Settings2, 
   Globe, 
   Video,
-  CheckCircle2,
-  XCircle
+  Info,
+  MessageSquare,
+  ShieldAlert
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
@@ -46,25 +46,32 @@ export default function BotControlPage() {
   const isDeveloper = user?.openId === "761011766440230932";
 
   const [maintenanceEnabled, setMaintenanceEnabled] = useState(false);
+  const [maintenanceGlobalEnabled, setMaintenanceGlobalEnabled] = useState(false);
   const [alertMessage, setAlertMessage] = useState("⚠️ O bot está em manutenção. Aguarde, já voltamos.");
   const [mediaUrl, setMediaUrl] = useState("");
-  const [alertChannelId, setAlertChannelId] = useState("");
   const [isSending, setIsSending] = useState(false);
 
-  const { data: settings, isLoading: settingsLoading } = trpc.maintenance.getSettings.useQuery(
+  const { data: settings, isLoading: settingsLoading } = trpc.settings.get.useQuery(
     { guildId: guildId || "" },
     { enabled: !!guildId }
   );
 
-  const { data: channels } = trpc.guilds.channels.useQuery(
-    { guildId: guildId || "" },
-    { enabled: !!guildId }
-  );
+  const { data: globalConfig, isLoading: globalLoading } = trpc.maintenance.getGlobal.useQuery();
 
-  const updateSettingsMutation = trpc.maintenance.updateSettings.useMutation({
+  const updateSettingsMutation = trpc.settings.update.useMutation({
     onSuccess: () => {
-      toast.success("⚙️ Configurações de manutenção atualizadas!");
-      utils.maintenance.getSettings.invalidate({ guildId });
+      toast.success("✅ Configurações locais atualizadas!");
+      utils.settings.get.invalidate({ guildId });
+    },
+    onError: (error) => {
+      toast.error(`❌ Erro: ${error.message}`);
+    },
+  });
+
+  const updateGlobalMutation = trpc.maintenance.updateGlobal.useMutation({
+    onSuccess: () => {
+      toast.success("🌍 Configurações globais atualizadas!");
+      utils.maintenance.getGlobal.invalidate();
     },
     onError: (error) => {
       toast.error(`❌ Erro: ${error.message}`);
@@ -76,11 +83,16 @@ export default function BotControlPage() {
   useEffect(() => {
     if (settings) {
       setMaintenanceEnabled(settings.maintenanceEnabled);
-      setAlertMessage(settings.alertMessage || "⚠️ O bot está em manutenção. Aguarde, já voltamos.");
-      setMediaUrl(settings.mediaUrl || "");
-      setAlertChannelId(settings.alertChannelId || "");
+      setAlertMessage(settings.maintenanceMessage || "⚠️ O bot está em manutenção. Aguarde, já voltamos.");
+      setMediaUrl(settings.maintenanceVideoUrl || "");
     }
   }, [settings]);
+
+  useEffect(() => {
+    if (globalConfig) {
+      setMaintenanceGlobalEnabled(globalConfig.maintenanceGlobalEnabled);
+    }
+  }, [globalConfig]);
 
   if (!isDeveloper) {
     return (
@@ -102,24 +114,27 @@ export default function BotControlPage() {
     );
   }
 
-  const handleSaveSettings = () => {
+  const handleSaveLocal = () => {
     if (!guildId) return;
     updateSettingsMutation.mutate({
       guildId,
       maintenanceEnabled,
-      alertChannelId,
-      alertMessage,
-      mediaUrl,
+      maintenanceMessage: alertMessage,
+      maintenanceVideoUrl: mediaUrl,
+    });
+  };
+
+  const handleSaveGlobal = () => {
+    updateGlobalMutation.mutate({
+      maintenanceGlobalEnabled,
+      maintenanceMessage: alertMessage,
+      maintenanceVideoUrl: mediaUrl,
     });
   };
 
   const handleSendAlert = async (type: "local" | "global") => {
     if (!guildId) return;
-    if (!alertChannelId && type === "local") {
-      toast.error("⚠️ Selecione um canal de alerta para o envio local.");
-      return;
-    }
-
+    
     const confirmMsg = type === "local" 
       ? "Deseja enviar o aviso de manutenção para o servidor atual?"
       : "⚠️ AVISO: Enviar aviso de manutenção para TODOS os servidores com canal configurado?";
@@ -136,7 +151,9 @@ export default function BotControlPage() {
       });
       
       const successCount = results.filter((r: any) => r.success).length;
-      toast.success(`✅ Alerta enviado para ${successCount} servidor(es).`);
+      const skipCount = results.filter((r: any) => !r.success && r.error === "Canal de alerta não configurado").length;
+      
+      toast.success(`✅ Alerta enviado para ${successCount} servidor(es). ${skipCount} pulados.`);
     } catch (error: any) {
       toast.error(`❌ Erro ao disparar alerta: ${error.message}`);
     } finally {
@@ -144,7 +161,7 @@ export default function BotControlPage() {
     }
   };
 
-  if (settingsLoading) {
+  if (settingsLoading || globalLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
@@ -158,12 +175,12 @@ export default function BotControlPage() {
         <div>
           <h1 className="text-3xl font-bold text-primary flex items-center gap-2">
             <Settings2 size={32} />
-            Controle de Manutenção
+            Modo Controle
           </h1>
-          <p className="text-muted-foreground">Gerencie o estado operacional e avisos do bot</p>
+          <p className="text-muted-foreground">Gerencie o estado operacional e avisos de manutenção</p>
         </div>
         <Badge variant="outline" className="border-primary text-primary px-3 py-1">
-          Painel de Controle Master
+          Painel Master
         </Badge>
       </div>
 
@@ -175,19 +192,39 @@ export default function BotControlPage() {
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
                   <CardTitle className="text-lg flex items-center gap-2">
-                    <AlertTriangle className="h-5 w-5 text-yellow-500" />
+                    <ShieldAlert className="h-5 w-5 text-yellow-500" />
                     Estado de Manutenção
                   </CardTitle>
                   <CardDescription>O bot continuará online, mas bloqueará comandos</CardDescription>
                 </div>
-                <Switch 
-                  checked={maintenanceEnabled} 
-                  onCheckedChange={setMaintenanceEnabled}
-                  className="data-[state=checked]:bg-primary"
-                />
               </div>
             </CardHeader>
             <CardContent className="pt-6 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="flex items-center justify-between p-4 rounded-lg bg-muted/30 border border-border/50">
+                  <div className="space-y-0.5">
+                    <Label className="text-base">Manutenção Local</Label>
+                    <p className="text-xs text-muted-foreground">Apenas para este servidor</p>
+                  </div>
+                  <Switch 
+                    checked={maintenanceEnabled} 
+                    onCheckedChange={setMaintenanceEnabled}
+                    className="data-[state=checked]:bg-primary"
+                  />
+                </div>
+                <div className="flex items-center justify-between p-4 rounded-lg bg-primary/5 border border-primary/20">
+                  <div className="space-y-0.5">
+                    <Label className="text-base text-primary">Manutenção Global</Label>
+                    <p className="text-xs text-muted-foreground">Todos os servidores do bot</p>
+                  </div>
+                  <Switch 
+                    checked={maintenanceGlobalEnabled} 
+                    onCheckedChange={setMaintenanceGlobalEnabled}
+                    className="data-[state=checked]:bg-primary"
+                  />
+                </div>
+              </div>
+
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label>Mensagem de Manutenção</Label>
@@ -205,37 +242,29 @@ export default function BotControlPage() {
                     URL de Vídeo/Imagem (Opcional)
                   </Label>
                   <Input 
-                    value={mediaUrl}
+                    value={mediaUrl || ""}
                     onChange={(e) => setMediaUrl(e.target.value)}
                     placeholder="https://exemplo.com/video.mp4 ou imagem.png"
-                    className="bg-input border-border"
+                    className="bg-input border-border h-12"
                   />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Canal de Alerta (Local)</Label>
-                  <Select value={alertChannelId} onValueChange={setAlertChannelId}>
-                    <SelectTrigger className="bg-input border-border">
-                      <SelectValue placeholder="Selecione o canal para avisos" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {channels?.filter(c => c.type === 0).map((channel) => (
-                        <SelectItem key={channel.id} value={channel.id}>
-                          #{channel.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                 </div>
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex gap-4">
                 <Button 
-                  onClick={handleSaveSettings}
+                  onClick={handleSaveLocal}
                   disabled={updateSettingsMutation.isPending}
+                  variant="outline"
+                  className="flex-1 border-border hover:bg-muted"
+                >
+                  Salvar Local
+                </Button>
+                <Button 
+                  onClick={handleSaveGlobal}
+                  disabled={updateGlobalMutation.isPending}
                   className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
                 >
-                  Salvar Configurações
+                  Salvar Global
                 </Button>
               </div>
             </CardContent>
@@ -255,7 +284,7 @@ export default function BotControlPage() {
                 variant="outline" 
                 onClick={() => handleSendAlert("local")}
                 disabled={isSending}
-                className="flex-1 gap-2 border-primary/20 hover:bg-primary/5"
+                className="flex-1 gap-2 border-primary/20 hover:bg-primary/5 h-12"
               >
                 <MessageSquare size={18} />
                 Enviar Teste Local
@@ -263,7 +292,7 @@ export default function BotControlPage() {
               <Button 
                 onClick={() => handleSendAlert("global")}
                 disabled={isSending}
-                className="flex-1 gap-2 bg-yellow-600 hover:bg-yellow-700 text-white"
+                className="flex-1 gap-2 bg-yellow-600 hover:bg-yellow-700 text-white h-12"
               >
                 <Globe size={18} />
                 Ativar Manutenção Global
@@ -272,12 +301,14 @@ export default function BotControlPage() {
                 variant="destructive"
                 onClick={() => {
                   setMaintenanceEnabled(false);
-                  handleSaveSettings();
+                  setMaintenanceGlobalEnabled(false);
+                  handleSaveGlobal();
+                  handleSaveLocal();
                 }}
-                className="flex-1 gap-2"
+                className="flex-1 gap-2 h-12"
               >
                 <Power size={18} />
-                Desativar Manutenção
+                Desativar Tudo
               </Button>
             </CardContent>
           </Card>
@@ -322,31 +353,11 @@ export default function BotControlPage() {
               <p>• O bot **NUNCA** desliga durante a manutenção.</p>
               <p>• Comandos serão interceptados e responderão com o embed acima.</p>
               <p>• O envio global respeita apenas servidores com canal de alerta configurado.</p>
+              <p>• Se a manutenção global estiver ativa, ela sobrepõe a local.</p>
             </AlertDescription>
           </Alert>
         </div>
       </div>
     </div>
-  );
-}
-
-function Info(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="12" cy="12" r="10" />
-      <path d="M12 16v-4" />
-      <path d="M12 8h.01" />
-    </svg>
   );
 }

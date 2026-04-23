@@ -14,7 +14,9 @@ import {
   CheckCircle2, 
   XCircle, 
   SkipForward,
-  Info
+  Info,
+  History,
+  LayoutList
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
@@ -73,7 +75,7 @@ export default function DevsPage() {
     const targetCount = sendType === "local" ? 1 : guilds.length;
     const confirmMsg = sendType === "local" 
       ? `Deseja enviar esta mensagem para o canal de alerta do servidor selecionado?`
-      : `⚠️ AVISO: Você está prestes a enviar uma mensagem GLOBAL para ${guilds.length} servidor(es).\n\nApenas servidores com canal de alerta configurado receberão a mensagem.\n\nDeseja continuar?`;
+      : `⚠️ AVISO: Você está prestes a enviar uma mensagem GLOBAL para ${guilds.length} servidor(es).\n\nEsta mensagem será enviada apenas para servidores que possuem canal de alerta configurado. Servidores sem canal serão ignorados.\n\nDeseja continuar?`;
 
     if (!window.confirm(confirmMsg)) return;
 
@@ -134,8 +136,7 @@ export default function DevsPage() {
         <Info className="h-5 w-5 text-primary" />
         <AlertTitle className="text-primary font-bold">Como funciona?</AlertTitle>
         <AlertDescription className="text-muted-foreground">
-          As mensagens globais são enviadas **apenas** para os servidores que possuem um **Canal de Alerta** configurado. 
-          Servidores sem configuração serão automaticamente pulados para evitar erros e garantir a organização.
+          Esta mensagem será enviada apenas para servidores que possuem canal de alerta configurado. Servidores sem canal serão ignorados.
         </AlertDescription>
       </Alert>
 
@@ -154,7 +155,7 @@ export default function DevsPage() {
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Tipo de Envio</label>
                   <Select value={sendType} onValueChange={(v: any) => setSendType(v)}>
-                    <SelectTrigger className="bg-input border-border">
+                    <SelectTrigger className="bg-input border-border h-12">
                       <SelectValue placeholder="Selecione o tipo" />
                     </SelectTrigger>
                     <SelectContent>
@@ -168,7 +169,7 @@ export default function DevsPage() {
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Servidor Alvo</label>
                     <Select value={activeGuildId} onValueChange={setActiveGuildId}>
-                      <SelectTrigger className="bg-input border-border">
+                      <SelectTrigger className="bg-input border-border h-12">
                         <SelectValue placeholder="Selecione um servidor" />
                       </SelectTrigger>
                       <SelectContent>
@@ -207,23 +208,25 @@ export default function DevsPage() {
               </div>
             </div>
 
-            <Button
-              onClick={handleSendMessage}
-              disabled={isSending}
-              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-12 text-lg font-bold shadow-lg shadow-primary/20"
-            >
-              {isSending ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                  Enviando...
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <Send className="h-5 w-5" />
-                  {sendType === "local" ? "Enviar Teste Local" : "Disparar Mensagem Global"}
-                </div>
-              )}
-            </Button>
+            <div className="flex gap-4">
+              <Button
+                onClick={handleSendMessage}
+                disabled={isSending}
+                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground h-12 text-lg font-bold shadow-lg shadow-primary/20"
+              >
+                {isSending ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    Enviando...
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Send className="h-5 w-5" />
+                    {sendType === "local" ? "Enviar Teste Local" : "Disparar Mensagem Global"}
+                  </div>
+                )}
+              </Button>
+            </div>
 
             {isSending && (
               <div className="space-y-2 animate-in fade-in">
@@ -239,10 +242,11 @@ export default function DevsPage() {
 
         <div className="space-y-6">
           <Card className="border-border bg-card shadow-sm">
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
                 Histórico Recente
               </CardTitle>
+              <History className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent className="space-y-4">
               {history.length === 0 ? (
@@ -263,10 +267,11 @@ export default function DevsPage() {
 
           {broadcastResults.length > 0 && (
             <Card className="border-border bg-card shadow-sm max-h-[400px] overflow-hidden flex flex-col">
-              <CardHeader className="shrink-0">
+              <CardHeader className="shrink-0 flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
                   Relatório de Envio
                 </CardTitle>
+                <LayoutList className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent className="overflow-y-auto space-y-2 pt-0">
                 {broadcastResults.map((res, i) => (
