@@ -36,7 +36,11 @@ import {
   Bot,
   UserCheck,
   TrendingUp,
-  Zap
+  Zap,
+  Cpu,
+  HardDrive,
+  Terminal,
+  ChevronRight
 } from "lucide-react";
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -48,8 +52,9 @@ import {
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer,
-  LineChart,
-  Line
+  BarChart,
+  Bar,
+  Cell
 } from "recharts";
 
 export default function MonitorPage() {
@@ -70,17 +75,19 @@ export default function MonitorPage() {
   );
 
   const { data: status } = trpc.monitor.getStatus.useQuery(undefined, {
-    refetchInterval: 30000
+    refetchInterval: 10000
   });
 
   const { data: metrics } = trpc.monitor.getMetrics.useQuery(
     { service: activeService, hours: 6 },
-    { refetchInterval: 60000 }
+    { refetchInterval: 30000 }
   );
+
+  const { data: commands } = trpc.monitor.listCommands.useQuery();
 
   const { data: logs } = trpc.monitor.getLogs.useQuery(
     { guildId: guildId || "", limit: 20 },
-    { enabled: !!guildId, refetchInterval: 60000 }
+    { enabled: !!guildId, refetchInterval: 30000 }
   );
 
   useEffect(() => {
@@ -95,7 +102,8 @@ export default function MonitorPage() {
     return metrics.map(m => ({
       time: new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       latency: m.latency,
-      status: m.status === "Online" ? 1 : 0
+      cpu: m.cpu || 0,
+      ram: m.ram || 0
     }));
   }, [metrics]);
 
@@ -177,15 +185,17 @@ export default function MonitorPage() {
             <ShieldAlert size={40} className="text-primary drop-shadow-[0_0_10px_rgba(255,0,0,0.5)]" />
             NOC Magnatas
           </h1>
-          <p className="text-muted-foreground font-medium">Centro de Operações e Performance em Tempo Real</p>
+          <p className="text-muted-foreground font-medium uppercase tracking-widest text-[10px]">Monitoramento de Hardware e Comandos</p>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex flex-col items-end">
             <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Status Global</span>
-            <span className="text-sm font-black text-green-500 uppercase italic">Sistemas Operacionais</span>
+            <span className={`text-sm font-black uppercase italic ${status?.Bot?.status === "Online" ? "text-green-500" : "text-red-500"}`}>
+              {status?.Bot?.status === "Online" ? "Sistemas Operacionais" : "Sistemas Offline"}
+            </span>
           </div>
-          <div className="w-12 h-12 rounded-full border-2 border-green-500/20 flex items-center justify-center bg-green-500/5">
-            <Activity className="text-green-500 animate-pulse" size={24} />
+          <div className={`w-12 h-12 rounded-full border-2 flex items-center justify-center ${status?.Bot?.status === "Online" ? "border-green-500/20 bg-green-500/5" : "border-red-500/20 bg-red-500/5"}`}>
+            <Activity className={`${status?.Bot?.status === "Online" ? "text-green-500 animate-pulse" : "text-red-500"}`} size={24} />
           </div>
         </div>
       </div>
@@ -215,64 +225,104 @@ export default function MonitorPage() {
         ))}
       </div>
 
-      {/* Main Analytics Section */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-        {/* Real-Time Graph */}
-        <Card className="xl:col-span-2 bg-[#0A0A0A] border-border shadow-2xl overflow-hidden">
+      {/* Hardware Metrics (CPU/RAM) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card className="bg-[#0A0A0A] border-border shadow-2xl">
           <CardHeader className="bg-[#050505] border-b border-border/50 flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-xl flex items-center gap-2 text-white uppercase italic font-black">
-                <TrendingUp className="h-5 w-5 text-primary" />
-                Performance: {activeService}
-              </CardTitle>
-              <CardDescription className="text-[10px] font-bold uppercase tracking-widest">Latência em milissegundos (ms)</CardDescription>
+            <div className="flex items-center gap-3">
+              <Cpu className="text-primary" size={24} />
+              <div>
+                <CardTitle className="text-lg font-black text-white uppercase italic">Uso de CPU</CardTitle>
+                <CardDescription className="text-[10px] font-bold uppercase">Carga do Processador (%)</CardDescription>
+              </div>
             </div>
-            <Badge className="bg-primary/10 text-primary border-primary/20">Tempo Real</Badge>
+            <span className="text-2xl font-black text-primary italic">{status?.Dashboard?.cpu || 0}%</span>
           </CardHeader>
-          <CardContent className="pt-10 h-[350px]">
+          <CardContent className="pt-6 h-[200px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData}>
                 <defs>
-                  <linearGradient id="colorLatency" x1="0" y1="0" x2="0" y2="1">
+                  <linearGradient id="colorCpu" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#FF0000" stopOpacity={0.3}/>
                     <stop offset="95%" stopColor="#FF0000" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
-                <XAxis 
-                  dataKey="time" 
-                  stroke="#666" 
-                  fontSize={10} 
-                  tickLine={false} 
-                  axisLine={false}
-                />
-                <YAxis 
-                  stroke="#666" 
-                  fontSize={10} 
-                  tickLine={false} 
-                  axisLine={false}
-                  tickFormatter={(value) => `${value}ms`}
-                />
+                <XAxis dataKey="time" hide />
+                <YAxis stroke="#666" fontSize={10} tickLine={false} axisLine={false} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#050505', border: '1px solid #333', borderRadius: '8px' }}
-                  itemStyle={{ color: '#FF0000', fontWeight: 'bold' }}
-                  labelStyle={{ color: '#fff', marginBottom: '4px' }}
+                  contentStyle={{ backgroundColor: '#050505', border: '1px solid #333' }}
+                  itemStyle={{ color: '#FF0000' }}
                 />
-                <Area 
-                  type="monotone" 
-                  dataKey="latency" 
-                  stroke="#FF0000" 
-                  strokeWidth={3}
-                  fillOpacity={1} 
-                  fill="url(#colorLatency)" 
-                  animationDuration={1500}
-                />
+                <Area type="monotone" dataKey="cpu" stroke="#FF0000" fill="url(#colorCpu)" strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        {/* Configuration & Alerts */}
+        <Card className="bg-[#0A0A0A] border-border shadow-2xl">
+          <CardHeader className="bg-[#050505] border-b border-border/50 flex flex-row items-center justify-between">
+            <div className="flex items-center gap-3">
+              <HardDrive className="text-blue-500" size={24} />
+              <div>
+                <CardTitle className="text-lg font-black text-white uppercase italic">Uso de RAM</CardTitle>
+                <CardDescription className="text-[10px] font-bold uppercase">Memória Consumida (MB)</CardDescription>
+              </div>
+            </div>
+            <span className="text-2xl font-black text-blue-500 italic">{status?.Dashboard?.ram || 0}MB</span>
+          </CardHeader>
+          <CardContent className="pt-6 h-[200px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData}>
+                <defs>
+                  <linearGradient id="colorRam" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
+                <XAxis dataKey="time" hide />
+                <YAxis stroke="#666" fontSize={10} tickLine={false} axisLine={false} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#050505', border: '1px solid #333' }}
+                  itemStyle={{ color: '#3b82f6' }}
+                />
+                <Area type="monotone" dataKey="ram" stroke="#3b82f6" fill="url(#colorRam)" strokeWidth={2} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Commands & Logs Section */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+        {/* Commands List */}
+        <Card className="xl:col-span-2 bg-[#0A0A0A] border-border shadow-2xl">
+          <CardHeader className="bg-[#050505] border-b border-border/50">
+            <CardTitle className="text-xl flex items-center gap-2 text-white uppercase italic font-black">
+              <Terminal className="h-5 w-5 text-primary" />
+              Comandos Registrados
+            </CardTitle>
+            <CardDescription className="text-[10px] font-bold uppercase tracking-widest">Lista de comandos ativos no bot</CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            <ScrollArea className="h-[400px]">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-6">
+                {commands?.map((cmd) => (
+                  <div key={cmd.name} className="group p-4 bg-[#111] border border-white/5 rounded-xl hover:border-primary/50 transition-all">
+                    <div className="flex items-center justify-between mb-2">
+                      <code className="text-primary font-black text-sm uppercase italic">/{cmd.name}</code>
+                      <Badge variant="outline" className="text-[8px] uppercase font-black opacity-50">{cmd.category}</Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground font-medium line-clamp-2">{cmd.description}</p>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          </CardContent>
+        </Card>
+
+        {/* Configuration & Logs */}
         <div className="space-y-6">
           <Card className="bg-[#0A0A0A] border-border shadow-2xl">
             <CardHeader className="bg-[#050505] border-b border-border/50">
@@ -317,11 +367,6 @@ export default function MonitorPage() {
                   <Save size={18} /> Salvar Configuração
                 </Button>
               </div>
-              {!isTestValidated && selectedChannel && (
-                <p className="text-[10px] text-yellow-500 font-black uppercase text-center animate-pulse">
-                  ⚠️ Realize o teste antes de salvar
-                </p>
-              )}
             </CardContent>
           </Card>
 

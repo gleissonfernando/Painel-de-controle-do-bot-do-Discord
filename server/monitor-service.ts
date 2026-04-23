@@ -1,20 +1,21 @@
 import { MonitorConfig, MonitorLog, GuildConfig, ServiceMetric } from "./models";
 import { sendMessageViaBot, checkBotAvailability } from "./bot-api-client";
 import mongoose from "mongoose";
-import axios from "axios";
+import pidusage from "pidusage";
 
 interface ServiceStatus {
   name: string;
   status: "Online" | "Offline" | "Instável";
   lastCheck: Date;
   latency: number;
+  cpu?: number;
+  ram?: number;
 }
 
-// ID do Desenvolvedor Responsável (Master)
 const DEV_RESPONSIBLE_ID = "761011766440230932";
 
 let currentStatus: Record<string, ServiceStatus> = {
-  "Dashboard": { name: "Dashboard", status: "Online", lastCheck: new Date(), latency: 0 },
+  "Dashboard": { name: "Dashboard", status: "Online", lastCheck: new Date(), latency: 0, cpu: 0, ram: 0 },
   "Bot": { name: "Bot", status: "Online", lastCheck: new Date(), latency: 0 },
   "Database": { name: "Database", status: "Online", lastCheck: new Date(), latency: 0 },
   "Discord API": { name: "Discord API", status: "Online", lastCheck: new Date(), latency: 0 },
@@ -68,7 +69,7 @@ async function checkServices() {
     currentStatus["Database"].latency = 0;
   }
 
-  // 2. Check Bot
+  // 2. Check Bot (Status Real: Se o bot não responder, fica Offline)
   const botStart = Date.now();
   try {
     const isBotOnline = await checkBotAvailability();
@@ -83,9 +84,16 @@ async function checkServices() {
   currentStatus["Discord API"].status = currentStatus["Bot"].status;
   currentStatus["Discord API"].latency = currentStatus["Bot"].latency;
 
-  // 4. Dashboard
-  currentStatus["Dashboard"].status = "Online";
-  currentStatus["Dashboard"].latency = 1; // Local
+  // 4. Dashboard Metrics (CPU/RAM)
+  try {
+    const stats = await pidusage(process.pid);
+    currentStatus["Dashboard"].status = "Online";
+    currentStatus["Dashboard"].latency = 1;
+    currentStatus["Dashboard"].cpu = Math.round(stats.cpu);
+    currentStatus["Dashboard"].ram = Math.round(stats.memory / 1024 / 1024); // MB
+  } catch (e) {
+    currentStatus["Dashboard"].status = "Online";
+  }
 
   // 5. Check Verificador
   currentStatus["Verificador"].status = currentStatus["Bot"].status;
@@ -101,6 +109,8 @@ async function checkServices() {
       await ServiceMetric.create({
         service: serviceName,
         latency: service.latency,
+        cpu: service.cpu,
+        ram: service.ram,
         status: service.status,
       });
     } catch (e) {
@@ -129,10 +139,8 @@ async function checkServices() {
   }
 }
 
-// Iniciar monitoramento a cada 1 minuto
 export function startMonitor() {
-  // Primeira execução imediata
   checkServices();
   setInterval(checkServices, 60000);
-  console.log("🚀 Motor de Monitoramento Magnatas iniciado com coleta de métricas.");
+  console.log("🚀 Motor de Monitoramento Magnatas iniciado com métricas de Hardware.");
 }

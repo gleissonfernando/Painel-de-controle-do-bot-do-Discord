@@ -493,6 +493,8 @@ export const MonitorLog = mongoose.model<IMonitorLog>("MonitorLog", MonitorLogSc
 export interface IServiceMetric extends Document {
   service: string;
   latency: number; // em ms
+  cpu?: number;    // em %
+  ram?: number;    // em MB
   status: string;
   createdAt: Date;
 }
@@ -501,6 +503,8 @@ const ServiceMetricSchema = new Schema<IServiceMetric>(
   {
     service: { type: String, required: true, index: true },
     latency: { type: Number, required: true },
+    cpu: { type: Number },
+    ram: { type: Number },
     status: { type: String, required: true },
     createdAt: { type: Date, default: Date.now, index: true },
   }

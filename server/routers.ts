@@ -481,6 +481,41 @@ const monitorRouter = router({
       }).sort({ createdAt: 1 });
     }),
 
+  listCommands: protectedProcedure.query(async () => {
+    const fs = await import("node:fs");
+    const path = await import("node:path");
+    const commandsPath = "/home/ubuntu/bot-magnatas-gg/commands";
+    const commands: any[] = [];
+
+    try {
+      const folders = fs.readdirSync(commandsPath);
+      for (const folder of folders) {
+        const folderPath = path.join(commandsPath, folder);
+        if (fs.statSync(folderPath).isDirectory()) {
+          const files = fs.readdirSync(folderPath).filter(f => f.endsWith(".js"));
+          for (const file of files) {
+            // Como não podemos dar require em arquivos JS arbitrários com facilidade no tRPC
+            // vamos ler o conteúdo e extrair o nome e descrição via regex simples
+            const content = fs.readFileSync(path.join(folderPath, file), "utf-8");
+            const nameMatch = content.match(/\.setName\(['"](.+?)['"]\)/);
+            const descMatch = content.match(/\.setDescription\(['"](.+?)['"]\)/);
+            
+            if (nameMatch) {
+              commands.push({
+                name: nameMatch[1],
+                description: descMatch ? descMatch[1] : "Sem descrição",
+                category: folder
+              });
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Erro ao listar comandos:", e);
+    }
+    return commands;
+  }),
+
   sendTest: protectedProcedure
     .input(z.object({
       guildId: z.string(),
