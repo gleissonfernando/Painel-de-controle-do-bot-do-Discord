@@ -18,6 +18,7 @@ import {
   Terminal,
   X,
   Lock,
+  ListFilter,
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
@@ -50,7 +51,9 @@ const navItems: NavItemWithPermission[] = [
     icon: <Bell size={18} />,
     path: "/notifications",
   },
-  { label: "Logs", icon: <FileText size={18} />, path: "/logs" },
+  { label: "Logs Antigas", icon: <FileText size={18} />, path: "/logs" },
+  { label: "Logs Real-Time", icon: <Activity size={18} />, path: "/realtime-logs" },
+  { label: "Configurar Logs", icon: <ListFilter size={18} />, path: "/log-config" },
 ];
 
 export default function DiscordDashboardLayout({

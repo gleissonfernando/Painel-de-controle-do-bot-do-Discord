@@ -332,6 +332,98 @@ const maintenanceRouter = router({
     }),
 });
 
+// --- Real-Time Logs Router ---
+const realTimeLogsRouter = router({
+  getConfig: protectedProcedure
+    .input(z.object({ guildId: z.string() }))
+    .query(async ({ input }) => {
+      const { RealTimeLogConfig } = await import("./models");
+      const config = await RealTimeLogConfig.findOne({ guildId: input.guildId });
+      return config || {
+        guildId: input.guildId,
+        logChannelId: null,
+        enabled: true,
+        updatedBy: "N/A",
+      };
+    }),
+
+  updateConfig: protectedProcedure
+    .input(z.object({
+      guildId: z.string(),
+      logChannelId: z.string().nullable(),
+      enabled: z.boolean(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const { RealTimeLogConfig } = await import("./models");
+      const config = await RealTimeLogConfig.findOneAndUpdate(
+        { guildId: input.guildId },
+        { ...input, updatedBy: ctx.user?.name || "Desconhecido" },
+        { upsert: true, new: true }
+      );
+      return config;
+    }),
+
+  getLogs: protectedProcedure
+    .input(z.object({ guildId: z.string(), limit: z.number().default(50) }))
+    .query(async ({ input }) => {
+      const { RealTimeLog } = await import("./models");
+      return await RealTimeLog.find({ guildId: input.guildId })
+        .sort({ createdAt: -1 })
+        .limit(input.limit);
+    }),
+
+  createLog: publicProcedure
+    .input(z.object({
+      guildId: z.string(),
+      title: z.string(),
+      description: z.string(),
+      fields: z.array(z.object({ name: z.string(), value: z.string(), inline: z.boolean().optional() })).optional(),
+      imageUrl: z.string().optional(),
+      footer: z.string().optional(),
+      color: z.number().optional(),
+      type: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const { RealTimeLog, RealTimeLogConfig } = await import("./models");
+      const { sendMessageViaBot } = await import("./bot-api-client");
+      
+      // 1. Salvar no Banco
+      const log = await RealTimeLog.create(input);
+
+      // 2. Emitir via Socket.IO (Isso será tratado no _core/index.ts ou similar onde o socket está)
+      // Para este ambiente, assumimos que o servidor detecta mudanças no banco ou tem um emissor global
+      const { io } = await import("./_core/socket");
+      if (io) {
+        io.to(`guild_${input.guildId}`).emit("new_log", log);
+      }
+
+      // 3. Enviar para o Discord se configurado
+      const config = await RealTimeLogConfig.findOne({ guildId: input.guildId });
+      if (config && config.enabled && config.logChannelId) {
+        try {
+          await sendMessageViaBot({
+            guildId: input.guildId,
+            channelId: config.logChannelId,
+            message: "",
+            embeds: [{
+              title: input.title,
+              description: input.description,
+              fields: input.fields,
+              image: input.imageUrl ? { url: input.imageUrl } : undefined,
+              footer: input.footer ? { text: input.footer } : undefined,
+              color: input.color || 0x000000,
+              timestamp: new Date(),
+            }]
+          });
+        } catch (err) {
+          console.error("Erro ao enviar log para o Discord:", err);
+        }
+      }
+
+      return log;
+    }),
+});
+
 // --- Broadcast Router ---
 const broadcastRouter = router({
   sendGlobal: protectedProcedure
@@ -503,6 +595,7 @@ export const appRouter = router({
   broadcast: broadcastRouter,
   devManagement: devManagementRouter,
   guildManagement: guildManagementRouter,
+  realTimeLogs: realTimeLogsRouter,
 });
 
 export type AppRouter = typeof appRouter;

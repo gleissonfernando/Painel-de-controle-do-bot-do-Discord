@@ -20,6 +20,8 @@ import SocialNotificationsPage from "./pages/SocialNotificationsPage";
 import LogsPage from "./pages/LogsPage";
 import OnboardingPage from "./pages/OnboardingPage";
 import WelcomeGoodbyePage from "./pages/WelcomeGoodbyePage";
+import RealTimeLogsPage from "./pages/RealTimeLogsPage";
+import RealTimeLogConfigPage from "./pages/RealTimeLogConfigPage";
 
 import DevActivationPage from "./pages/DevActivationPage";
 import DevsLoginPage from "./pages/DevsLoginPage";
@@ -85,6 +87,20 @@ function Router() {
         {params => (
           <DashboardLayout guildId={params.guildId}>
             <LogsPage guildId={params.guildId} />
+          </DashboardLayout>
+        )}
+      </Route>
+      <Route path="/dashboard/:guildId/realtime-logs">
+        {params => (
+          <DashboardLayout guildId={params.guildId}>
+            <RealTimeLogsPage />
+          </DashboardLayout>
+        )}
+      </Route>
+      <Route path="/dashboard/:guildId/log-config">
+        {params => (
+          <DashboardLayout guildId={params.guildId}>
+            <RealTimeLogConfigPage />
           </DashboardLayout>
         )}
       </Route>

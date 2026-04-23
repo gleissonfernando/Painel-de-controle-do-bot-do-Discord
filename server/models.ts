@@ -394,3 +394,55 @@ const GuildEventLogSchema = new Schema<IGuildEventLog>(
 );
 
 export const GuildEventLog = mongoose.model<IGuildEventLog>("GuildEventLog", GuildEventLogSchema);
+
+// --- Real-Time Logs ---
+export interface IRealTimeLog extends Document {
+  guildId: string;
+  channelId?: string;
+  title: string;
+  description: string;
+  fields?: Array<{ name: string; value: string; inline?: boolean }>;
+  imageUrl?: string;
+  footer?: string;
+  color?: number;
+  type?: string;
+  createdAt: Date;
+}
+
+const RealTimeLogSchema = new Schema<IRealTimeLog>(
+  {
+    guildId: { type: String, required: true, index: true },
+    channelId: String,
+    title: { type: String, required: true },
+    description: { type: String, required: true },
+    fields: [{ name: String, value: String, inline: Boolean }],
+    imageUrl: String,
+    footer: String,
+    color: { type: Number, default: 0x000000 },
+    type: { type: String, index: true },
+  },
+  { timestamps: true }
+);
+
+export const RealTimeLog = mongoose.model<IRealTimeLog>("RealTimeLog", RealTimeLogSchema);
+
+// --- Real-Time Log Configuration ---
+export interface IRealTimeLogConfig extends Document {
+  guildId: string;
+  logChannelId: string | null;
+  enabled: boolean;
+  updatedBy: string;
+  updatedAt: Date;
+}
+
+const RealTimeLogConfigSchema = new Schema<IRealTimeLogConfig>(
+  {
+    guildId: { type: String, required: true, unique: true },
+    logChannelId: { type: String, default: null },
+    enabled: { type: Boolean, default: true },
+    updatedBy: String,
+  },
+  { timestamps: true }
+);
+
+export const RealTimeLogConfig = mongoose.model<IRealTimeLogConfig>("RealTimeLogConfig", RealTimeLogConfigSchema);
