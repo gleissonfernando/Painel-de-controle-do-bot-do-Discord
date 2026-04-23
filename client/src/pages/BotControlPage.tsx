@@ -19,32 +19,72 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Send, Power, AlertTriangle } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { 
+  AlertCircle, 
+  Send, 
+  Power, 
+  AlertTriangle, 
+  Settings2, 
+  Globe, 
+  Video,
+  CheckCircle2,
+  XCircle
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { Badge } from "@/components/ui/badge";
 
 export default function BotControlPage() {
   const { guildId } = useParams<{ guildId: string }>();
-  const { t } = useLanguage();
   const { user } = useAuth();
+  const utils = trpc.useUtils();
 
   // Verificar se o usuário é desenvolvedor
   const isDeveloper = user?.openId === "761011766440230932";
-  
-  // DEBUG: Log do ID do usuário para verificação
+
+  const [maintenanceEnabled, setMaintenanceEnabled] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("⚠️ O bot está em manutenção. Aguarde, já voltamos.");
+  const [mediaUrl, setMediaUrl] = useState("");
+  const [alertChannelId, setAlertChannelId] = useState("");
+  const [isSending, setIsSending] = useState(false);
+
+  const { data: settings, isLoading: settingsLoading } = trpc.maintenance.getSettings.useQuery(
+    { guildId: guildId || "" },
+    { enabled: !!guildId }
+  );
+
+  const { data: channels } = trpc.guilds.channels.useQuery(
+    { guildId: guildId || "" },
+    { enabled: !!guildId }
+  );
+
+  const updateSettingsMutation = trpc.maintenance.updateSettings.useMutation({
+    onSuccess: () => {
+      toast.success("⚙️ Configurações de manutenção atualizadas!");
+      utils.maintenance.getSettings.invalidate({ guildId });
+    },
+    onError: (error) => {
+      toast.error(`❌ Erro: ${error.message}`);
+    },
+  });
+
+  const sendAlertMutation = trpc.maintenance.sendAlert.useMutation();
+
   useEffect(() => {
-    if (user) {
-      console.log("[DEV DEBUG] User openId:", user.openId);
-      console.log("[DEV DEBUG] Is Developer:", isDeveloper);
-      console.log("[DEV DEBUG] Full user object:", user);
+    if (settings) {
+      setMaintenanceEnabled(settings.maintenanceEnabled);
+      setAlertMessage(settings.alertMessage || "⚠️ O bot está em manutenção. Aguarde, já voltamos.");
+      setMediaUrl(settings.mediaUrl || "");
+      setAlertChannelId(settings.alertChannelId || "");
     }
-  }, [user, isDeveloper]);
+  }, [settings]);
 
   if (!isDeveloper) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[#050505]">
+      <div className="flex items-center justify-center min-h-[400px]">
         <Card className="w-full max-w-md border-destructive/50 bg-destructive/5">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-destructive">
@@ -61,255 +101,252 @@ export default function BotControlPage() {
       </div>
     );
   }
-  const [selectedChannel, setSelectedChannel] = useState<string>("");
-  const [testMessage, setTestMessage] = useState<string>("");
-  const [botEnabled, setBotEnabled] = useState<boolean>(true);
-  const [maintenanceMode, setMaintenanceMode] = useState<boolean>(false);
 
-  const { data: channels } = trpc.guilds.channels.useQuery(
-    { guildId: guildId || "" },
-    {
-      enabled: !!guildId,
-    }
-  );
+  const handleSaveSettings = () => {
+    if (!guildId) return;
+    updateSettingsMutation.mutate({
+      guildId,
+      maintenanceEnabled,
+      alertChannelId,
+      alertMessage,
+      mediaUrl,
+    });
+  };
 
-  const { data: settings } = trpc.settings.get.useQuery(
-    { guildId: guildId || "" },
-    {
-      enabled: !!guildId,
-    }
-  );
-
-  // Sincronizar estado do bot com as configurações salvas
-  useEffect(() => {
-    if (settings) {
-      setBotEnabled(settings.botEnabled ?? true);
-      setMaintenanceMode((settings as any).maintenanceMode ?? false);
-    }
-  }, [settings]);
-
-  const sendTestMutation = trpc.settings.testMessage.useMutation({
-    onSuccess: () => {
-      const channelName = channels?.find(ch => ch.id === selectedChannel)?.name || "canal";
-      toast.success(`✅ Mensagem enviada para #${channelName}!`);
-      setTestMessage("");
-    },
-    onError: (error: any) => {
-      console.error("Erro ao enviar mensagem:", error);
-      toast.error(`❌ Erro ao enviar: ${error.message || "Tente novamente"}`);
-    },
-  });
-
-  const updateSettingsMutation = trpc.settings.update.useMutation({
-    onSuccess: () => {
-      toast.success("⚙️ Configurações atualizadas!");
-    },
-    onError: (error: any) => {
-      toast.error(`❌ Erro: ${error.message || "Tente novamente"}`);
-    },
-  });
-
-  const handleSendTest = () => {
-    if (!selectedChannel || !testMessage.trim()) {
-      toast.error("⚠️ Selecione um canal e digite uma mensagem");
+  const handleSendAlert = async (type: "local" | "global") => {
+    if (!guildId) return;
+    if (!alertChannelId && type === "local") {
+      toast.error("⚠️ Selecione um canal de alerta para o envio local.");
       return;
     }
 
-    const selectedChannelName = channels?.find(ch => ch.id === selectedChannel)?.name || "desconhecido";
-    
-    console.log(`📤 Enviando mensagem para canal: #${selectedChannelName} (ID: ${selectedChannel})`);
-    console.log(`📝 Mensagem: ${testMessage}`);
-    
-    sendTestMutation.mutate({
-      guildId: guildId || "",
-      channelId: selectedChannel,
-      message: testMessage,
-    });
+    const confirmMsg = type === "local" 
+      ? "Deseja enviar o aviso de manutenção para o servidor atual?"
+      : "⚠️ AVISO: Enviar aviso de manutenção para TODOS os servidores com canal configurado?";
+
+    if (!window.confirm(confirmMsg)) return;
+
+    setIsSending(true);
+    try {
+      const results = await sendAlertMutation.mutateAsync({
+        guildId,
+        type,
+        message: alertMessage,
+        mediaUrl,
+      });
+      
+      const successCount = results.filter((r: any) => r.success).length;
+      toast.success(`✅ Alerta enviado para ${successCount} servidor(es).`);
+    } catch (error: any) {
+      toast.error(`❌ Erro ao disparar alerta: ${error.message}`);
+    } finally {
+      setIsSending(false);
+    }
   };
 
-  const handleToggleBot = () => {
-    if (!guildId) return;
-    const newState = !botEnabled;
-    setBotEnabled(newState);
-    updateSettingsMutation.mutate({
-      guildId,
-      botEnabled: newState,
-    });
-  };
-
-  const handleToggleMaintenance = () => {
-    if (!guildId) return;
-    const newState = !maintenanceMode;
-    setMaintenanceMode(newState);
-    updateSettingsMutation.mutate({
-      guildId,
-      maintenanceMode: newState,
-    });
-  };
+  if (settingsLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">
-          🎮 Controle e Testes do Bot
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          Gerencie o estado do bot, ative modo de manutenção e envie mensagens de teste
-        </p>
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-primary flex items-center gap-2">
+            <Settings2 size={32} />
+            Controle de Manutenção
+          </h1>
+          <p className="text-muted-foreground">Gerencie o estado operacional e avisos do bot</p>
+        </div>
+        <Badge variant="outline" className="border-primary text-primary px-3 py-1">
+          Painel de Controle Master
+        </Badge>
       </div>
 
-      {/* Status Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Bot Status */}
-        <Card className={botEnabled ? "border-primary" : "border-red-500"}>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Power size={20} />
-              Estado do Bot
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">
-                {botEnabled ? "✅ Bot Ativado" : "❌ Bot Desativado"}
-              </span>
-              <Button
-                onClick={handleToggleBot}
-                variant={botEnabled ? "destructive" : "default"}
-                size="sm"
-                disabled={updateSettingsMutation.isPending}
-              >
-                {botEnabled ? "Desativar" : "Ativar"}
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Desative o bot para parar todas as suas funcionalidades temporariamente.
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Maintenance Mode */}
-        <Card className={maintenanceMode ? "border-yellow-500" : "border-gray-500"}>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertTriangle size={20} />
-              Modo de Manutenção
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">
-                {maintenanceMode ? "🔧 Manutenção Ativa" : "✅ Operacional"}
-              </span>
-              <Button
-                onClick={handleToggleMaintenance}
-                variant={maintenanceMode ? "default" : "outline"}
-                size="sm"
-                disabled={updateSettingsMutation.isPending}
-              >
-                {maintenanceMode ? "Desativar" : "Ativar"}
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Ative para notificar usuários que o bot está em manutenção.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Test Message Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Send size={20} />
-            Enviar Mensagem de Teste
-          </CardTitle>
-          <CardDescription>
-            Selecione um canal e envie uma mensagem para testar o bot
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Channel Select */}
-          <div className="space-y-2">
-            <Label htmlFor="testChannel">Selecione um Canal</Label>
-            <Select value={selectedChannel} onValueChange={setSelectedChannel}>
-              <SelectTrigger id="testChannel">
-                <SelectValue placeholder="Escolha um canal..." />
-              </SelectTrigger>
-              <SelectContent>
-                {!channels || channels.length === 0 ? (
-                  <div className="p-2 text-sm text-muted-foreground">
-                    Nenhum canal encontrado
-                  </div>
-                ) : (
-                  channels.map((channel) => (
-                    <SelectItem key={channel.id} value={channel.id}>
-                      #{channel.name}
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
-            {selectedChannel && (
-              <div className="p-2 rounded bg-primary/10 border border-primary/30">
-                <p className="text-xs text-primary font-medium">
-                  ✓ Canal selecionado: <strong>#{channels?.find(ch => ch.id === selectedChannel)?.name}</strong>
-                </p>
-                <p className="text-[10px] text-primary/70 mt-1">
-                  ID: {selectedChannel}
-                </p>
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2 space-y-6">
+          {/* Configurações de Manutenção */}
+          <Card className="border-border bg-card shadow-sm">
+            <CardHeader className="border-b border-border/50">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <AlertTriangle className="h-5 w-5 text-yellow-500" />
+                    Estado de Manutenção
+                  </CardTitle>
+                  <CardDescription>O bot continuará online, mas bloqueará comandos</CardDescription>
+                </div>
+                <Switch 
+                  checked={maintenanceEnabled} 
+                  onCheckedChange={setMaintenanceEnabled}
+                  className="data-[state=checked]:bg-primary"
+                />
               </div>
-            )}
-          </div>
+            </CardHeader>
+            <CardContent className="pt-6 space-y-6">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Mensagem de Manutenção</Label>
+                  <Textarea 
+                    value={alertMessage}
+                    onChange={(e) => setAlertMessage(e.target.value)}
+                    placeholder="Digite a mensagem que aparecerá no embed..."
+                    className="min-h-[100px] bg-input border-border"
+                  />
+                </div>
 
-          {/* Message Textarea */}
-          <div className="space-y-2">
-            <Label htmlFor="testMsg">Mensagem</Label>
-            <Textarea
-              id="testMsg"
-              value={testMessage}
-              onChange={(e) => setTestMessage(e.target.value)}
-              placeholder="Digite a mensagem de teste..."
-              className="min-h-[100px]"
-            />
-            <div className="flex justify-between items-center">
-              <p className="text-xs text-muted-foreground">
-                Máximo de 2000 caracteres (limite do Discord)
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {testMessage.length}/2000
-              </p>
-            </div>
-          </div>
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <Video size={14} />
+                    URL de Vídeo/Imagem (Opcional)
+                  </Label>
+                  <Input 
+                    value={mediaUrl}
+                    onChange={(e) => setMediaUrl(e.target.value)}
+                    placeholder="https://exemplo.com/video.mp4 ou imagem.png"
+                    className="bg-input border-border"
+                  />
+                </div>
 
-          {/* Send Button */}
-          <Button
-            onClick={handleSendTest}
-            disabled={sendTestMutation.isPending || !selectedChannel || !testMessage.trim()}
-            className="w-full gap-2"
-          >
-            <Send size={16} />
-            {sendTestMutation.isPending ? "Enviando..." : "Enviar Teste"}
-          </Button>
-        </CardContent>
-      </Card>
+                <div className="space-y-2">
+                  <Label>Canal de Alerta (Local)</Label>
+                  <Select value={alertChannelId} onValueChange={setAlertChannelId}>
+                    <SelectTrigger className="bg-input border-border">
+                      <SelectValue placeholder="Selecione o canal para avisos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {channels?.filter(c => c.type === 0).map((channel) => (
+                        <SelectItem key={channel.id} value={channel.id}>
+                          #{channel.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
 
-      {/* Info Alert */}
-      <Alert>
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          <p className="font-semibold mb-2">💡 Dicas:</p>
-          <ul className="text-sm space-y-1 list-disc list-inside">
-            <li>Selecione o canal onde deseja enviar a mensagem de teste</li>
-            <li>O ID do canal é capturado automaticamente e enviado ao bot</li>
-            <li>Use o teste para validar que o bot está respondendo corretamente</li>
-            <li>Desative o bot se precisar fazer manutenção ou atualizações</li>
-            <li>O modo de manutenção notifica os usuários sobre indisponibilidade temporária</li>
-            <li>Todas as alterações são salvas automaticamente</li>
-          </ul>
-        </AlertDescription>
-      </Alert>
+              <div className="flex gap-3">
+                <Button 
+                  onClick={handleSaveSettings}
+                  disabled={updateSettingsMutation.isPending}
+                  className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
+                >
+                  Salvar Configurações
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Ações de Disparo */}
+          <Card className="border-border bg-card shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Send className="h-5 w-5 text-primary" />
+                Disparar Avisos
+              </CardTitle>
+              <CardDescription>Envie o embed de manutenção para os canais configurados</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-wrap gap-4">
+              <Button 
+                variant="outline" 
+                onClick={() => handleSendAlert("local")}
+                disabled={isSending}
+                className="flex-1 gap-2 border-primary/20 hover:bg-primary/5"
+              >
+                <MessageSquare size={18} />
+                Enviar Teste Local
+              </Button>
+              <Button 
+                onClick={() => handleSendAlert("global")}
+                disabled={isSending}
+                className="flex-1 gap-2 bg-yellow-600 hover:bg-yellow-700 text-white"
+              >
+                <Globe size={18} />
+                Ativar Manutenção Global
+              </Button>
+              <Button 
+                variant="destructive"
+                onClick={() => {
+                  setMaintenanceEnabled(false);
+                  handleSaveSettings();
+                }}
+                className="flex-1 gap-2"
+              >
+                <Power size={18} />
+                Desativar Manutenção
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="space-y-6">
+          {/* Preview do Embed */}
+          <Card className="border-border bg-card shadow-sm overflow-hidden">
+            <CardHeader className="bg-muted/50 border-b border-border/50">
+              <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                Preview do Aviso
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4">
+              <div className="border-l-4 border-red-600 bg-[#121212] rounded-r-lg p-4 space-y-3 shadow-xl">
+                <h4 className="font-bold text-white flex items-center gap-2">
+                  🛠️ Bot em manutenção
+                </h4>
+                <p className="text-sm text-gray-300 leading-relaxed">
+                  {alertMessage}
+                </p>
+                {mediaUrl && (
+                  <div className="aspect-video bg-black/40 rounded border border-white/10 flex items-center justify-center overflow-hidden">
+                    <Video size={24} className="text-white/20" />
+                  </div>
+                )}
+                <div className="pt-2 border-t border-white/5 flex items-center justify-between">
+                  <span className="text-[10px] text-gray-500 font-medium">
+                    Magnatas.gg • Sistema de manutenção
+                  </span>
+                  <span className="text-[10px] text-gray-600">Agora</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Regras de Manutenção */}
+          <Alert className="bg-blue-500/5 border-blue-500/20">
+            <Info className="h-5 w-5 text-blue-500" />
+            <AlertTitle className="text-blue-500 font-bold">Regras do Sistema</AlertTitle>
+            <AlertDescription className="text-xs text-muted-foreground space-y-2 mt-2">
+              <p>• O bot **NUNCA** desliga durante a manutenção.</p>
+              <p>• Comandos serão interceptados e responderão com o embed acima.</p>
+              <p>• O envio global respeita apenas servidores com canal de alerta configurado.</p>
+            </AlertDescription>
+          </Alert>
+        </div>
+      </div>
     </div>
+  );
+}
+
+function Info(props: any) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 16v-4" />
+      <path d="M12 8h.01" />
+    </svg>
   );
 }

@@ -908,7 +908,13 @@ const maintenanceRouter = router({
     .query(async ({ input }) => {
       const { MaintenanceSettings } = await import("./models");
       const settings = await MaintenanceSettings.findOne({ guildId: input.guildId });
-      return settings || { guildId: input.guildId, maintenanceEnabled: false, alertChannelId: null, alertMessage: "Sistema em manutenção" };
+      return settings || { 
+        guildId: input.guildId, 
+        maintenanceEnabled: false, 
+        alertChannelId: null, 
+        alertMessage: "⚠️ O bot está em manutenção. Aguarde, já voltamos.",
+        mediaUrl: ""
+      };
     }),
 
   updateSettings: protectedProcedure
@@ -917,21 +923,19 @@ const maintenanceRouter = router({
       maintenanceEnabled: z.boolean(),
       alertChannelId: z.string().optional(),
       alertMessage: z.string().optional(),
+      mediaUrl: z.string().optional(),
     }))
     .mutation(async ({ input, ctx }) => {
       const { MaintenanceSettings } = await import("./models");
-      const { guildId, maintenanceEnabled, alertChannelId, alertMessage } = input;
-
-      if (maintenanceEnabled && !alertChannelId) {
-        throw new Error("⚠️ Selecione um canal antes de ativar a manutenção.");
-      }
+      const { guildId, maintenanceEnabled, alertChannelId, alertMessage, mediaUrl } = input;
 
       const settings = await MaintenanceSettings.findOneAndUpdate(
         { guildId },
         {
           maintenanceEnabled,
           alertChannelId,
-          alertMessage: alertMessage || "Sistema em manutenção",
+          alertMessage: alertMessage || "⚠️ O bot está em manutenção. Aguarde, já voltamos.",
+          mediaUrl: mediaUrl || "",
         },
         { upsert: true, new: true }
       );
@@ -943,10 +947,65 @@ const maintenanceRouter = router({
         userId: ctx.user?.openId,
         userName: ctx.user?.name,
         userAvatar: ctx.user?.avatar,
-        details: { alertChannelId, alertMessage },
+        details: { alertChannelId, alertMessage, mediaUrl },
       });
 
       return settings;
+    }),
+
+  sendAlert: protectedProcedure
+    .input(z.object({
+      guildId: z.string(),
+      type: z.enum(["local", "global"]),
+      message: z.string(),
+      mediaUrl: z.string().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const { guildId, type, message, mediaUrl } = input;
+      const DEVELOPER_ID = "761011766440230932";
+      
+      if (ctx.user.openId !== DEVELOPER_ID) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Apenas desenvolvedores podem disparar alertas de manutenção." });
+      }
+
+      const { MaintenanceSettings } = await import("./models");
+      const { sendGlobalBroadcast } = await import("./discord-broadcast");
+
+      let targetGuildIds: string[] = [];
+      if (type === "local") {
+        targetGuildIds = [guildId];
+      } else {
+        const allSettings = await MaintenanceSettings.find({ alertChannelId: { $ne: null } });
+        targetGuildIds = allSettings.map(s => s.guildId);
+      }
+
+      // Lógica de envio de embed formatado
+      const results = await Promise.all(targetGuildIds.map(async (id) => {
+        const s = await MaintenanceSettings.findOne({ guildId: id });
+        if (!s || !s.alertChannelId) return { guildId: id, success: false, error: "Sem canal configurado" };
+        
+        try {
+          const { sendMessageViaBot } = await import("./bot-api-client");
+          await sendMessageViaBot({
+            guildId: id,
+            channelId: s.alertChannelId,
+            message: "",
+            embeds: [{
+              title: "🛠️ Bot em manutenção",
+              description: message,
+              image: mediaUrl ? { url: mediaUrl } : undefined,
+              footer: { text: "Magnatas.gg • Sistema de manutenção" },
+              color: 0xFF0000,
+              timestamp: new Date(),
+            }]
+          });
+          return { guildId: id, success: true };
+        } catch (err: any) {
+          return { guildId: id, success: false, error: err.message };
+        }
+      }));
+
+      return results;
     }),
 });
 

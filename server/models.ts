@@ -305,6 +305,7 @@ export interface IMaintenanceSettings extends Document {
   maintenanceEnabled: boolean;
   alertChannelId?: string;
   alertMessage?: string;
+  mediaUrl?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -315,6 +316,7 @@ const MaintenanceSettingsSchema = new Schema<IMaintenanceSettings>(
     maintenanceEnabled: { type: Boolean, default: false },
     alertChannelId: String,
     alertMessage: { type: String, default: "Sistema em manutenção" },
+    mediaUrl: String,
   },
   { timestamps: true }
 );
