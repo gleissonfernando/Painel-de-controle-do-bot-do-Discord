@@ -183,3 +183,61 @@ export async function sendMessageToChannel(channelId: string, message: string) {
     throw error;
   }
 }
+
+/**
+ * Envia um alerta global de manutenção para todos os servidores onde o bot está presente.
+ */
+export async function sendGlobalMaintenanceAlert() {
+  const token = await resolveBotToken();
+  if (!token) return;
+
+  try {
+    // 1. Buscar todas as guildas onde o bot está
+    const guildsRes = await axios.get(`${DISCORD_API}/users/@me/guilds`, {
+      headers: { Authorization: `Bot ${token}` },
+    });
+    
+    const guilds = guildsRes.data;
+
+    // 2. Preparar o Embed de Manutenção
+    const maintenanceEmbed = {
+      title: "🚨 COMUNICADO OFICIAL - MANUTENÇÃO GLOBAL",
+      description: "Atenção! O sistema **Magnatas.gg** está entrando em manutenção global para atualizações críticas.\n\n" +
+                   "Durante este período, as funcionalidades do bot e do painel podem ficar indisponíveis.\n\n" +
+                   "**Previsão de Retorno:** Em breve!\n" +
+                   "Agradecemos a compreensão de todos os membros.",
+      color: 0xFFAA00,
+      image: { url: "https://i.imgur.com/x9n7S6L.png" },
+      footer: { text: "Equipe de Desenvolvimento Magnatas.gg" },
+      timestamp: new Date().toISOString()
+    };
+
+    // 3. Enviar para o canal principal de cada guilda
+    for (const guild of guilds) {
+      try {
+        const channelsRes = await axios.get(`${DISCORD_API}/guilds/${guild.id}/channels`, {
+          headers: { Authorization: `Bot ${token}` },
+        });
+        
+        const channels = channelsRes.data;
+        
+        // Prioriza canais com nomes comuns de avisos ou o primeiro canal de texto
+        const targetChannel = channels.find((c: any) => 
+          c.type === 0 && (c.name.includes("avisos") || c.name.includes("geral") || c.name.includes("anúncios"))
+        ) || channels.find((c: any) => c.type === 0);
+
+        if (targetChannel) {
+          await axios.post(
+            `${DISCORD_API}/channels/${targetChannel.id}/messages`,
+            { embeds: [maintenanceEmbed] },
+            { headers: { Authorization: `Bot ${token}` } }
+          );
+        }
+      } catch (e) {
+        console.error(`[Maintenance] Erro ao enviar alerta para guilda ${guild.id}`);
+      }
+    }
+  } catch (error) {
+    console.error("[Maintenance] Erro no sistema de alerta global:", error);
+  }
+}

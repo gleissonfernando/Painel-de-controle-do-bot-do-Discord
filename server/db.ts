@@ -75,6 +75,17 @@ export async function getGuildSettings(guildId: string) {
 export async function upsertGuildSettings(data: any) {
   await getDb();
   const { guildId, ...rest } = data;
+  
+  // Se estiver ativando o modo de manutenção, dispara o alerta global
+  if (rest.maintenanceMode === true) {
+    try {
+      const { sendGlobalMaintenanceAlert } = await import("./discord");
+      await sendGlobalMaintenanceAlert();
+    } catch (e) {
+      console.error("[Maintenance] Erro ao disparar alerta global:", e);
+    }
+  }
+
   await GuildSettings.findOneAndUpdate(
     { guildId },
     { $set: rest },

@@ -258,9 +258,20 @@ const settingsRouter = router({
         ownerId: z.string().nullable().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const { guildId, ...rest } = input;
       
+      // APENAS O DESENVOLVEDOR PODE ALTERAR MODO DE MANUTENÇÃO
+      if (rest.maintenanceMode !== undefined) {
+        const DEVELOPER_ID = "761011766440230932";
+        if (ctx.user.id !== DEVELOPER_ID) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Apenas o Desenvolvedor Mestre pode ativar o Modo de Manutenção.",
+          });
+        }
+      }
+
       // Bloqueio se o bot não estiver no servidor
       const isBotPresent = await checkBotInGuild(guildId);
       if (!isBotPresent) {
@@ -282,7 +293,16 @@ const settingsRouter = router({
         message: z.string(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      // APENAS O DESENVOLVEDOR PODE ENVIAR MENSAGENS DE TESTE
+      const DEVELOPER_ID = "761011766440230932";
+      if (ctx.user.id !== DEVELOPER_ID) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Apenas o Desenvolvedor Mestre pode realizar testes de mensagem.",
+        });
+      }
+
       const isBotPresent = await checkBotInGuild(input.guildId);
       if (!isBotPresent) {
         throw new TRPCError({
