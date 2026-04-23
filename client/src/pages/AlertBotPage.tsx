@@ -119,7 +119,7 @@ export default function AlertBotPage() {
               Seleção de Canal
             </CardTitle>
             <CardDescription>Escolha o canal de texto oficial para o bot</CardDescription>
-          </Header>
+          </CardHeader>
           <CardContent className="pt-6 space-y-6">
             <div className="space-y-4">
               <div className="space-y-2">
