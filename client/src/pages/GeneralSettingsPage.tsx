@@ -47,6 +47,7 @@ export default function GeneralSettingsPage({
     adminRoleId: "",
     welcomeChannelId: "",
     logsChannelId: "",
+    alertChannelId: "",
     botToken: "",
     botEnabled: true,
   });
@@ -60,6 +61,7 @@ export default function GeneralSettingsPage({
         adminRoleId: settings.adminRoleId ?? "",
         welcomeChannelId: settings.welcomeChannelId ?? "",
         logsChannelId: settings.logsChannelId ?? "",
+        alertChannelId: settings.alertChannelId ?? "",
         botToken: settings.botToken ?? "",
         botEnabled: settings.botEnabled ?? true,
       });
@@ -80,6 +82,11 @@ export default function GeneralSettingsPage({
     // Log de Auditoria no Frontend (Opcional, o backend já faz)
     console.log(`[Config] Salvando configurações para o servidor ${guildId}...`);
     
+    if (!form.alertChannelId) {
+      toast.error("⚠️ Selecione um canal de alerta obrigatoriamente!");
+      return;
+    }
+
     updateMutation.mutate({
       guildId,
       prefix: form.prefix,
@@ -88,6 +95,7 @@ export default function GeneralSettingsPage({
       adminRoleId: form.adminRoleId || null,
       welcomeChannelId: form.welcomeChannelId || null,
       logsChannelId: form.logsChannelId || null,
+      alertChannelId: form.alertChannelId || null,
       botToken: form.botToken || null,
       botEnabled: form.botEnabled,
     });
@@ -333,6 +341,32 @@ export default function GeneralSettingsPage({
                 </option>
               ))}
             </select>
+          </div>
+
+          {/* Alert Channel (OBRIGATÓRIO) */}
+          <div className="col-span-1 sm:col-span-2">
+            <label className="block text-sm font-medium text-foreground mb-1.5">
+              <span className="text-red-500">*</span> Canal de Alerta (Obrigatório)
+            </label>
+            <select
+              value={form.alertChannelId}
+              onChange={e =>
+                setForm({ ...form, alertChannelId: e.target.value })
+              }
+              className={`w-full px-3 py-2 bg-input border rounded-lg text-sm text-foreground focus:outline-none focus:ring-1 focus:border-primary transition-colors ${
+                form.alertChannelId ? "border-border focus:ring-primary" : "border-red-500 focus:ring-red-500"
+              }`}
+            >
+              <option value="">Selecione um canal...</option>
+              {(channels ?? []).map((c: { id: string; name: string }) => (
+                <option key={c.id} value={c.id}>
+                  #{c.name}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-muted-foreground mt-1">
+              Canal onde as mensagens de manutenção e avisos globais serão enviados. Este campo é obrigatório!
+            </p>
           </div>
         </div>
       </div>

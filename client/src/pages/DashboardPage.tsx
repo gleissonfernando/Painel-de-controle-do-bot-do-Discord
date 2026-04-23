@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { useSocket } from "@/hooks/useSocket";
 import { getBotInviteUrl } from "@/const";
+import AlertChannelSetupModal from "@/components/AlertChannelSetupModal";
 import {
   Activity,
   Bell,
@@ -71,6 +72,7 @@ const EVENT_LABELS: Record<string, string> = {
 
 export default function DashboardPage({ guildId }: DashboardPageProps) {
   const utils = trpc.useUtils();
+  const [showAlertChannelModal, setShowAlertChannelModal] = useState(false);
   const { isConnected, botStatus: socketBotStatus } = useSocket(guildId, (data) => {
     console.log("[WebSocket] Real-time update received:", data);
     utils.guilds.details.invalidate({ guildId });
@@ -98,6 +100,13 @@ export default function DashboardPage({ guildId }: DashboardPageProps) {
 
   const guildName = guildDetails?.name ?? settings?.guildName ?? "Seu Servidor";
   const isBotPresent = botStatus?.botInGuild ?? false;
+
+  // Verificar se o canal de alerta está configurado
+  useEffect(() => {
+    if (isBotPresent && !settings?.alertChannelId) {
+      setShowAlertChannelModal(true);
+    }
+  }, [isBotPresent, settings?.alertChannelId]);
 
   const STAT_CARDS = [
     {
@@ -145,7 +154,14 @@ export default function DashboardPage({ guildId }: DashboardPageProps) {
   }, [botStatus, guildId]);
 
   return (
-    <div className="space-y-6">
+    <>
+      <AlertChannelSetupModal
+        open={showAlertChannelModal}
+        onOpenChange={setShowAlertChannelModal}
+        guildId={guildId}
+        guildName={guildName}
+      />
+      <div className="space-y-6">
       {/* Aviso de Setup de Logs */}
       {isBotPresent && !settings?.logsChannelId && (
         <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 mb-4">
@@ -359,5 +375,6 @@ export default function DashboardPage({ guildId }: DashboardPageProps) {
         </div>
       </div>
     </div>
+    </>
   );
 }
