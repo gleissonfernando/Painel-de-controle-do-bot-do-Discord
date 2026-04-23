@@ -762,6 +762,56 @@ const welcomeGoodbyeRouter = router({
 
 // ─── App Router ───────────────────────────────────────────────────────────────
 
+// ─── Maintenance Router ───────────────────────────────────────────────────────
+
+const maintenanceRouter = router({
+  getSettings: protectedProcedure
+    .input(z.object({ guildId: z.string() }))
+    .query(async ({ input }) => {
+      const { MaintenanceSettings } = await import("./models");
+      const settings = await MaintenanceSettings.findOne({ guildId: input.guildId });
+      return settings || { guildId: input.guildId, maintenanceEnabled: false, alertChannelId: null, alertMessage: "Sistema em manutenção" };
+    }),
+
+  updateSettings: protectedProcedure
+    .input(z.object({
+      guildId: z.string(),
+      maintenanceEnabled: z.boolean(),
+      alertChannelId: z.string().optional(),
+      alertMessage: z.string().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const { MaintenanceSettings } = await import("./models");
+      const { guildId, maintenanceEnabled, alertChannelId, alertMessage } = input;
+
+      if (maintenanceEnabled && !alertChannelId) {
+        throw new Error("⚠️ Selecione um canal antes de ativar a manutenção.");
+      }
+
+      const settings = await MaintenanceSettings.findOneAndUpdate(
+        { guildId },
+        {
+          maintenanceEnabled,
+          alertChannelId,
+          alertMessage: alertMessage || "Sistema em manutenção",
+        },
+        { upsert: true, new: true }
+      );
+
+      // Log da ação
+      await createServerLog({
+        guildId,
+        eventType: maintenanceEnabled ? "MAINTENANCE_ENABLED" : "MAINTENANCE_DISABLED",
+        userId: ctx.user?.openId,
+        userName: ctx.user?.name,
+        userAvatar: ctx.user?.avatar,
+        details: { alertChannelId, alertMessage },
+      });
+
+      return settings;
+    }),
+});
+
 export const appRouter = router({
   system: systemRouter,
   auth: authRouter,
@@ -773,6 +823,7 @@ export const appRouter = router({
   commands: commandsRouter,
   messages: messagesRouter,
   welcomeGoodbye: welcomeGoodbyeRouter,
+  maintenance: maintenanceRouter,
 });
 
 export type AppRouter = typeof appRouter;

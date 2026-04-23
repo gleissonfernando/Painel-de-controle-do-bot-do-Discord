@@ -246,3 +246,25 @@ const WelcomeMessageSchema = new Schema<IWelcomeMessage>(
 );
 
 export const WelcomeMessage = mongoose.model<IWelcomeMessage>("WelcomeMessage", WelcomeMessageSchema);
+
+// --- Maintenance Settings ---
+export interface IMaintenanceSettings extends Document {
+  guildId: string;
+  maintenanceEnabled: boolean;
+  alertChannelId?: string;
+  alertMessage?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const MaintenanceSettingsSchema = new Schema<IMaintenanceSettings>(
+  {
+    guildId: { type: String, required: true, unique: true },
+    maintenanceEnabled: { type: Boolean, default: false },
+    alertChannelId: String,
+    alertMessage: { type: String, default: "Sistema em manutenção" },
+  },
+  { timestamps: true }
+);
+
+export const MaintenanceSettings = mongoose.model<IMaintenanceSettings>("MaintenanceSettings", MaintenanceSettingsSchema);
