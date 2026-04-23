@@ -56,6 +56,7 @@ export default function DiscordDashboardLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const { data: settings } = trpc.settings.get.useQuery({ guildId });
+  const { data: guilds } = trpc.guilds.list.useQuery();
 
   const guildName = settings?.guildName ?? "Server";
   const guildIcon = settings?.guildIcon;
@@ -87,37 +88,75 @@ export default function DiscordDashboardLayout({
         </div>
       </div>
 
-      {/* Server Info */}
+      {/* Server Selector */}
       <div className="px-3 py-3 border-b border-sidebar-border">
-        <Link href="/servers">
-          <div className="flex items-center gap-2 px-2 py-2 rounded-md hover:bg-sidebar-accent cursor-pointer transition-colors group">
-            <Avatar className="w-8 h-8">
-              {guildIcon ? (
-                <AvatarImage
-                  src={`https://cdn.discordapp.com/icons/${guildId}/${guildIcon}.png`}
-                  alt={guildName}
-                />
-              ) : null}
-              <AvatarFallback className="bg-primary/20 text-primary text-xs font-bold">
-                {getInitials(guildName)}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-foreground truncate">
-                {guildName}
-              </p>
-              <p className="text-xs text-muted-foreground">Click to change</p>
-            </div>
-            <ChevronLeft
-              size={14}
-              className="text-muted-foreground group-hover:text-primary transition-colors"
-            />
+        <div className="space-y-1">
+          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-2 mb-1">
+            Current Server
+          </p>
+          <div className="relative group">
+            <Link href="/servers">
+              <div className="flex items-center gap-2 px-2 py-2 rounded-md hover:bg-sidebar-accent cursor-pointer transition-colors border border-transparent hover:border-sidebar-border">
+                <Avatar className="w-8 h-8">
+                  {guildIcon ? (
+                    <AvatarImage
+                      src={`https://cdn.discordapp.com/icons/${guildId}/${guildIcon}.png`}
+                      alt={guildName}
+                    />
+                  ) : null}
+                  <AvatarFallback className="bg-primary/20 text-primary text-xs font-bold">
+                    {getInitials(guildName)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-foreground truncate">
+                    {guildName}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">Switch server</p>
+                </div>
+                <ChevronLeft size={14} className="text-muted-foreground group-hover:text-primary transition-colors" />
+              </div>
+            </Link>
           </div>
-        </Link>
+        </div>
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5">
+        {/* Other Servers Quick Access */}
+        {guilds && guilds.length > 1 && (
+          <div className="mb-6">
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-2 mb-2">
+              Your Other Servers
+            </p>
+            <div className="space-y-1">
+              {guilds
+                .filter(g => g.id !== guildId && g.botPresent)
+                .slice(0, 3)
+                .map(otherGuild => (
+                  <Link key={otherGuild.id} href={`/dashboard/${otherGuild.id}`}>
+                    <div className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-sidebar-accent cursor-pointer transition-colors group">
+                      <Avatar className="w-6 h-6">
+                        {otherGuild.icon ? (
+                          <AvatarImage
+                            src={`https://cdn.discordapp.com/icons/${otherGuild.id}/${otherGuild.icon}.png`}
+                            alt={otherGuild.name}
+                          />
+                        ) : null}
+                        <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-bold">
+                          {getInitials(otherGuild.name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <p className="text-[11px] font-medium text-muted-foreground group-hover:text-foreground truncate">
+                        {otherGuild.name}
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+            </div>
+          </div>
+        )}
+
         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2 mb-2">
           Management
         </p>
