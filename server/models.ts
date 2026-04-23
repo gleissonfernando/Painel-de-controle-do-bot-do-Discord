@@ -253,6 +253,48 @@ const WelcomeMessageSchema = new Schema<IWelcomeMessage>(
 
 export const WelcomeMessage = mongoose.model<IWelcomeMessage>("WelcomeMessage", WelcomeMessageSchema);
 
+// --- Dev Audit Log ---
+export interface IDevAuditLog extends Document {
+  devUserId: string;
+  action: string;
+  details: Record<string, any>;
+  timestamp: Date;
+}
+
+const DevAuditLogSchema = new Schema<IDevAuditLog>(
+  {
+    devUserId: { type: String, required: true },
+    action: { type: String, required: true },
+    details: { type: Schema.Types.Mixed, default: {} },
+    timestamp: { type: Date, default: Date.now },
+  },
+  { timestamps: false }
+);
+
+export const DevAuditLog = mongoose.model<IDevAuditLog>("DevAuditLog", DevAuditLogSchema);
+
+// --- Guild Removal Log ---
+export interface IGuildRemovalLog extends Document {
+  guildId: string;
+  guildName?: string;
+  removedBy: string;
+  reason?: string;
+  timestamp: Date;
+}
+
+const GuildRemovalLogSchema = new Schema<IGuildRemovalLog>(
+  {
+    guildId: { type: String, required: true },
+    guildName: String,
+    removedBy: { type: String, required: true },
+    reason: String,
+    timestamp: { type: Date, default: Date.now },
+  },
+  { timestamps: false }
+);
+
+export const GuildRemovalLog = mongoose.model<IGuildRemovalLog>("GuildRemovalLog", GuildRemovalLogSchema);
+
 // --- Maintenance Settings ---
 export interface IMaintenanceSettings extends Document {
   guildId: string;
@@ -274,3 +316,31 @@ const MaintenanceSettingsSchema = new Schema<IMaintenanceSettings>(
 );
 
 export const MaintenanceSettings = mongoose.model<IMaintenanceSettings>("MaintenanceSettings", MaintenanceSettingsSchema);
+
+// --- Dev Users ---
+export type DevRole = "master" | "creator" | "helper";
+
+export interface IDevUser extends Document {
+  userId: string;
+  username: string;
+  email?: string;
+  avatar?: string;
+  role: DevRole;
+  createdBy?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const DevUserSchema = new Schema<IDevUser>(
+  {
+    userId: { type: String, required: true, unique: true },
+    username: { type: String, required: true },
+    email: String,
+    avatar: String,
+    role: { type: String, enum: ["master", "creator", "helper"], default: "helper" },
+    createdBy: String,
+  },
+  { timestamps: true }
+);
+
+export const DevUser = mongoose.model<IDevUser>("DevUser", DevUserSchema);

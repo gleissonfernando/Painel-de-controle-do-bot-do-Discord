@@ -31,6 +31,18 @@ import {
 import { sendBroadcastToAllGuilds } from "./discord-broadcast";
 import { sendAdminWelcomeMessage, sendGuildJoinWelcome } from "./welcome-admin";
 import { sendMessageToChannel, getGuildTextChannels } from "./discord-messages";
+import {
+  getAllDevs,
+  getDevById,
+  createDev,
+  updateDevRole,
+  removeDev,
+  getAuditLogs,
+  createAuditLog,
+  canPerformAction,
+  isUserMaster,
+} from "./db-devs";
+import { removeGuildBot, getGuildInfo } from "./discord-guild-management";
 
 // ─── Auth Router ──────────────────────────────────────────────────────────────
 
@@ -970,6 +982,160 @@ export const appRouter = router({
   welcomeGoodbye: welcomeGoodbyeRouter,
   maintenance: maintenanceRouter,
   broadcast: broadcastRouter,
+  devManagement: devManagementRouter,
+  guildManagement: guildManagementRouter,
 });
 
 export type AppRouter = typeof appRouter;
+
+// ─── Dev Management Router ───────────────────────────────────────────────────
+
+const devManagementRouter = router({
+  list: protectedProcedure.query(async ({ ctx }) => {
+    const isMaster = await isUserMaster(ctx.user?.openId || "");
+    if (!isMaster) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "Apenas o desenvolvedor mestre pode listar devs",
+      });
+    }
+    return await getAllDevs();
+  }),
+
+  create: protectedProcedure
+    .input(
+      z.object({
+        userId: z.string(),
+        username: z.string(),
+        role: z.enum(["master", "creator", "helper"]),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const canCreate = await canPerformAction(ctx.user?.openId || "", "creator");
+      if (!canCreate) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Você não tem permissão para criar devs",
+        });
+      }
+
+      try {
+        const dev = await createDev(
+          input.userId,
+          input.username,
+          input.role,
+          ctx.user?.openId
+        );
+        return dev;
+      } catch (error) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: error instanceof Error ? error.message : "Erro ao criar dev",
+        });
+      }
+    }),
+
+  updateRole: protectedProcedure
+    .input(
+      z.object({
+        userId: z.string(),
+        role: z.enum(["master", "creator", "helper"]),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const isMaster = await isUserMaster(ctx.user?.openId || "");
+      if (!isMaster) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Apenas o desenvolvedor mestre pode alterar roles",
+        });
+      }
+
+      try {
+        const dev = await updateDevRole(input.userId, input.role, ctx.user?.openId);
+        return dev;
+      } catch (error) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: error instanceof Error ? error.message : "Erro ao atualizar role",
+        });
+      }
+    }),
+
+  remove: protectedProcedure
+    .input(z.object({ userId: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      const isMaster = await isUserMaster(ctx.user?.openId || "");
+      if (!isMaster) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Apenas o desenvolvedor mestre pode remover devs",
+        });
+      }
+
+      try {
+        const dev = await removeDev(input.userId, ctx.user?.openId);
+        return dev;
+      } catch (error) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: error instanceof Error ? error.message : "Erro ao remover dev",
+        });
+      }
+    }),
+
+  auditLogs: protectedProcedure.query(async ({ ctx }) => {
+    const isMaster = await isUserMaster(ctx.user?.openId || "");
+    if (!isMaster) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "Apenas o desenvolvedor mestre pode ver audit logs",
+      });
+    }
+    return await getAuditLogs(100);
+  }),
+});
+
+// ─── Guild Management Router ──────────────────────────────────────────────────
+
+const guildManagementRouter = router({
+  removeBot: protectedProcedure
+    .input(z.object({ guildId: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      const canRemove = await canPerformAction(ctx.user?.openId || "", "creator");
+      if (!canRemove) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Você não tem permissão para remover o bot",
+        });
+      }
+
+      try {
+        const result = await removeGuildBot(input.guildId);
+        if (result.success) {
+          await createAuditLog(ctx.user?.openId || "", "GUILD_BOT_REMOVED", {
+            guildId: input.guildId,
+          });
+        }
+        return result;
+      } catch (error) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error instanceof Error ? error.message : "Erro ao remover bot",
+        });
+      }
+    }),
+
+  getInfo: protectedProcedure
+    .input(z.object({ guildId: z.string() }))
+    .query(async ({ input }) => {
+      try {
+        return await getGuildInfo(input.guildId);
+      } catch (error) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Servidor não encontrado",
+        });
+      }
+    }),
+});
