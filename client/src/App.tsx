@@ -22,6 +22,7 @@ import OnboardingPage from "./pages/OnboardingPage";
 import WelcomeGoodbyePage from "./pages/WelcomeGoodbyePage";
 import RealTimeLogsPage from "./pages/RealTimeLogsPage";
 import RealTimeLogConfigPage from "./pages/RealTimeLogConfigPage";
+import WelcomeMagnatasPage from "./pages/WelcomeMagnatasPage";
 
 import DevActivationPage from "./pages/DevActivationPage";
 import DevsLoginPage from "./pages/DevsLoginPage";
@@ -108,6 +109,13 @@ function Router() {
         {params => (
           <DashboardLayout guildId={params.guildId}>
             <WelcomeGoodbyePage />
+          </DashboardLayout>
+        )}
+      </Route>
+      <Route path="/dashboard/:guildId/welcome-magnatas">
+        {params => (
+          <DashboardLayout guildId={params.guildId}>
+            <WelcomeMagnatasPage />
           </DashboardLayout>
         )}
       </Route>

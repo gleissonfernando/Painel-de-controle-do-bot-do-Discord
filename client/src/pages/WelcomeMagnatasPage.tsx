@@ -1,0 +1,298 @@
+import React, { useState, useRef } from "react";
+import { useParams } from "wouter";
+import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  CardTitle, 
+  CardDescription,
+  CardFooter
+} from "@/components/ui/card";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Crown, 
+  Upload, 
+  Image as ImageIcon, 
+  Send, 
+  Globe, 
+  MapPin, 
+  User as UserIcon,
+  Eye,
+  Settings,
+  X
+} from "lucide-react";
+import { toast } from "sonner";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
+export default function WelcomeMagnatasPage() {
+  const { guildId } = useParams<{ guildId: string }>();
+  const { user } = useAuth();
+  const [selectedChannel, setSelectedChannel] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { data: channels, isLoading: channelsLoading } = trpc.guilds.channels.useQuery(
+    { guildId: guildId || "" },
+    { enabled: !!guildId }
+  );
+
+  const sendWelcomeMutation = trpc.welcomeGoodbye.sendWelcome.useMutation({
+    onSuccess: (data) => {
+      toast.success("🚀 Mensagem de boas-vindas enviada com sucesso!");
+    },
+    onError: (error) => {
+      toast.error(`❌ Erro ao enviar: ${error.message}`);
+    }
+  });
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("A imagem deve ter no máximo 5MB");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSend = (mode: "local" | "global") => {
+    if (!selectedChannel && mode === "local") {
+      toast.error("Selecione um canal para o envio local");
+      return;
+    }
+    if (!imagePreview) {
+      toast.error("Faça o upload de uma imagem para o banner");
+      return;
+    }
+
+    sendWelcomeMutation.mutate({
+      guildId: guildId || "",
+      channelId: selectedChannel,
+      mode,
+      imageUrl: imagePreview,
+      userName: user?.name || "Membro",
+      userAvatar: user?.avatar || ""
+    });
+  };
+
+  return (
+    <div className="space-y-8 animate-in fade-in duration-700">
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="text-4xl font-black text-primary flex items-center gap-3 tracking-tighter italic uppercase">
+            <Crown size={40} className="text-yellow-500 drop-shadow-[0_0_10px_rgba(234,179,8,0.5)]" />
+            Boas-vindas Magnatas
+          </h1>
+          <p className="text-muted-foreground font-medium">Gerencie a entrada de novos membros no império</p>
+        </div>
+        <Badge variant="outline" className="border-yellow-500/50 text-yellow-500 bg-yellow-500/5 px-4 py-1.5 text-sm font-bold uppercase tracking-widest">
+          Sistema Magnatas 1v99
+        </Badge>
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+        {/* Configuration Panel */}
+        <div className="space-y-6">
+          <Card className="border-border bg-[#0A0A0A] shadow-2xl overflow-hidden">
+            <CardHeader className="bg-[#050505] border-b border-border/50">
+              <CardTitle className="text-xl flex items-center gap-2 text-white uppercase italic font-black">
+                <Settings className="h-5 w-5 text-primary" />
+                Configuração de Envio
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-8 space-y-8">
+              {/* Channel Selection */}
+              <div className="space-y-3">
+                <label className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                  <MapPin size={14} className="text-primary" /> Selecionar Canal (Call)
+                </label>
+                <Select value={selectedChannel || ""} onValueChange={setSelectedChannel}>
+                  <SelectTrigger className="bg-[#111] border-border/50 h-14 text-lg font-bold focus:ring-primary/50">
+                    <SelectValue placeholder="Escolha o canal de destino..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#111] border-border">
+                    {channels?.filter(c => c.type === 0).map((channel) => (
+                      <SelectItem key={channel.id} value={channel.id} className="font-bold">
+                        # {channel.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Image Upload */}
+              <div className="space-y-3">
+                <label className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                  <Upload size={14} className="text-primary" /> Banner Personalizado
+                </label>
+                <div 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="group relative border-2 border-dashed border-border/50 rounded-xl p-10 flex flex-col items-center justify-center gap-4 bg-[#111] hover:bg-[#151515] hover:border-primary/50 transition-all cursor-pointer overflow-hidden"
+                >
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    className="hidden" 
+                    accept="image/*" 
+                    onChange={handleImageUpload}
+                  />
+                  <div className="p-4 bg-primary/10 rounded-full group-hover:scale-110 transition-transform">
+                    <ImageIcon size={32} className="text-primary" />
+                  </div>
+                  <div className="text-center">
+                    <p className="font-black text-white uppercase italic">Clique para Upload</p>
+                    <p className="text-xs text-muted-foreground font-bold">PNG, JPG ou GIF (Máx. 5MB)</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+                <Button 
+                  onClick={() => handleSend("local")}
+                  disabled={sendWelcomeMutation.isPending}
+                  className="h-16 bg-white hover:bg-gray-200 text-black font-black uppercase italic text-lg gap-3 shadow-xl shadow-white/5"
+                >
+                  <Send size={20} /> Enviar Local
+                </Button>
+                <Button 
+                  onClick={() => handleSend("global")}
+                  disabled={sendWelcomeMutation.isPending}
+                  className="h-16 bg-primary hover:bg-primary/90 text-white font-black uppercase italic text-lg gap-3 shadow-xl shadow-primary/20"
+                >
+                  <Globe size={20} /> Enviar Global
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Preview Panel */}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between px-2">
+            <h3 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+              <Eye size={14} className="text-primary" /> Preview do Painel
+            </h3>
+            {imagePreview && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setImagePreview(null)}
+                className="h-6 text-[10px] font-black uppercase text-destructive hover:bg-destructive/10"
+              >
+                <X size={12} className="mr-1" /> Remover Imagem
+              </Button>
+            )}
+          </div>
+
+          {/* Discord Style Embed Preview */}
+          <div className="bg-[#313338] rounded-lg shadow-2xl overflow-hidden border border-white/5">
+            {/* Banner */}
+            <div className="relative h-48 bg-[#1e1f22] flex items-center justify-center overflow-hidden">
+              {imagePreview ? (
+                <img src={imagePreview} alt="Banner Preview" className="w-full h-full object-cover" />
+              ) : (
+                <div className="flex flex-col items-center gap-2 text-white/20">
+                  <ImageIcon size={48} />
+                  <p className="text-xs font-black uppercase italic">Banner Magnatas</p>
+                </div>
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-[#313338] to-transparent opacity-60" />
+            </div>
+
+            {/* Content */}
+            <div className="p-6 relative -mt-12">
+              <div className="flex items-end gap-4 mb-6">
+                <div className="relative">
+                  <Avatar className="w-24 h-24 border-4 border-[#313338] shadow-xl">
+                    <AvatarImage src={user?.avatar || ""} />
+                    <AvatarFallback className="bg-primary text-white font-black text-2xl">
+                      {user?.name?.[0] || "M"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="absolute bottom-1 right-1 w-6 h-6 bg-green-500 border-4 border-[#313338] rounded-full" />
+                </div>
+                <div className="pb-2">
+                  <h2 className="text-2xl font-black text-white italic uppercase tracking-tighter flex items-center gap-2">
+                    👑 Bem-vindo(a) ao clã Magnatas
+                  </h2>
+                  <p className="text-primary font-bold text-sm">1v99 • Império Magnatas</p>
+                </div>
+              </div>
+
+              <div className="space-y-4 bg-[#2b2d31] p-5 rounded-xl border border-white/5">
+                <div className="space-y-1">
+                  <p className="text-white font-bold text-lg">
+                    <span className="text-primary">@{user?.name || "usuario"}</span> seja bem-vindo ao império Magnatas.
+                  </p>
+                  <p className="text-gray-400 text-sm leading-relaxed">
+                    Você acaba de entrar para a elite. Prepare-se para a dominação total.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-[#1e1f22] p-3 rounded-lg border border-white/5">
+                    <p className="text-[10px] font-black text-gray-500 uppercase mb-1">Status</p>
+                    <p className="text-xs font-bold text-green-500 flex items-center gap-1">
+                      <CheckCircle size={12} /> Ativo no Clã
+                    </p>
+                  </div>
+                  <div className="bg-[#1e1f22] p-3 rounded-lg border border-white/5">
+                    <p className="text-[10px] font-black text-gray-500 uppercase mb-1">Cargo</p>
+                    <p className="text-xs font-bold text-white">Novo Membro</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 flex items-center justify-between text-[10px] font-black text-gray-500 uppercase tracking-widest">
+                <div className="flex items-center gap-2">
+                  <Crown size={12} className="text-yellow-500" />
+                  <span>Sistema Magnatas • {new Date().toLocaleDateString()}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-1 h-1 rounded-full bg-primary" />
+                  <span>v1.0</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CheckCircle({ size }: { size: number }) {
+  return (
+    <svg 
+      width={size} 
+      height={size} 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="3" 
+      strokeLinecap="round" 
+      strokeLinejoin="round"
+    >
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+      <polyline points="22 4 12 14.01 9 11.01" />
+    </svg>
+  );
+}

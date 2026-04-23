@@ -390,8 +390,7 @@ const realTimeLogsRouter = router({
       // 1. Salvar no Banco
       const log = await RealTimeLog.create(input);
 
-      // 2. Emitir via Socket.IO (Isso será tratado no _core/index.ts ou similar onde o socket está)
-      // Para este ambiente, assumimos que o servidor detecta mudanças no banco ou tem um emissor global
+      // 2. Emitir via Socket.IO
       const { io } = await import("./_core/socket");
       if (io) {
         io.to(`guild_${input.guildId}`).emit("new_log", log);
@@ -560,6 +559,73 @@ const welcomeGoodbyeRouter = router({
     .input(z.any())
     .mutation(async ({ input }) => {
       return await upsertWelcomeMessages({ guildId: input.guildId, ...input.config });
+    }),
+  sendWelcome: protectedProcedure
+    .input(z.object({
+      guildId: z.string(),
+      channelId: z.string().nullable(),
+      mode: z.enum(["local", "global"]),
+      imageUrl: z.string(),
+      userName: z.string(),
+      userAvatar: z.string()
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const { guildId, channelId, mode, imageUrl, userName, userAvatar } = input;
+      const { GuildConfig } = await import("./models");
+      const { sendMessageViaBot } = await import("./bot-api-client");
+
+      let targetGuilds = [];
+      if (mode === "local") {
+        const s = await GuildConfig.findOne({ guildId });
+        if (s && channelId) {
+          targetGuilds.push({ guildId: s.guildId, channelId });
+        }
+      } else {
+        const configs = await GuildConfig.find({ alertChannelId: { $ne: null } });
+        targetGuilds = configs.map(c => ({ guildId: c.guildId, channelId: c.alertChannelId! }));
+      }
+
+      const results = await Promise.all(targetGuilds.map(async (target) => {
+        try {
+          await sendMessageViaBot({
+            guildId: target.guildId,
+            channelId: target.channelId,
+            message: "",
+            embeds: [{
+              title: "👑 Novo membro chegou!",
+              description: `📛 **${userName}** entrou no Magnatas\n\n@${userName} seja bem-vindo ao império Magnatas.`,
+              image: { url: imageUrl },
+              thumbnail: { url: userAvatar },
+              footer: { text: "Magnatas.gg • Sistema Magnatas 1v99" },
+              color: 0xFF0000,
+              timestamp: new Date(),
+            }]
+          });
+          return { guildId: target.guildId, success: true };
+        } catch (err: any) {
+          return { guildId: target.guildId, success: false, error: err.message };
+        }
+      }));
+
+      // Registrar Log em Tempo Real
+      const { RealTimeLog } = await import("./models");
+      const { io } = await import("./_core/socket");
+      
+      const logData = {
+        guildId,
+        title: "🚀 Boas-vindas Enviada",
+        description: `Mensagem de boas-vindas enviada para ${results.filter(r => r.success).length} servidor(es).`,
+        type: "WELCOME",
+        color: 0x00FF00,
+        footer: "Sistema Magnatas"
+      };
+      
+      const log = await RealTimeLog.create(logData);
+      if (io) {
+        io.to(`guild_${guildId}`).emit("new_log", log);
+      }
+
+      return results;
     }),
 });
 
