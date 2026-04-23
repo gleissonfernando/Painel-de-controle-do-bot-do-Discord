@@ -16,6 +16,7 @@ import SocialNotificationsPage from "./pages/SocialNotificationsPage";
 import LogsPage from "./pages/LogsPage";
 import OnboardingPage from "./pages/OnboardingPage";
 import WelcomeGoodbyePage from "./pages/WelcomeGoodbyePage";
+import BotControlPage from "./pages/BotControlPage";
 import DashboardLayout from "./components/DiscordDashboardLayout";
 
 function Router() {
@@ -80,6 +81,13 @@ function Router() {
           </DashboardLayout>
         )}
       </Route>
+      <Route path="/dashboard/:guildId/control">
+        {params => (
+          <DashboardLayout guildId={params.guildId}>
+            <BotControlPage />
+          </DashboardLayout>
+        )}
+      </Route>
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
@@ -88,16 +96,18 @@ function Router() {
 
 function App() {
   return (
-    <ErrorBoundary>
-      <LanguageProvider>
-        <ThemeProvider defaultTheme="dark">
-          <TooltipProvider>
-            <Toaster />
-            <Router />
-          </TooltipProvider>
-        </ThemeProvider>
-      </LanguageProvider>
-    </ErrorBoundary>
+    <div translate="no">
+      <ErrorBoundary>
+        <LanguageProvider>
+          <ThemeProvider defaultTheme="dark">
+            <TooltipProvider>
+              <Toaster />
+              <Router />
+            </TooltipProvider>
+          </ThemeProvider>
+        </LanguageProvider>
+      </ErrorBoundary>
+    </div>
   );
 }
 

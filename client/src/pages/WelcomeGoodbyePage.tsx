@@ -29,9 +29,11 @@ interface WelcomeGoodbyeConfig {
   welcomeEnabled: boolean;
   welcomeChannelId: string | null;
   welcomeMessage: string | null;
+  welcomeBanner: string | null;
   goodbyeEnabled: boolean;
   goodbyeChannelId: string | null;
   goodbyeMessage: string | null;
+  goodbyeBanner: string | null;
 }
 
 const PLACEHOLDER_VARIABLES = [
@@ -53,9 +55,11 @@ export default function WelcomeGoodbyePage() {
     welcomeChannelId: null,
     welcomeMessage:
       "Bem-vindo {user}! 👋 Você é o {joinPosition} membro de {server}",
+    welcomeBanner: "",
     goodbyeEnabled: true,
     goodbyeChannelId: null,
     goodbyeMessage: "{user} saiu do servidor. Até logo! 👋",
+    goodbyeBanner: "",
   });
 
   const { data: channels } = trpc.guilds.channels.useQuery(
@@ -87,9 +91,11 @@ export default function WelcomeGoodbyePage() {
         welcomeEnabled: savedConfig.welcomeEnabled ?? false,
         welcomeChannelId: savedConfig.welcomeChannelId ?? null,
         welcomeMessage: savedConfig.welcomeMessage ?? null,
+        welcomeBanner: (savedConfig as any).welcomeBanner ?? "",
         goodbyeEnabled: savedConfig.goodbyeEnabled ?? false,
         goodbyeChannelId: savedConfig.goodbyeChannelId ?? null,
         goodbyeMessage: savedConfig.goodbyeMessage ?? null,
+        goodbyeBanner: (savedConfig as any).goodbyeBanner ?? "",
       });
     }
   }, [savedConfig]);
@@ -102,9 +108,11 @@ export default function WelcomeGoodbyePage() {
         welcomeEnabled: config.welcomeEnabled,
         welcomeChannelId: config.welcomeChannelId || "",
         welcomeMessage: config.welcomeMessage || "",
+        welcomeBanner: config.welcomeBanner || "",
         goodbyeEnabled: config.goodbyeEnabled,
         goodbyeChannelId: config.goodbyeChannelId || "",
         goodbyeMessage: config.goodbyeMessage || "",
+        goodbyeBanner: config.goodbyeBanner || "",
       },
     });
   };
@@ -218,6 +226,22 @@ export default function WelcomeGoodbyePage() {
                     />
                   </div>
 
+                  {/* Banner URL */}
+                  <div className="space-y-2">
+                    <Label htmlFor="welcomeBanner">URL da Imagem (Banner)</Label>
+                    <Input
+                      id="welcomeBanner"
+                      value={config.welcomeBanner || ""}
+                      onChange={e =>
+                        setConfig({ ...config, welcomeBanner: e.target.value })
+                      }
+                      placeholder="https://exemplo.com/imagem.png"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Esta imagem será exibida no painel de boas-vindas dos Magnatas.
+                    </p>
+                  </div>
+
                   {/* Preview */}
                   <div className="space-y-2">
                     <Label>Preview</Label>
@@ -294,6 +318,19 @@ export default function WelcomeGoodbyePage() {
                       }
                       placeholder="Digite a mensagem de despedida..."
                       className="min-h-[120px]"
+                    />
+                  </div>
+
+                  {/* Banner URL */}
+                  <div className="space-y-2">
+                    <Label htmlFor="goodbyeBanner">URL da Imagem (Banner)</Label>
+                    <Input
+                      id="goodbyeBanner"
+                      value={config.goodbyeBanner || ""}
+                      onChange={e =>
+                        setConfig({ ...config, goodbyeBanner: e.target.value })
+                      }
+                      placeholder="https://exemplo.com/imagem.png"
                     />
                   </div>
 

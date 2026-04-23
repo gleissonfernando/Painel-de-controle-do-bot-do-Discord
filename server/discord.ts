@@ -165,3 +165,21 @@ export function getMockGuilds() {
     },
   ];
 }
+
+export async function sendMessageToChannel(channelId: string, message: string) {
+  const token = await resolveBotToken(); // Tenta o token global se não houver guildId específico
+  if (!token) throw new Error("Bot token not configured");
+
+  try {
+    await axios.post(
+      `${DISCORD_API}/channels/${channelId}/messages`,
+      { content: message },
+      {
+        headers: { Authorization: `Bot ${token}` },
+      }
+    );
+  } catch (error: any) {
+    console.error(`[Discord] Erro ao enviar mensagem para canal ${channelId}:`, error.response?.status || error.message);
+    throw error;
+  }
+}

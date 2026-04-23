@@ -48,6 +48,7 @@ export interface IGuildSettings extends Document {
   logsChannelId?: string;
   botToken?: string;
   botEnabled: boolean;
+  maintenanceMode: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -66,6 +67,7 @@ const GuildSettingsSchema = new Schema<IGuildSettings>(
     logsChannelId: String,
     botToken: String,
     botEnabled: { type: Boolean, default: true },
+    maintenanceMode: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
@@ -220,6 +222,8 @@ export interface IWelcomeMessage extends Document {
   goodbyeMessage?: string;
   dmWelcome: boolean;
   dmMessage?: string;
+  welcomeBanner?: string;
+  goodbyeBanner?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -235,6 +239,8 @@ const WelcomeMessageSchema = new Schema<IWelcomeMessage>(
     goodbyeMessage: String,
     dmWelcome: { type: Boolean, default: false },
     dmMessage: String,
+    welcomeBanner: String,
+    goodbyeBanner: String,
   },
   { timestamps: true }
 );

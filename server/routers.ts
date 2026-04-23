@@ -252,6 +252,7 @@ const settingsRouter = router({
         logsChannelId: z.string().nullable().optional(),
         botToken: z.string().nullable().optional(),
         botEnabled: z.boolean().optional(),
+        maintenanceMode: z.boolean().optional(),
         guildName: z.string().nullable().optional(),
         guildIcon: z.string().nullable().optional(),
         ownerId: z.string().nullable().optional(),
@@ -271,6 +272,36 @@ const settingsRouter = router({
 
       await upsertGuildSettings({ guildId, ...rest });
       return { success: true };
+    }),
+
+  testMessage: protectedProcedure
+    .input(
+      z.object({
+        guildId: z.string(),
+        channelId: z.string(),
+        message: z.string(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const isBotPresent = await checkBotInGuild(input.guildId);
+      if (!isBotPresent) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "BOT_NOT_IN_GUILD",
+        });
+      }
+
+      try {
+        const { sendMessageToChannel } = await import("./discord");
+        await sendMessageToChannel(input.channelId, input.message);
+        return { success: true };
+      } catch (error) {
+        console.error("Error sending test message:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "FAILED_TO_SEND_MESSAGE",
+        });
+      }
     }),
 });
 
@@ -651,6 +682,8 @@ const welcomeGoodbyeRouter = router({
           goodbyeEnabled: z.boolean(),
           goodbyeChannelId: z.string(),
           goodbyeMessage: z.string(),
+          welcomeBanner: z.string().optional(),
+          goodbyeBanner: z.string().optional(),
         }),
       })
     )
@@ -664,6 +697,8 @@ const welcomeGoodbyeRouter = router({
         goodbyeEnabled: config.goodbyeEnabled,
         goodbyeChannelId: config.goodbyeChannelId || null,
         goodbyeMessage: config.goodbyeMessage,
+        welcomeBanner: config.welcomeBanner,
+        goodbyeBanner: config.goodbyeBanner,
       });
       return { success: true };
     }),

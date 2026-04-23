@@ -38,6 +38,7 @@ const navItems: NavItem[] = [
   { label: "Commands", icon: <Terminal size={18} />, path: "/commands" },
   { label: "Messages", icon: <MessageSquare size={18} />, path: "/messages" },
   { label: "Welcome/Goodbye", icon: <Activity size={18} />, path: "/welcome" },
+  { label: "Bot Control", icon: <Terminal size={18} />, path: "/control" },
   { label: "Auto Moderation", icon: <Shield size={18} />, path: "/automod" },
   {
     label: "Social Notifications",
@@ -76,7 +77,7 @@ export default function DiscordDashboardLayout({
   };
 
   const SidebarContent = () => (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full" translate="no">
       {/* Logo / Brand */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border">
         <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center shadow-lg shadow-primary/30">
@@ -255,7 +256,7 @@ export default function DiscordDashboardLayout({
       )}
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden" translate="no">
         {/* Top Header */}
         <header className="flex items-center justify-between px-4 lg:px-6 py-3 border-b border-border bg-card/50 backdrop-blur-sm flex-shrink-0">
           <div className="flex items-center gap-3">
