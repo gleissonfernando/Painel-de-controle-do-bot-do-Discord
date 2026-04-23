@@ -184,10 +184,16 @@ export default function DevsPage() {
 
   // Sincronizar canais quando o servidor ativo mudar
   useEffect(() => {
-    if (guildChannels) {
+    if (guildChannels && guildChannels.length > 0) {
       setChannels(guildChannels);
+      // Resetar seleções de canal ao mudar de servidor
+      setLocalChannel("");
+      setTestChannel("");
+      setMessageChannel("");
+      setLogsChannel("");
+      setLocalMessageError("");
     }
-  }, [guildChannels]);
+  }, [guildChannels, activeGuildId]);
 
   // Sincronizar configurações do bot
   useEffect(() => {
