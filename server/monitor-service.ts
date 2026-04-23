@@ -1,4 +1,4 @@
-import { MonitorConfig, MonitorLog, GuildConfig } from "./models";
+import { MonitorConfig, MonitorLog, GuildConfig, ServiceMetric } from "./models";
 import { sendMessageViaBot, checkBotAvailability } from "./bot-api-client";
 import mongoose from "mongoose";
 import axios from "axios";
@@ -7,17 +7,18 @@ interface ServiceStatus {
   name: string;
   status: "Online" | "Offline" | "Instável";
   lastCheck: Date;
+  latency: number;
 }
 
 // ID do Desenvolvedor Responsável (Master)
 const DEV_RESPONSIBLE_ID = "761011766440230932";
 
 let currentStatus: Record<string, ServiceStatus> = {
-  "Dashboard": { name: "Dashboard", status: "Online", lastCheck: new Date() },
-  "Bot": { name: "Bot", status: "Online", lastCheck: new Date() },
-  "Database": { name: "Database", status: "Online", lastCheck: new Date() },
-  "Discord API": { name: "Discord API", status: "Online", lastCheck: new Date() },
-  "Verificador": { name: "Verificador", status: "Online", lastCheck: new Date() },
+  "Dashboard": { name: "Dashboard", status: "Online", lastCheck: new Date(), latency: 0 },
+  "Bot": { name: "Bot", status: "Online", lastCheck: new Date(), latency: 0 },
+  "Database": { name: "Database", status: "Online", lastCheck: new Date(), latency: 0 },
+  "Discord API": { name: "Discord API", status: "Online", lastCheck: new Date(), latency: 0 },
+  "Verificador": { name: "Verificador", status: "Online", lastCheck: new Date(), latency: 0 },
 };
 
 export const getServicesStatus = () => currentStatus;
@@ -57,54 +58,61 @@ async function checkServices() {
   const previousStatus = { ...currentStatus };
 
   // 1. Check Database
+  const dbStart = Date.now();
   try {
     if (mongoose.connection.readyState !== 1) throw new Error("DB Offline");
     currentStatus["Database"].status = "Online";
+    currentStatus["Database"].latency = Date.now() - dbStart;
   } catch (err) {
     currentStatus["Database"].status = "Offline";
+    currentStatus["Database"].latency = 0;
   }
 
   // 2. Check Bot
+  const botStart = Date.now();
   try {
     const isBotOnline = await checkBotAvailability();
     currentStatus["Bot"].status = isBotOnline ? "Online" : "Offline";
+    currentStatus["Bot"].latency = isBotOnline ? Date.now() - botStart : 0;
   } catch (err) {
     currentStatus["Bot"].status = "Offline";
+    currentStatus["Bot"].latency = 0;
   }
 
   // 3. Check Discord API (via Bot)
   currentStatus["Discord API"].status = currentStatus["Bot"].status;
+  currentStatus["Discord API"].latency = currentStatus["Bot"].latency;
 
-  // 4. Dashboard (Sempre Online se este código está rodando)
+  // 4. Dashboard
   currentStatus["Dashboard"].status = "Online";
+  currentStatus["Dashboard"].latency = 1; // Local
 
-  // 5. Check Verificador de Usuário (Simulado ou via Ping se houver URL)
-  // Como o repositório é local ou em outro deploy, tentamos um ping se houver URL configurada
-  // Por enquanto, monitoramos a existência do processo ou uma URL padrão
-  try {
-    // Exemplo: Se o verificador roda na porta 3001
-    // const response = await axios.get("http://localhost:3001/api/health", { timeout: 5000 });
-    // currentStatus["Verificador"].status = response.status === 200 ? "Online" : "Offline";
-    
-    // Simulação baseada no Bot por enquanto, já que eles costumam rodar juntos
-    currentStatus["Verificador"].status = currentStatus["Bot"].status;
-  } catch (err) {
-    currentStatus["Verificador"].status = "Offline";
-  }
+  // 5. Check Verificador
+  currentStatus["Verificador"].status = currentStatus["Bot"].status;
+  currentStatus["Verificador"].latency = currentStatus["Bot"].latency;
 
-  // Processar mudanças de status
+  // Salvar métricas e processar mudanças
   for (const serviceName of Object.keys(currentStatus)) {
     const service = currentStatus[serviceName];
     const prev = previousStatus[serviceName];
 
+    // Salvar métrica no banco para os gráficos
+    try {
+      await ServiceMetric.create({
+        service: serviceName,
+        latency: service.latency,
+        status: service.status,
+      });
+    } catch (e) {
+      console.error("Erro ao salvar métrica:", e);
+    }
+
     if (service.status !== prev.status) {
       service.lastCheck = new Date();
       
-      // Buscar todas as guildas configuradas para receber alertas
       const configs = await MonitorConfig.find({ enabled: true, alertChannelId: { $ne: null } });
       
       for (const config of configs) {
-        // Salvar Log
         await MonitorLog.create({
           guildId: config.guildId,
           service: serviceName,
@@ -112,7 +120,6 @@ async function checkServices() {
           message: service.status === "Online" ? "Serviço restaurado" : "Queda detectada",
         });
 
-        // Enviar Alerta se for transição Online -> Offline ou Offline -> Online
         if (config.alertChannelId) {
           const isRestored = service.status === "Online";
           await sendDiscordAlert(config.guildId, config.alertChannelId, serviceName, service.status, isRestored);
@@ -124,6 +131,8 @@ async function checkServices() {
 
 // Iniciar monitoramento a cada 1 minuto
 export function startMonitor() {
+  // Primeira execução imediata
+  checkServices();
   setInterval(checkServices, 60000);
-  console.log("🚀 Motor de Monitoramento Magnatas iniciado com suporte ao Verificador.");
+  console.log("🚀 Motor de Monitoramento Magnatas iniciado com coleta de métricas.");
 }

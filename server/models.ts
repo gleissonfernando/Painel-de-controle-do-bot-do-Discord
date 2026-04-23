@@ -488,3 +488,22 @@ const MonitorLogSchema = new Schema<IMonitorLog>(
 );
 
 export const MonitorLog = mongoose.model<IMonitorLog>("MonitorLog", MonitorLogSchema);
+
+// --- Service Metrics ---
+export interface IServiceMetric extends Document {
+  service: string;
+  latency: number; // em ms
+  status: string;
+  createdAt: Date;
+}
+
+const ServiceMetricSchema = new Schema<IServiceMetric>(
+  {
+    service: { type: String, required: true, index: true },
+    latency: { type: Number, required: true },
+    status: { type: String, required: true },
+    createdAt: { type: Date, default: Date.now, index: true },
+  }
+);
+
+export const ServiceMetric = mongoose.model<IServiceMetric>("ServiceMetric", ServiceMetricSchema);

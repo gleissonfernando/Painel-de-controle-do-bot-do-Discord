@@ -470,6 +470,17 @@ const monitorRouter = router({
         .limit(input.limit);
     }),
 
+  getMetrics: protectedProcedure
+    .input(z.object({ service: z.string(), hours: z.number().default(24) }))
+    .query(async ({ input }) => {
+      const { ServiceMetric } = await import("./models");
+      const startTime = new Date(Date.now() - input.hours * 60 * 60 * 1000);
+      return await ServiceMetric.find({ 
+        service: input.service,
+        createdAt: { $gte: startTime }
+      }).sort({ createdAt: 1 });
+    }),
+
   sendTest: protectedProcedure
     .input(z.object({
       guildId: z.string(),
