@@ -18,10 +18,9 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
 
   if (!isUnauthorized) return;
 
-  // Evita redirecionamento infinito se já estivermos na página de login
-  if (window.location.pathname === "/") return;
-
-  window.location.href = getLoginUrl();
+  // Redirecionamento automático desativado para evitar loops infinitos.
+  // O usuário deve clicar no botão de login manualmente se a sessão expirar.
+  console.warn("[Auth] Sessão expirada ou não autorizada. Redirecionamento automático desativado.");
 };
 
 queryClient.getQueryCache().subscribe(event => {

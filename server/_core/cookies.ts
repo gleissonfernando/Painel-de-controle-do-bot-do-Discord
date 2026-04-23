@@ -42,7 +42,7 @@ export function getSessionCookieOptions(
   return {
     httpOnly: true,
     path: "/",
-    sameSite: "lax",
-    secure: isSecureRequest(req),
+    sameSite: "none", // Necessário para cookies em domínios cruzados ou proxies
+    secure: true,      // Obrigatório quando sameSite é 'none'
   };
 }

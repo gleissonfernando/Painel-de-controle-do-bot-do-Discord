@@ -61,15 +61,13 @@ export function useAuth(options?: UseAuthOptions) {
   ]);
 
   useEffect(() => {
+    // Redirecionamento automático desativado para evitar loops de desconexão.
+    // O sistema agora apenas informa que o usuário não está autenticado.
     if (!redirectOnUnauthenticated) return;
     if (meQuery.isLoading || logoutMutation.isPending) return;
     if (state.user) return;
-    if (typeof window === "undefined") return;
     
-    // Evita redirecionar se já estivermos na página de login ou no caminho de redirecionamento
-    if (window.location.pathname === "/" || window.location.pathname === redirectPath) return;
-
-    window.location.href = redirectPath;
+    console.log("[Auth] Usuário não autenticado, mas redirecionamento automático desativado.");
   }, [
     redirectOnUnauthenticated,
     redirectPath,
