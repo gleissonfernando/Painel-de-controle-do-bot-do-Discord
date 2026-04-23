@@ -241,3 +241,34 @@ export async function sendGlobalMaintenanceAlert() {
     console.error("[Maintenance] Erro no sistema de alerta global:", error);
   }
 }
+
+/**
+ * Envia um log de auditoria para o canal configurado no servidor.
+ */
+export async function sendAuditLog(guildId: string, embedData: { title: string, description: string, color: number }) {
+  const token = await resolveBotToken(guildId);
+  if (!token) return;
+
+  try {
+    // 1. Buscar as configurações da guild para pegar o logsChannelId
+    const settings = await getGuildSettings(guildId);
+    const channelId = settings?.logsChannelId;
+
+    if (!channelId) return;
+
+    // 2. Enviar o Embed de Log
+    await axios.post(
+      `${DISCORD_API}/channels/${channelId}/messages`,
+      {
+        embeds: [{
+          ...embedData,
+          footer: { text: "Sistema de Auditoria Magnatas.gg" },
+          timestamp: new Date().toISOString()
+        }]
+      },
+      { headers: { Authorization: `Bot ${token}` } }
+    );
+  } catch (error) {
+    console.error(`[AuditLog] Erro ao enviar log para guild ${guildId}:`, error);
+  }
+}

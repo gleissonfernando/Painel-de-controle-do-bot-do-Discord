@@ -281,7 +281,7 @@ const settingsRouter = router({
         });
       }
 
-      await upsertGuildSettings({ guildId, ...rest });
+      await upsertGuildSettings({ guildId, ...rest }, ctx.user.id, ctx.user.name);
       return { success: true };
     }),
 
@@ -312,8 +312,16 @@ const settingsRouter = router({
       }
 
       try {
-        const { sendMessageToChannel } = await import("./discord");
+        const { sendMessageToChannel, sendAuditLog } = await import("./discord");
         await sendMessageToChannel(input.channelId, input.message);
+        
+        // Log de Auditoria para o envio de teste
+        await sendAuditLog(input.guildId, {
+          title: "🚀 Teste de Mensagem Enviado",
+          description: `O desenvolvedor **${ctx.user.name}** enviou uma mensagem de teste no canal <#${input.channelId}>.\n\n**Conteúdo:**\n${input.message}`,
+          color: 0x2ECC71
+        });
+
         return { success: true };
       } catch (error) {
         console.error("Error sending test message:", error);
