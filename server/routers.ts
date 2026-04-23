@@ -287,6 +287,8 @@ const settingsRouter = router({
         maintenanceMode: z.boolean().optional(),
         maintenanceEnabled: z.boolean().optional(),
         alertChannelId: z.string().nullable().optional(),
+        alertChannelName: z.string().nullable().optional(),
+        configuredBy: z.string().nullable().optional(),
         maintenanceMessage: z.string().optional(),
         guildName: z.string().nullable().optional(),
         guildIcon: z.string().nullable().optional(),
@@ -295,6 +297,12 @@ const settingsRouter = router({
     )
     .mutation(async ({ input, ctx }) => {
       const { guildId, ...rest } = input;
+      
+      // Adicionar informações de quem configurou
+      if (rest.alertChannelId) {
+        (rest as any).configuredBy = ctx.user?.name || "Desconhecido";
+        (rest as any).updatedAt = new Date();
+      }
       
       // APENAS O DESENVOLVEDOR PODE ALTERAR MODO DE MANUTENÇÃO
       if (rest.maintenanceMode !== undefined || rest.maintenanceEnabled !== undefined) {
@@ -974,6 +982,15 @@ const broadcastRouter = router({
 
       // Enviar broadcast
       const results = await sendBroadcastToAllGuilds(message, guilds);
+      
+      // Mapear resultados para incluir nomes dos servidores se não estiverem presentes
+      const detailedResults = results.map(res => {
+        const guild = guilds.find(g => g.id === res.guildId);
+        return {
+          ...res,
+          guildName: res.guildName || guild?.name || `Guild ${res.guildId}`
+        };
+      });
 
       // Registrar log de auditoria
       await createServerLog({
@@ -989,7 +1006,7 @@ const broadcastRouter = router({
         },
       });
 
-      return results;
+      return detailedResults;
     }),
 });
 

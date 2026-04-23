@@ -40,6 +40,7 @@ interface NavItemWithPermission extends NavItem {
 const navItems: NavItemWithPermission[] = [
   { label: "Início", icon: <LayoutDashboard size={18} />, path: "" },
   { label: "Configurações", icon: <Settings size={18} />, path: "/general" },
+  { label: "Alerta Bot", icon: <Bell size={18} />, path: "/alerts" },
   { label: "Comandos", icon: <Terminal size={18} />, path: "/commands" },
   { label: "Mensagens", icon: <MessageSquare size={18} />, path: "/messages" },
   { label: "Boas-vindas", icon: <Activity size={18} />, path: "/welcome" },

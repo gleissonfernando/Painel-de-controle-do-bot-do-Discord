@@ -12,6 +12,7 @@ import LoginPage from "./pages/LoginPage";
 import ServerSelectPage from "./pages/ServerSelectPage";
 import DashboardPage from "./pages/DashboardPage";
 import GeneralSettingsPage from "./pages/GeneralSettingsPage";
+import AlertBotPage from "./pages/AlertBotPage";
 import CommandsPage from "./pages/CommandsPage";
 import MessagesPage from "./pages/MessagesPage";
 import AutoModerationPage from "./pages/AutoModerationPage";
@@ -42,6 +43,13 @@ function Router() {
         {params => (
           <DashboardLayout guildId={params.guildId}>
             <GeneralSettingsPage guildId={params.guildId} />
+          </DashboardLayout>
+        )}
+      </Route>
+      <Route path="/dashboard/:guildId/alerts">
+        {params => (
+          <DashboardLayout guildId={params.guildId}>
+            <AlertBotPage guildId={params.guildId} />
           </DashboardLayout>
         )}
       </Route>

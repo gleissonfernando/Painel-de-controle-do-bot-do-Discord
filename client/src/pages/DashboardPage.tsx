@@ -162,8 +162,28 @@ export default function DashboardPage({ guildId }: DashboardPageProps) {
         guildName={guildName}
       />
       <div className="space-y-6">
+      {/* Aviso de Canal de Alerta Não Configurado */}
+      {isBotPresent && !settings?.alertChannelId && (
+        <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 mb-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-amber-500/20 rounded-lg">
+              <AlertCircle className="text-amber-500" size={20} />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-amber-500">⚠️ Canal de alerta não configurado</h3>
+              <p className="text-xs text-amber-500/80">Configure um canal em Alerta Bot para receber avisos do bot.</p>
+            </div>
+          </div>
+          <a href={`/dashboard/${guildId}/alerts`} className="w-full md:w-auto">
+            <button className="w-full px-4 py-2 bg-amber-500 text-black text-xs font-bold rounded-lg hover:bg-amber-600 transition-colors">
+              Configurar Alerta Bot
+            </button>
+          </a>
+        </div>
+      )}
+
       {/* Aviso de Setup de Logs */}
-      {isBotPresent && !settings?.logsChannelId && (
+      {isBotPresent && settings?.alertChannelId && !settings?.logsChannelId && (
         <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 mb-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-primary/20 rounded-lg">
