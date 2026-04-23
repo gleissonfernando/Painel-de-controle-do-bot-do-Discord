@@ -80,6 +80,9 @@ export function registerOAuthRoutes(app: Express) {
           openId: discordUser.id,
           name: discordUser.global_name || discordUser.username,
           email: discordUser.email,
+          avatar: discordUser.avatar 
+            ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png`
+            : null,
           loginMethod: "discord",
         };
       }
@@ -107,6 +110,7 @@ export function registerOAuthRoutes(app: Express) {
         openId: userInfo.openId,
         name: userInfo.name || null,
         email: userInfo.email ?? null,
+        avatar: (userInfo as any).avatar || null,
         accessToken: tokenResponse.accessToken,
         refreshToken: tokenResponse.refreshToken,
         loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,

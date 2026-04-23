@@ -119,12 +119,48 @@ const EVENT_LABELS: Record<string, string> = {
 };
 
 export default function DashboardPage({ guildId }: DashboardPageProps) {
+  const { data: guildDetails } = trpc.guilds.details.useQuery({ guildId });
   const { data: settings } = trpc.settings.get.useQuery({ guildId });
   const { data: logs } = trpc.logs.list.useQuery({ guildId, limit: 5 });
   const { data: botStatus } = trpc.guilds.checkBotStatus.useQuery({ guildId });
 
-  const guildName = settings?.guildName ?? "Your Server";
-  const isBotPresent = botStatus?.botInGuild ?? true;
+  const guildName = guildDetails?.name ?? settings?.guildName ?? "Your Server";
+  const isBotPresent = botStatus?.botInGuild ?? false;
+
+  const STAT_CARDS = [
+    {
+      label: "Total Members",
+      value: guildDetails?.member_count?.toLocaleString() || "0",
+      change: isBotPresent ? "Real-time" : "Bot Required",
+      icon: <Users size={20} />,
+      color: "text-blue-400",
+      bg: "bg-blue-500/10 border-blue-500/20",
+    },
+    {
+      label: "Text Channels",
+      value: (settings as any)?.channelsCount?.toString() || "0",
+      change: "Active",
+      icon: <Hash size={20} />,
+      color: "text-green-400",
+      bg: "bg-green-500/10 border-green-500/20",
+    },
+    {
+      label: "Active Commands",
+      value: (settings as any)?.commandsCount?.toString() || "0",
+      change: "Total",
+      icon: <Terminal size={20} />,
+      color: "text-yellow-400",
+      bg: "bg-yellow-500/10 border-yellow-500/20",
+    },
+    {
+      label: "Status",
+      value: isBotPresent ? "Online" : "Offline",
+      change: isBotPresent ? "Connected" : "Not Linked",
+      icon: <Activity size={20} />,
+      color: isBotPresent ? "text-primary" : "text-red-400",
+      bg: isBotPresent ? "bg-primary/10 border-primary/20" : "bg-red-500/10 border-red-500/20",
+    },
+  ];
 
   const getBotInviteUrl = () => {
     const clientId = "1492325134550302952";
@@ -179,7 +215,7 @@ export default function DashboardPage({ guildId }: DashboardPageProps) {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {STAT_CARDS.map(card => (
           <div
             key={card.label}
@@ -189,16 +225,7 @@ export default function DashboardPage({ guildId }: DashboardPageProps) {
               <div className={`p-2 rounded-lg border ${card.bg} ${card.color}`}>
                 {card.icon}
               </div>
-              <div
-                className={`flex items-center gap-1 text-xs font-medium ${
-                  card.change.startsWith("+")
-                    ? "text-green-400"
-                    : card.change === "0"
-                      ? "text-muted-foreground"
-                      : "text-red-400"
-                }`}
-              >
-                <TrendingUp size={10} />
+              <div className={`flex items-center gap-1 text-[10px] font-medium opacity-70`}>
                 {card.change}
               </div>
             </div>
