@@ -28,6 +28,7 @@ import {
   getMockGuilds,
   checkBotInGuild,
 } from "./discord";
+import { sendBroadcastToAllGuilds } from "./discord-broadcast";
 
 // ─── Auth Router ──────────────────────────────────────────────────────────────
 
@@ -253,6 +254,9 @@ const settingsRouter = router({
         botToken: z.string().nullable().optional(),
         botEnabled: z.boolean().optional(),
         maintenanceMode: z.boolean().optional(),
+        maintenanceEnabled: z.boolean().optional(),
+        alertChannelId: z.string().nullable().optional(),
+        maintenanceMessage: z.string().optional(),
         guildName: z.string().nullable().optional(),
         guildIcon: z.string().nullable().optional(),
         ownerId: z.string().nullable().optional(),
@@ -262,14 +266,22 @@ const settingsRouter = router({
       const { guildId, ...rest } = input;
       
       // APENAS O DESENVOLVEDOR PODE ALTERAR MODO DE MANUTENÇÃO
-      if (rest.maintenanceMode !== undefined) {
-    const DEVELOPER_ID = "761011766440230932";
-    if (ctx.user.openId !== DEVELOPER_ID) {
+      if (rest.maintenanceMode !== undefined || rest.maintenanceEnabled !== undefined) {
+        const DEVELOPER_ID = "761011766440230932";
+        if (ctx.user.openId !== DEVELOPER_ID) {
           throw new TRPCError({
             code: "FORBIDDEN",
             message: "Apenas o Desenvolvedor Mestre pode ativar o Modo de Manutenção.",
           });
         }
+      }
+
+      // Validar que alertChannelId está configurado se maintenanceEnabled for true
+      if (rest.maintenanceEnabled === true && !rest.alertChannelId) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Selecione um canal antes de ativar a manutenção.",
+        });
       }
 
       // Bloqueio se o bot não estiver no servidor
@@ -812,6 +824,57 @@ const maintenanceRouter = router({
     }),
 });
 
+// --- Broadcast Router ---
+const broadcastRouter = router({
+  sendGlobal: protectedProcedure
+    .input(z.object({
+      message: z.string().max(2000),
+      guildIds: z.array(z.string()),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      // APENAS O DESENVOLVEDOR PODE ENVIAR MENSAGENS GLOBAIS
+      const DEVELOPER_ID = "761011766440230932";
+      if (ctx.user.openId !== DEVELOPER_ID) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Apenas o Desenvolvedor Mestre pode enviar mensagens globais.",
+        });
+      }
+
+      const { message, guildIds } = input;
+      
+      // Buscar nomes dos servidores
+      const guilds = await Promise.all(
+        guildIds.map(async (guildId) => {
+          const settings = await getGuildSettings(guildId);
+          return {
+            id: guildId,
+            name: settings?.guildName || `Guild ${guildId}`,
+          };
+        })
+      );
+
+      // Enviar broadcast
+      const results = await sendBroadcastToAllGuilds(message, guilds);
+
+      // Registrar log de auditoria
+      await createServerLog({
+        guildId: guildIds[0] || "global",
+        eventType: "BROADCAST_SENT",
+        userId: ctx.user?.openId,
+        userName: ctx.user?.name,
+        userAvatar: ctx.user?.avatar,
+        details: {
+          message: message.substring(0, 100),
+          totalGuilds: guildIds.length,
+          successCount: results.filter(r => r.success).length,
+        },
+      });
+
+      return results;
+    }),
+});
+
 export const appRouter = router({
   system: systemRouter,
   auth: authRouter,
@@ -824,6 +887,7 @@ export const appRouter = router({
   messages: messagesRouter,
   welcomeGoodbye: welcomeGoodbyeRouter,
   maintenance: maintenanceRouter,
+  broadcast: broadcastRouter,
 });
 
 export type AppRouter = typeof appRouter;

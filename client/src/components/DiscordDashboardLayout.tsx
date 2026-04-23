@@ -43,7 +43,6 @@ const navItems: NavItemWithPermission[] = [
   { label: "Commands", icon: <Terminal size={18} />, path: "/commands" },
   { label: "Messages", icon: <MessageSquare size={18} />, path: "/messages" },
   { label: "Welcome/Goodbye", icon: <Activity size={18} />, path: "/welcome" },
-  { label: "Bot Control", icon: <Terminal size={18} />, path: "/control", devOnly: true },
   { label: "Auto Moderation", icon: <Shield size={18} />, path: "/automod" },
   {
     label: "Social Notifications",

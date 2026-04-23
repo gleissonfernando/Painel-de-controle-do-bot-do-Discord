@@ -49,6 +49,9 @@ export interface IGuildSettings extends Document {
   botToken?: string;
   botEnabled: boolean;
   maintenanceMode: boolean;
+  maintenanceEnabled: boolean;
+  alertChannelId?: string;
+  maintenanceMessage?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -68,6 +71,9 @@ const GuildSettingsSchema = new Schema<IGuildSettings>(
     botToken: String,
     botEnabled: { type: Boolean, default: true },
     maintenanceMode: { type: Boolean, default: false },
+    maintenanceEnabled: { type: Boolean, default: false },
+    alertChannelId: String,
+    maintenanceMessage: { type: String, default: "Sistema em manutenção" },
   },
   { timestamps: true }
 );

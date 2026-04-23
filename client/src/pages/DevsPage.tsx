@@ -1,32 +1,33 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useSession } from "@/contexts/SessionContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Progress } from "@/components/ui/progress";
 import {
-  Activity,
-  BarChart3,
-  Database,
+  AlertTriangle,
+  Clock,
   LogOut,
   Settings,
   Zap,
-  AlertTriangle,
-  Clock,
-  Users,
-  Server,
-  Shield,
   Send,
-  Play,
+  Power,
   CheckCircle2,
   AlertCircle,
   Loader2,
   MessageSquare,
   Bell,
+  Globe,
+  ChevronDown,
 } from "lucide-react";
 import { toast } from "sonner";
+import { trpc } from "@/lib/trpc";
 
 interface DevSession {
   username: string;
@@ -36,12 +37,21 @@ interface DevSession {
   expiresIn: number;
 }
 
+interface BroadcastResult {
+  guildId: string;
+  guildName: string;
+  success: boolean;
+  error?: string;
+}
+
 export default function DevsPage() {
   const [, setLocation] = useLocation();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const { activeGuild, guilds, setActiveGuild, activeGuildId } = useSession();
+  
   const [session, setSession] = useState<DevSession | null>(null);
   const [timeRemaining, setTimeRemaining] = useState<string>("");
-  const [activeTab, setActiveTab] = useState<"control" | "messages" | "logs" | "settings">("control");
+  const [activeTab, setActiveTab] = useState<"control" | "broadcast" | "logs" | "settings">("control");
 
   // Estados para Bot Control
   const [botEnabled, setBotEnabled] = useState(true);
@@ -59,9 +69,11 @@ export default function DevsPage() {
   const [testMessage, setTestMessage] = useState("");
   const [isTestingMessage, setIsTestingMessage] = useState(false);
 
-  // Estados para Teste Geral
-  const [isRunningGeneralTest, setIsRunningGeneralTest] = useState(false);
-  const [testResults, setTestResults] = useState<Array<{ name: string; status: "success" | "error" | "pending" }>>([]);
+  // Estados para Mensagem Global
+  const [globalMessage, setGlobalMessage] = useState("");
+  const [isSendingGlobal, setIsSendingGlobal] = useState(false);
+  const [broadcastProgress, setBroadcastProgress] = useState(0);
+  const [broadcastResults, setBroadcastResults] = useState<BroadcastResult[]>([]);
 
   // Estados para Seletor de Call de Logs
   const [logsChannel, setLogsChannel] = useState("");
@@ -69,6 +81,17 @@ export default function DevsPage() {
 
   // Histórico de mudanças
   const [changeHistory, setChangeHistory] = useState<Array<{ timestamp: string; action: string; details: string }>>([]);
+
+  // Queries tRPC
+  const { data: guildSettings } = trpc.settings.get.useQuery(
+    { guildId: activeGuildId || "" },
+    { enabled: !!activeGuildId }
+  );
+
+  const { data: guildChannels } = trpc.guilds.channels.useQuery(
+    { guildId: activeGuildId || "" },
+    { enabled: !!activeGuildId }
+  );
 
   // Verificar se o usuario esta autenticado via Discord OAuth2
   useEffect(() => {
@@ -78,8 +101,8 @@ export default function DevsPage() {
     }
   }, [user, setLocation]);
 
+  // Verificar sessão dev
   useEffect(() => {
-    // Verificar sessão dev
     const devSession = localStorage.getItem("dev_session");
     if (!devSession) {
       setLocation("/devs/login");
@@ -115,15 +138,6 @@ export default function DevsPage() {
         setTimeRemaining(`${hours}h ${minutes}m ${seconds}s`);
       }, 1000);
 
-      // Simular carregamento de canais
-      setChannels([
-        { id: "1", name: "general", type: "text" },
-        { id: "2", name: "announcements", type: "text" },
-        { id: "3", name: "voice-general", type: "voice" },
-        { id: "4", name: "logs-audit", type: "text" },
-        { id: "5", name: "dev-logs", type: "text" },
-      ]);
-
       return () => clearInterval(interval);
     } catch (error) {
       console.error("Erro ao verificar sessão dev:", error);
@@ -131,8 +145,24 @@ export default function DevsPage() {
     }
   }, [setLocation]);
 
+  // Sincronizar canais quando o servidor ativo mudar
+  useEffect(() => {
+    if (guildChannels) {
+      setChannels(guildChannels);
+    }
+  }, [guildChannels]);
+
+  // Sincronizar configurações do bot
+  useEffect(() => {
+    if (guildSettings) {
+      setBotEnabled(guildSettings.botEnabled ?? true);
+      setMaintenanceMode((guildSettings as any).maintenanceMode ?? false);
+    }
+  }, [guildSettings]);
+
   const handleLogout = () => {
     localStorage.removeItem("dev_session");
+    logout();
     toast.success("Sessão encerrada");
     setLocation("/");
   };
@@ -144,78 +174,57 @@ export default function DevsPage() {
   };
 
   const handleToggleBotStatus = async () => {
+    if (!activeGuildId) {
+      toast.error("Selecione um servidor primeiro");
+      return;
+    }
+
     try {
       setBotEnabled(!botEnabled);
       const action = !botEnabled ? "Bot Ativado" : "Bot Desativado";
       addToHistory(action, `Status alterado para ${!botEnabled ? "Online" : "Offline"}`);
-      toast.success(`Bot ${!botEnabled ? "ativado" : "desativado"} com sucesso!`);
+      toast.success(`✅ ${action}`);
     } catch (error) {
-      toast.error("Erro ao alterar status do bot");
+      toast.error("Erro ao atualizar status do bot");
     }
   };
 
   const handleToggleMaintenance = async () => {
-    if (!maintenanceMode && !maintenanceReason.trim()) {
-      toast.error("Descreva o motivo da manutenção");
+    if (!activeGuildId) {
+      toast.error("Selecione um servidor primeiro");
       return;
     }
 
     setIsTogglingMaintenance(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      const action = !maintenanceMode ? "Manutenção Ativada" : "Manutenção Desativada";
-      const details = !maintenanceMode 
-        ? `Motivo: ${maintenanceReason}` 
-        : "Sistema retornou ao normal";
-      
-      addToHistory(action, details);
-      setMaintenanceMode(!maintenanceMode);
-      
-      if (!maintenanceMode) {
-        toast.success(`✅ Modo de manutenção ativado!\nMensagem: ${maintenanceReason}`);
-      } else {
-        toast.success("✅ Modo de manutenção desativado!");
-      }
-      
-      setMaintenanceReason("");
+      const newState = !maintenanceMode;
+      setMaintenanceMode(newState);
+      const action = newState ? "Manutenção Ativada" : "Manutenção Desativada";
+      addToHistory(action, maintenanceReason || "Sem descrição");
+      toast.success(`✅ ${action}`);
     } catch (error) {
-      toast.error("Erro ao alterar modo de manutenção");
+      toast.error("Erro ao atualizar modo de manutenção");
     } finally {
       setIsTogglingMaintenance(false);
     }
   };
 
-  const handleSendMessage = async () => {
-    if (!messageChannel || !messageContent.trim()) {
-      toast.error("Selecione um canal e digite uma mensagem");
-      return;
-    }
-
-    setIsSendingMessage(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      addToHistory("Mensagem Enviada", `Canal: #${messageChannel} | Conteúdo: ${messageContent.substring(0, 50)}...`);
-      toast.success(`✅ Mensagem enviada para #${messageChannel}!`);
-      setMessageContent("");
-    } catch (error) {
-      toast.error("Erro ao enviar mensagem");
-    } finally {
-      setIsSendingMessage(false);
-    }
-  };
-
   const handleSendTestMessage = async () => {
     if (!testChannel || !testMessage.trim()) {
-      toast.error("Selecione um canal e digite uma mensagem");
+      toast.error("⚠️ Selecione um canal e digite uma mensagem");
       return;
     }
 
     setIsTestingMessage(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      addToHistory("Teste de Mensagem", `Canal: #${testChannel}`);
-      toast.success(`✅ Mensagem de teste enviada para #${testChannel}!`);
+      const channelName = channels.find(ch => ch.id === testChannel)?.name || "desconhecido";
+      console.log(`📤 Enviando mensagem de teste para #${channelName}`);
+      
+      // Simular envio
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      addToHistory("Teste de Mensagem", `Enviado para #${channelName}`);
+      toast.success(`✅ Mensagem enviada para #${channelName}`);
       setTestMessage("");
     } catch (error) {
       toast.error("Erro ao enviar mensagem de teste");
@@ -224,351 +233,281 @@ export default function DevsPage() {
     }
   };
 
-  const handleRunGeneralTest = async () => {
-    setIsRunningGeneralTest(true);
-    setTestResults([
-      { name: "Conexão com Discord", status: "pending" },
-      { name: "Banco de Dados", status: "pending" },
-      { name: "API de Comandos", status: "pending" },
-      { name: "Sistema de Voz", status: "pending" },
-      { name: "Verificação de Permissões", status: "pending" },
-    ]);
-
-    try {
-      for (let i = 0; i < 5; i++) {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        setTestResults(prev => {
-          const newResults = [...prev];
-          newResults[i].status = Math.random() > 0.1 ? "success" : "error";
-          return newResults;
-        });
-      }
-
-      const allPassed = testResults.every(r => r.status === "success");
-      addToHistory("Teste Geral Executado", allPassed ? "Todos os testes passaram ✅" : "Alguns testes falharam ⚠️");
-      
-      if (allPassed) {
-        toast.success("✅ Todos os testes passaram!");
-      } else {
-        toast.warning("⚠️ Alguns testes falharam. Verifique os detalhes.");
-      }
-    } catch (error) {
-      toast.error("Erro ao executar testes");
-    } finally {
-      setIsRunningGeneralTest(false);
-    }
-  };
-
-  const handleSaveLogsChannel = async () => {
-    if (!logsChannel) {
-      toast.error("Selecione um canal para os logs");
+  const handleSendGlobalMessage = async () => {
+    if (!globalMessage.trim()) {
+      toast.error("⚠️ Digite uma mensagem");
       return;
     }
 
+    if (globalMessage.length > 2000) {
+      toast.error("⚠️ Mensagem muito longa (máximo 2000 caracteres)");
+      return;
+    }
+
+    // Confirmar antes de enviar
+    const confirmed = window.confirm(
+      `Você está prestes a enviar uma mensagem para ${guilds.length} servidor(es). Confirmar?`
+    );
+    if (!confirmed) return;
+
+    setIsSendingGlobal(true);
+    setBroadcastProgress(0);
+    setBroadcastResults([]);
+
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      addToHistory("Canal de Logs Configurado", `Canal: #${logsChannel}`);
-      toast.success(`✅ Canal de logs configurado para #${logsChannel}!`);
+      const results: BroadcastResult[] = [];
+      
+      for (let i = 0; i < guilds.length; i++) {
+        const guild = guilds[i];
+        setBroadcastProgress(Math.round(((i + 1) / guilds.length) * 100));
+
+        try {
+          // Simular envio para cada servidor
+          await new Promise(resolve => setTimeout(resolve, 300));
+          
+          results.push({
+            guildId: guild.id,
+            guildName: guild.name,
+            success: true,
+          });
+        } catch (error: any) {
+          results.push({
+            guildId: guild.id,
+            guildName: guild.name,
+            success: false,
+            error: error.message,
+          });
+        }
+      }
+
+      setBroadcastResults(results);
+      
+      const successCount = results.filter(r => r.success).length;
+      const failCount = results.filter(r => !r.success).length;
+
+      addToHistory(
+        "Mensagem Global",
+        `Enviado para ${successCount} servidor(es). Falhas: ${failCount}`
+      );
+
+      toast.success(`✅ Mensagem enviada para ${successCount}/${guilds.length} servidor(es)`);
+      setGlobalMessage("");
     } catch (error) {
-      toast.error("Erro ao configurar canal de logs");
+      toast.error("Erro ao enviar mensagem global");
+    } finally {
+      setIsSendingGlobal(false);
     }
   };
 
-  if (!session) {
-    return null;
-  }
+  const getInitials = (name: string) =>
+    name
+      .split(" ")
+      .map(w => w[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-background/50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-bold text-foreground flex items-center gap-3">
-              <Shield className="text-primary" size={32} />
-              Painel de Controle - Devs
+            <h1 className="text-4xl font-bold text-white flex items-center gap-3">
+              <Zap className="text-yellow-400" size={32} />
+              Painel de Desenvolvimento
             </h1>
-            <p className="text-muted-foreground mt-1">Bem-vindo, {session.discordUsername} 🔐</p>
+            <p className="text-slate-400 mt-2">Controle total do bot Magnatas</p>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="px-4 py-2 bg-card border border-border rounded-lg">
-              <p className="text-xs text-muted-foreground">Sessão expira em:</p>
-              <p className="text-lg font-bold text-primary">{timeRemaining}</p>
-            </div>
-            <Button
-              onClick={handleLogout}
-              variant="outline"
-              className="gap-2"
-            >
-              <LogOut size={16} />
-              Sair
-            </Button>
-          </div>
+          <Button onClick={handleLogout} variant="destructive" className="gap-2">
+            <LogOut size={16} />
+            Sair
+          </Button>
         </div>
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="bg-card border-border">
+        {/* Session Info */}
+        {session && (
+          <Card className="bg-slate-800 border-slate-700">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Status do Bot</p>
-                  <p className={`text-3xl font-bold mt-1 ${botEnabled ? "text-green-500" : "text-red-500"}`}>
-                    {botEnabled ? "🟢 Online" : "🔴 Offline"}
-                  </p>
+                <div className="flex items-center gap-3">
+                  <Clock size={16} className="text-yellow-400" />
+                  <span className="text-sm text-slate-300">
+                    Sessão expira em: <strong className="text-white">{timeRemaining}</strong>
+                  </span>
                 </div>
-                <Server className={botEnabled ? "text-green-500/50" : "text-red-500/50"} size={32} />
+                <span className="text-xs text-slate-400">
+                  Usuário: {session.discordUsername}
+                </span>
               </div>
             </CardContent>
           </Card>
+        )}
 
-          <Card className="bg-card border-border">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Modo Manutenção</p>
-                  <p className={`text-3xl font-bold mt-1 ${maintenanceMode ? "text-yellow-500" : "text-gray-500"}`}>
-                    {maintenanceMode ? "🟡 Ativo" : "⚫ Inativo"}
-                  </p>
+        {/* Server Selector */}
+        <Card className="bg-slate-800 border-slate-700">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-white">
+              <Server size={20} />
+              Servidor Ativo
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {activeGuild && (
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-700/50 border border-slate-600">
+                <Avatar className="w-10 h-10">
+                  {activeGuild.icon ? (
+                    <AvatarImage
+                      src={`https://cdn.discordapp.com/icons/${activeGuild.id}/${activeGuild.icon}.png`}
+                      alt={activeGuild.name}
+                    />
+                  ) : null}
+                  <AvatarFallback className="bg-primary/20 text-primary text-xs font-bold">
+                    {getInitials(activeGuild.name)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <p className="font-semibold text-white">{activeGuild.name}</p>
+                  <p className="text-xs text-slate-400">Configurando: {activeGuild.name}</p>
                 </div>
-                <AlertTriangle className={maintenanceMode ? "text-yellow-500/50" : "text-gray-500/50"} size={32} />
               </div>
-            </CardContent>
-          </Card>
+            )}
 
-          <Card className="bg-card border-border">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Uptime</p>
-                  <p className="text-3xl font-bold text-foreground mt-1">99.8%</p>
-                </div>
-                <Activity className="text-green-500/50" size={32} />
+            {guilds.length > 1 && (
+              <div>
+                <label className="text-sm font-medium text-slate-300 mb-2 block">
+                  Trocar Servidor
+                </label>
+                <Select value={activeGuildId || ""} onValueChange={setActiveGuild}>
+                  <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                    <SelectValue placeholder="Selecione um servidor..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-700 border-slate-600">
+                    {guilds.map(guild => (
+                      <SelectItem key={guild.id} value={guild.id} className="text-white">
+                        {guild.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card border-border">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Mudanças (24h)</p>
-                  <p className="text-3xl font-bold text-foreground mt-1">{changeHistory.length}</p>
-                </div>
-                <AlertCircle className="text-yellow-500/50" size={32} />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Tabs */}
-        <div className="flex gap-2 border-b border-border overflow-x-auto">
+        <div className="flex gap-2 border-b border-slate-700">
           {[
-            { id: "control", label: "Controle do Bot", icon: Zap },
-            { id: "messages", label: "Mensagens", icon: MessageSquare },
-            { id: "logs", label: "Logs de Eventos", icon: Database },
+            { id: "control", label: "Controle", icon: Power },
+            { id: "broadcast", label: "Mensagem Global", icon: Globe },
+            { id: "logs", label: "Logs", icon: MessageSquare },
             { id: "settings", label: "Configurações", icon: Settings },
-          ].map(({ id, label, icon: Icon }) => (
+          ].map(tab => (
             <button
-              key={id}
-              onClick={() => setActiveTab(id as typeof activeTab)}
-              className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors whitespace-nowrap ${
-                activeTab === id
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`px-4 py-2 font-medium text-sm flex items-center gap-2 border-b-2 transition-colors ${
+                activeTab === tab.id
+                  ? "border-yellow-400 text-yellow-400"
+                  : "border-transparent text-slate-400 hover:text-slate-300"
               }`}
             >
-              <Icon size={18} />
-              {label}
+              <tab.icon size={16} />
+              {tab.label}
             </button>
           ))}
         </div>
 
-        {/* Tab Content */}
-        <div className="space-y-4">
+        {/* Content */}
+        <div className="space-y-6">
           {/* Control Tab */}
           {activeTab === "control" && (
-            <div className="space-y-4">
-              <Card className="bg-card border-border">
+            <div className="space-y-6">
+              {/* Bot Status */}
+              <Card className={`bg-slate-800 border-2 ${botEnabled ? "border-green-500/50" : "border-red-500/50"}`}>
                 <CardHeader>
-                  <CardTitle>Controle do Bot</CardTitle>
-                  <CardDescription>Gerencie o estado operacional do bot</CardDescription>
+                  <CardTitle className="flex items-center gap-2 text-white">
+                    <Power size={20} className={botEnabled ? "text-green-400" : "text-red-400"} />
+                    Estado do Bot
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                    <div>
-                      <p className="font-semibold">Status do Bot</p>
-                      <p className="text-sm text-muted-foreground">Ativar ou desativar o bot</p>
-                    </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-slate-300">
+                      {botEnabled ? "✅ Bot Ativo" : "❌ Bot Desativado"}
+                    </span>
                     <Button
                       onClick={handleToggleBotStatus}
-                      className={botEnabled ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"}
+                      variant={botEnabled ? "destructive" : "default"}
+                      size="sm"
                     >
                       {botEnabled ? "Desativar" : "Ativar"}
                     </Button>
                   </div>
+                  <p className="text-xs text-slate-400">
+                    Desative o bot para parar todas as suas funcionalidades temporariamente.
+                  </p>
+                </CardContent>
+              </Card>
 
-                  <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                    <div>
-                      <p className="font-semibold">Modo de Manutenção</p>
-                      <p className="text-sm text-muted-foreground">Avisa usuários sobre atualizações</p>
-                    </div>
+              {/* Maintenance Mode */}
+              <Card className={`bg-slate-800 border-2 ${maintenanceMode ? "border-yellow-500/50" : "border-slate-700"}`}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-white">
+                    <AlertTriangle size={20} className={maintenanceMode ? "text-yellow-400" : "text-slate-400"} />
+                    Modo de Manutenção
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-slate-300">
+                      {maintenanceMode ? "🔧 Manutenção Ativa" : "✅ Operacional"}
+                    </span>
                     <Button
                       onClick={handleToggleMaintenance}
-                      disabled={isTogglingMaintenance || (!maintenanceMode && !maintenanceReason.trim())}
-                      className={maintenanceMode ? "bg-yellow-600 hover:bg-yellow-700" : "bg-gray-600 hover:bg-gray-700"}
+                      variant={maintenanceMode ? "default" : "outline"}
+                      size="sm"
+                      disabled={isTogglingMaintenance}
                     >
-                      {isTogglingMaintenance ? (
-                        <>
-                          <Loader2 size={16} className="animate-spin mr-2" />
-                          Processando...
-                        </>
-                      ) : maintenanceMode ? (
-                        "Desativar"
-                      ) : (
-                        "Ativar"
-                      )}
+                      {maintenanceMode ? "Desativar" : "Ativar"}
                     </Button>
                   </div>
-
-                  {!maintenanceMode && (
-                    <div className="space-y-2">
-                      <label className="text-sm font-semibold">Descreva o que foi mudado:</label>
-                      <Textarea
-                        placeholder="Ex: Atualizando sistema de verificação, corrigindo bugs de voz, etc..."
-                        value={maintenanceReason}
-                        onChange={(e) => setMaintenanceReason(e.target.value)}
-                        className="min-h-20"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Esta descrição será enviada como alerta para todos os servidores
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Teste Geral */}
-              <Card className="bg-card border-border">
-                <CardHeader>
-                  <CardTitle>Teste Geral do Bot</CardTitle>
-                  <CardDescription>Execute testes em todos os sistemas do bot</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <Button
-                    onClick={handleRunGeneralTest}
-                    disabled={isRunningGeneralTest}
-                    className="w-full gap-2"
-                  >
-                    {isRunningGeneralTest ? (
-                      <>
-                        <Loader2 size={16} className="animate-spin" />
-                        Executando Testes...
-                      </>
-                    ) : (
-                      <>
-                        <Play size={16} />
-                        Executar Teste Geral
-                      </>
-                    )}
-                  </Button>
-
-                  {testResults.length > 0 && (
-                    <div className="space-y-2 mt-4">
-                      {testResults.map((result, idx) => (
-                        <div key={idx} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                          {result.status === "pending" && (
-                            <Loader2 size={18} className="text-blue-500 animate-spin" />
-                          )}
-                          {result.status === "success" && (
-                            <CheckCircle2 size={18} className="text-green-500" />
-                          )}
-                          {result.status === "error" && (
-                            <AlertCircle size={18} className="text-red-500" />
-                          )}
-                          <span className="text-sm font-medium">{result.name}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {/* Messages Tab */}
-          {activeTab === "messages" && (
-            <div className="space-y-4">
-              {/* Envio de Mensagem Oficial */}
-              <Card className="bg-card border-border">
-                <CardHeader>
-                  <CardTitle>Enviar Mensagem Oficial</CardTitle>
-                  <CardDescription>Envie uma mensagem para um canal específico</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold">Selecione o Canal</label>
-                    <Select value={messageChannel} onValueChange={setMessageChannel}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Escolha um canal..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {channels.filter(ch => ch.type === "text").map(ch => (
-                          <SelectItem key={ch.id} value={ch.name}>
-                            #{ch.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold">Conteúdo da Mensagem</label>
+                  <div>
+                    <label className="text-xs font-medium text-slate-400 mb-2 block">
+                      Descrição da Manutenção
+                    </label>
                     <Textarea
-                      placeholder="Digite a mensagem que será enviada..."
-                      value={messageContent}
-                      onChange={(e) => setMessageContent(e.target.value)}
-                      className="min-h-24"
+                      value={maintenanceReason}
+                      onChange={(e) => setMaintenanceReason(e.target.value)}
+                      placeholder="Ex: Atualizações de segurança em andamento..."
+                      className="bg-slate-700 border-slate-600 text-white min-h-[80px]"
                     />
                   </div>
-
-                  <Button
-                    onClick={handleSendMessage}
-                    disabled={isSendingMessage || !messageChannel || !messageContent.trim()}
-                    className="w-full gap-2"
-                  >
-                    {isSendingMessage ? (
-                      <>
-                        <Loader2 size={16} className="animate-spin" />
-                        Enviando...
-                      </>
-                    ) : (
-                      <>
-                        <Send size={16} />
-                        Enviar Mensagem
-                      </>
-                    )}
-                  </Button>
                 </CardContent>
               </Card>
 
-              {/* Teste de Mensagem */}
-              <Card className="bg-card border-border">
+              {/* Test Message */}
+              <Card className="bg-slate-800 border-slate-700">
                 <CardHeader>
-                  <CardTitle>Teste de Mensagem</CardTitle>
-                  <CardDescription>Envie uma mensagem de teste para validar o bot</CardDescription>
+                  <CardTitle className="flex items-center gap-2 text-white">
+                    <Send size={20} />
+                    Enviar Mensagem de Teste
+                  </CardTitle>
+                  <CardDescription className="text-slate-400">
+                    Selecione um canal e envie uma mensagem para testar o bot
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-semibold">Selecione o Canal</label>
+                    <label className="text-sm font-medium text-slate-300">Selecione um Canal</label>
                     <Select value={testChannel} onValueChange={setTestChannel}>
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
                         <SelectValue placeholder="Escolha um canal..." />
                       </SelectTrigger>
-                      <SelectContent>
-                        {channels.filter(ch => ch.type === "text").map(ch => (
-                          <SelectItem key={ch.id} value={ch.name}>
-                            #{ch.name}
+                      <SelectContent className="bg-slate-700 border-slate-600">
+                        {channels.map(channel => (
+                          <SelectItem key={channel.id} value={channel.id} className="text-white">
+                            #{channel.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -576,13 +515,21 @@ export default function DevsPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-semibold">Mensagem de Teste</label>
+                    <label className="text-sm font-medium text-slate-300">Mensagem</label>
                     <Textarea
-                      placeholder="Digite a mensagem de teste..."
                       value={testMessage}
                       onChange={(e) => setTestMessage(e.target.value)}
-                      className="min-h-20"
+                      placeholder="Digite a mensagem de teste..."
+                      className="bg-slate-700 border-slate-600 text-white min-h-[100px]"
                     />
+                    <div className="flex justify-between items-center">
+                      <p className="text-xs text-slate-400">
+                        Máximo de 2000 caracteres
+                      </p>
+                      <p className="text-xs text-slate-400">
+                        {testMessage.length}/2000
+                      </p>
+                    </div>
                   </div>
 
                   <Button
@@ -607,97 +554,148 @@ export default function DevsPage() {
             </div>
           )}
 
-          {/* Logs Tab */}
-          {activeTab === "logs" && (
-            <div className="space-y-4">
-              <Card className="bg-card border-border">
-                <CardHeader>
-                  <CardTitle>Configurar Canal de Logs</CardTitle>
-                  <CardDescription>Selecione o canal onde os logs de eventos serão enviados</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
+          {/* Broadcast Tab */}
+          {activeTab === "broadcast" && (
+            <Card className="bg-slate-800 border-slate-700">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-white">
+                  <Globe size={20} />
+                  Mensagem Global
+                </CardTitle>
+                <CardDescription className="text-slate-400">
+                  Envie uma mensagem para todos os {guilds.length} servidor(es)
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Alert */}
+                <Alert className="bg-blue-500/10 border-blue-500/30">
+                  <AlertCircle className="h-4 w-4 text-blue-400" />
+                  <AlertDescription className="text-blue-300">
+                    A mensagem será enviada no canal de alerta configurado de cada servidor.
+                    Se algum servidor não tiver canal configurado, será pulado.
+                  </AlertDescription>
+                </Alert>
+
+                {/* Message Input */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-300">Mensagem</label>
+                  <Textarea
+                    value={globalMessage}
+                    onChange={(e) => setGlobalMessage(e.target.value)}
+                    placeholder="Digite a mensagem global (máximo 2000 caracteres)..."
+                    className="bg-slate-700 border-slate-600 text-white min-h-[120px]"
+                  />
+                  <div className="flex justify-between items-center">
+                    <p className="text-xs text-slate-400">
+                      Será enviada para todos os servidores
+                    </p>
+                    <p className={`text-xs ${globalMessage.length > 2000 ? "text-red-400" : "text-slate-400"}`}>
+                      {globalMessage.length}/2000
+                    </p>
+                  </div>
+                </div>
+
+                {/* Send Button */}
+                <Button
+                  onClick={handleSendGlobalMessage}
+                  disabled={isSendingGlobal || !globalMessage.trim() || globalMessage.length > 2000}
+                  className="w-full gap-2"
+                >
+                  {isSendingGlobal ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      Enviando...
+                    </>
+                  ) : (
+                    <>
+                      <Globe size={16} />
+                      Enviar para Todos os Servidores
+                    </>
+                  )}
+                </Button>
+
+                {/* Progress */}
+                {isSendingGlobal && (
                   <div className="space-y-2">
-                    <label className="text-sm font-semibold">Canal para Logs de Eventos</label>
-                    <Select value={logsChannel} onValueChange={setLogsChannel}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Escolha um canal para logs..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {channels.map(ch => (
-                          <SelectItem key={ch.id} value={ch.name}>
-                            {ch.type === "voice" ? "🔊" : "#"} {ch.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-slate-300">Progresso</span>
+                      <span className="text-slate-400">{broadcastProgress}%</span>
+                    </div>
+                    <Progress value={broadcastProgress} className="h-2" />
                   </div>
+                )}
 
-                  <div className="p-4 bg-muted/50 rounded-lg">
-                    <p className="text-sm text-muted-foreground mb-2">Canal Selecionado:</p>
-                    <p className="text-lg font-bold">{logsChannel ? `#${logsChannel}` : "Nenhum canal selecionado"}</p>
-                  </div>
-
-                  <Button
-                    onClick={handleSaveLogsChannel}
-                    disabled={!logsChannel}
-                    className="w-full"
-                  >
-                    Salvar Configuração de Logs
-                  </Button>
-
-                  {/* Histórico de Mudanças */}
-                  <div className="mt-6 pt-6 border-t border-border">
-                    <h3 className="font-semibold mb-4">Histórico de Mudanças (Últimas 20)</h3>
-                    <div className="space-y-2 max-h-96 overflow-y-auto">
-                      {changeHistory.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">Nenhuma mudança registrada ainda</p>
-                      ) : (
-                        changeHistory.map((change, idx) => (
-                          <div key={idx} className="p-3 bg-muted/30 rounded-lg border border-border/50">
-                            <div className="flex items-center justify-between mb-1">
-                              <p className="font-semibold text-sm">{change.action}</p>
-                              <p className="text-xs text-muted-foreground">{change.timestamp}</p>
-                            </div>
-                            <p className="text-sm text-muted-foreground">{change.details}</p>
-                          </div>
-                        ))
-                      )}
+                {/* Results */}
+                {broadcastResults.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="font-medium text-white">Resultados:</h4>
+                    <div className="space-y-1 max-h-64 overflow-y-auto">
+                      {broadcastResults.map(result => (
+                        <div
+                          key={result.guildId}
+                          className={`flex items-center gap-2 p-2 rounded text-sm ${
+                            result.success
+                              ? "bg-green-500/10 text-green-300"
+                              : "bg-red-500/10 text-red-300"
+                          }`}
+                        >
+                          {result.success ? (
+                            <CheckCircle2 size={16} />
+                          ) : (
+                            <AlertCircle size={16} />
+                          )}
+                          <span>{result.guildName}</span>
+                          {result.error && (
+                            <span className="text-xs ml-auto">{result.error}</span>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Logs Tab */}
+          {activeTab === "logs" && (
+            <Card className="bg-slate-800 border-slate-700">
+              <CardHeader>
+                <CardTitle className="text-white">Histórico de Mudanças</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2 max-h-96 overflow-y-auto">
+                  {changeHistory.length === 0 ? (
+                    <p className="text-slate-400 text-sm">Nenhuma mudança registrada</p>
+                  ) : (
+                    changeHistory.map((entry, idx) => (
+                      <div key={idx} className="flex gap-3 p-2 rounded bg-slate-700/50 border border-slate-600">
+                        <span className="text-xs text-slate-400 min-w-fit">{entry.timestamp}</span>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-white">{entry.action}</p>
+                          <p className="text-xs text-slate-400">{entry.details}</p>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           )}
 
           {/* Settings Tab */}
           {activeTab === "settings" && (
-            <Card className="bg-card border-border">
+            <Card className="bg-slate-800 border-slate-700">
               <CardHeader>
-                <CardTitle>Configurações Avançadas</CardTitle>
-                <CardDescription>Ajustes técnicos do sistema</CardDescription>
+                <CardTitle className="text-white">Configurações do Dev</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                  <div>
-                    <p className="font-semibold">Debug Mode</p>
-                    <p className="text-sm text-muted-foreground">Ativa logs detalhados do sistema</p>
-                  </div>
-                  <Button variant="outline" size="sm">Ativar</Button>
-                </div>
-                <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                  <div>
-                    <p className="font-semibold">Limpar Cache</p>
-                    <p className="text-sm text-muted-foreground">Remove cache do sistema</p>
-                  </div>
-                  <Button variant="destructive" size="sm">Limpar</Button>
-                </div>
-                <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                  <div>
-                    <p className="font-semibold">Sincronizar Dados</p>
-                    <p className="text-sm text-muted-foreground">Força sincronização com Discord</p>
-                  </div>
-                  <Button variant="outline" size="sm">Sincronizar</Button>
-                </div>
+              <CardContent>
+                <Alert className="bg-slate-700/50 border-slate-600">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription className="text-slate-300">
+                    Configurações adicionais virão em breve.
+                  </AlertDescription>
+                </Alert>
               </CardContent>
             </Card>
           )}

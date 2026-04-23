@@ -5,6 +5,7 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
+import { SessionProvider } from "./contexts/SessionContext";
 import LoginPage from "./pages/LoginPage";
 import ServerSelectPage from "./pages/ServerSelectPage";
 import DashboardPage from "./pages/DashboardPage";
@@ -16,7 +17,7 @@ import SocialNotificationsPage from "./pages/SocialNotificationsPage";
 import LogsPage from "./pages/LogsPage";
 import OnboardingPage from "./pages/OnboardingPage";
 import WelcomeGoodbyePage from "./pages/WelcomeGoodbyePage";
-import BotControlPage from "./pages/BotControlPage";
+
 import DevActivationPage from "./pages/DevActivationPage";
 import DevsLoginPage from "./pages/DevsLoginPage";
 import DevsPage from "./pages/DevsPage";
@@ -84,13 +85,7 @@ function Router() {
           </DashboardLayout>
         )}
       </Route>
-      <Route path="/dashboard/:guildId/control">
-        {params => (
-          <DashboardLayout guildId={params.guildId}>
-            <BotControlPage />
-          </DashboardLayout>
-        )}
-      </Route>
+
       <Route path="/dashboard/:guildId/dev-activation">
         {params => <DevActivationPage guildId={params.guildId} />}
       </Route>
@@ -108,10 +103,12 @@ function App() {
       <ErrorBoundary>
         <LanguageProvider>
           <ThemeProvider defaultTheme="dark">
-            <TooltipProvider>
-              <Toaster />
-              <Router />
-            </TooltipProvider>
+            <SessionProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Router />
+              </TooltipProvider>
+            </SessionProvider>
           </ThemeProvider>
         </LanguageProvider>
       </ErrorBoundary>
