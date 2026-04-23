@@ -146,6 +146,26 @@ export default function DashboardPage({ guildId }: DashboardPageProps) {
 
   return (
     <div className="space-y-6">
+      {/* Aviso de Setup de Logs */}
+      {isBotPresent && !settings?.logsChannelId && (
+        <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 mb-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/20 rounded-lg">
+              <MessageSquare className="text-primary" size={20} />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-primary">Configuração de Logs Necessária</h3>
+              <p className="text-xs text-primary/80">Para monitorar as atividades do Dashboard, configure uma call ou canal de logs.</p>
+            </div>
+          </div>
+          <a href={`/dashboard/${guildId}/general`} className="w-full md:w-auto">
+            <button className="w-full px-4 py-2 bg-primary text-primary-foreground text-xs font-bold rounded-lg hover:bg-primary/90 transition-colors">
+              Configurar Agora
+            </button>
+          </a>
+        </div>
+      )}
+
       {!isBotPresent && (
         <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4">
           <div className="flex items-center gap-3">

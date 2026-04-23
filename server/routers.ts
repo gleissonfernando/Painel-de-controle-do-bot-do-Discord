@@ -285,6 +285,34 @@ const settingsRouter = router({
       return { success: true };
     }),
 
+  activateDev: protectedProcedure
+    .input(
+      z.object({
+        guildId: z.string(),
+        devCode: z.string(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const DEV_ACTIVATION_CODE = "04042003";
+      
+      if (input.devCode !== DEV_ACTIVATION_CODE) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Código de ativação inválido",
+        });
+      }
+
+      // Armazenar o ID do usuário como Dev temporário na sessão
+      // Isso será verificado no frontend para liberar as abas
+      ctx.res.cookie("dev_activated", ctx.user?.openId || "", {
+        httpOnly: false,
+        maxAge: 24 * 60 * 60 * 1000, // 24 horas
+        sameSite: "lax",
+      });
+
+      return { success: true, message: "Modo Dev ativado com sucesso!" };
+    }),
+
   testMessage: protectedProcedure
     .input(
       z.object({

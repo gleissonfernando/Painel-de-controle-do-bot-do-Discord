@@ -17,6 +17,7 @@ import LogsPage from "./pages/LogsPage";
 import OnboardingPage from "./pages/OnboardingPage";
 import WelcomeGoodbyePage from "./pages/WelcomeGoodbyePage";
 import BotControlPage from "./pages/BotControlPage";
+import DevActivationPage from "./pages/DevActivationPage";
 import DashboardLayout from "./components/DiscordDashboardLayout";
 
 function Router() {
@@ -87,6 +88,9 @@ function Router() {
             <BotControlPage />
           </DashboardLayout>
         )}
+      </Route>
+      <Route path="/dashboard/:guildId/dev-activation">
+        {params => <DevActivationPage guildId={params.guildId} />}
       </Route>
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

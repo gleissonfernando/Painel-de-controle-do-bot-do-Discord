@@ -77,6 +77,9 @@ export default function GeneralSettingsPage({
   });
 
   const handleSave = () => {
+    // Log de Auditoria no Frontend (Opcional, o backend já faz)
+    console.log(`[Config] Salvando configurações para o servidor ${guildId}...`);
+    
     updateMutation.mutate({
       guildId,
       prefix: form.prefix,
