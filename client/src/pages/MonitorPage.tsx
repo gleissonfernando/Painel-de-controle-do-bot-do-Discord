@@ -33,7 +33,8 @@ import {
   Server,
   Database,
   Globe,
-  Bot
+  Bot,
+  UserCheck
 } from "lucide-react";
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -135,6 +136,7 @@ export default function MonitorPage() {
       case "Bot": return <Bot className="text-primary" size={20} />;
       case "Database": return <Database className="text-primary" size={20} />;
       case "Discord API": return <Server className="text-primary" size={20} />;
+      case "Verificador": return <UserCheck className="text-primary" size={20} />;
       default: return <Activity className="text-primary" size={20} />;
     }
   };

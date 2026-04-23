@@ -108,7 +108,7 @@ export default function RealTimeLogConfigPage() {
               Destino das Logs
             </CardTitle>
             <CardDescription>Escolha o canal do Discord onde as logs serão enviadas</CardDescription>
-          </Header>
+          </CardHeader>
           <CardContent className="pt-6 space-y-6">
             <div className="space-y-6">
               <div className="flex items-center justify-between p-4 rounded-lg bg-muted/30 border border-border/50">
@@ -171,7 +171,7 @@ export default function RealTimeLogConfigPage() {
                 <div>
                   <p className="text-[10px] text-muted-foreground uppercase font-bold">Status de Envio</p>
                   <p className="text-sm font-medium text-foreground">
-                    {enabled ? <span className="text-green-500">Ativado</span> : <span className="text-red-500">Desativado</span>}
+                    {enabled ? <span className="text-green-500">Ativado</span> : <span className="text-red-500">Desatinado</span>}
                   </p>
                 </div>
               </div>

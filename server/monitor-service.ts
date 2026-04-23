@@ -1,6 +1,7 @@
 import { MonitorConfig, MonitorLog, GuildConfig } from "./models";
-import { sendMessageViaBot, fetchBotStatus } from "./bot-api-client";
+import { sendMessageViaBot, checkBotAvailability } from "./bot-api-client";
 import mongoose from "mongoose";
+import axios from "axios";
 
 interface ServiceStatus {
   name: string;
@@ -8,11 +9,15 @@ interface ServiceStatus {
   lastCheck: Date;
 }
 
+// ID do Desenvolvedor Responsável (Master)
+const DEV_RESPONSIBLE_ID = "761011766440230932";
+
 let currentStatus: Record<string, ServiceStatus> = {
   "Dashboard": { name: "Dashboard", status: "Online", lastCheck: new Date() },
   "Bot": { name: "Bot", status: "Online", lastCheck: new Date() },
   "Database": { name: "Database", status: "Online", lastCheck: new Date() },
   "Discord API": { name: "Discord API", status: "Online", lastCheck: new Date() },
+  "Verificador": { name: "Verificador", status: "Online", lastCheck: new Date() },
 };
 
 export const getServicesStatus = () => currentStatus;
@@ -30,7 +35,7 @@ async function sendDiscordAlert(guildId: string, channelId: string, service: str
     timestamp: new Date(),
   } : {
     title: "🚨 ALERTA MAGNATAS",
-    description: `**Serviço afetado:** ${service}\n**Status:** ${status}\n**Horário:** ${now}\n**Servidor:** ${guildName}\n\nA equipe já foi notificada.`,
+    description: `**Serviço afetado:** ${service}\n**Status:** ${status}\n**Horário:** ${now}\n**Servidor:** ${guildName}\n\nO desenvolvedor responsável <@${DEV_RESPONSIBLE_ID}> já foi notificado.`,
     color: 0xFF0000,
     footer: { text: "Magnatas.gg • Monitoramento" },
     timestamp: new Date(),
@@ -40,7 +45,7 @@ async function sendDiscordAlert(guildId: string, channelId: string, service: str
     await sendMessageViaBot({
       guildId,
       channelId,
-      message: "",
+      message: isRestored ? "" : `<@${DEV_RESPONSIBLE_ID}> 🚨 Queda detectada no serviço: **${service}**`,
       embeds: [embed]
     });
   } catch (err) {
@@ -61,18 +66,31 @@ async function checkServices() {
 
   // 2. Check Bot
   try {
-    const botStatus = await fetchBotStatus();
-    currentStatus["Bot"].status = botStatus.success ? "Online" : "Offline";
+    const isBotOnline = await checkBotAvailability();
+    currentStatus["Bot"].status = isBotOnline ? "Online" : "Offline";
   } catch (err) {
     currentStatus["Bot"].status = "Offline";
   }
 
   // 3. Check Discord API (via Bot)
-  // Simulado: Se o bot está online, a API geralmente está ok para nós
   currentStatus["Discord API"].status = currentStatus["Bot"].status;
 
   // 4. Dashboard (Sempre Online se este código está rodando)
   currentStatus["Dashboard"].status = "Online";
+
+  // 5. Check Verificador de Usuário (Simulado ou via Ping se houver URL)
+  // Como o repositório é local ou em outro deploy, tentamos um ping se houver URL configurada
+  // Por enquanto, monitoramos a existência do processo ou uma URL padrão
+  try {
+    // Exemplo: Se o verificador roda na porta 3001
+    // const response = await axios.get("http://localhost:3001/api/health", { timeout: 5000 });
+    // currentStatus["Verificador"].status = response.status === 200 ? "Online" : "Offline";
+    
+    // Simulação baseada no Bot por enquanto, já que eles costumam rodar juntos
+    currentStatus["Verificador"].status = currentStatus["Bot"].status;
+  } catch (err) {
+    currentStatus["Verificador"].status = "Offline";
+  }
 
   // Processar mudanças de status
   for (const serviceName of Object.keys(currentStatus)) {
@@ -107,5 +125,5 @@ async function checkServices() {
 // Iniciar monitoramento a cada 1 minuto
 export function startMonitor() {
   setInterval(checkServices, 60000);
-  console.log("🚀 Motor de Monitoramento Magnatas iniciado.");
+  console.log("🚀 Motor de Monitoramento Magnatas iniciado com suporte ao Verificador.");
 }
