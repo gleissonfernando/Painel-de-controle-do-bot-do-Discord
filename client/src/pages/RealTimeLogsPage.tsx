@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { io, Socket } from "socket.io-client";
@@ -7,53 +7,53 @@ import {
   CardContent, 
   CardHeader, 
   CardTitle, 
-  CardDescription,
-  CardFooter
+  CardDescription 
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { 
   Activity, 
   Search, 
   Filter, 
   Clock, 
-  Trash2, 
-  ExternalLink,
-  Terminal,
+  Server, 
+  User, 
+  Bot, 
+  ShieldAlert,
+  Trash2,
+  RefreshCw,
+  FlaskConical,
+  LogOut,
+  Crown,
   Wifi,
   WifiOff
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-
-interface LogField {
-  name: string;
-  value: string;
-  inline?: boolean;
-}
+import { Button } from "@/components/ui/button";
 
 interface RealTimeLog {
   _id: string;
+  guildId: string;
   title: string;
   description: string;
-  fields?: LogField[];
-  imageUrl?: string;
-  footer?: string;
-  color?: number;
   type?: string;
+  color?: number;
+  footer?: string;
+  imageUrl?: string;
+  userName?: string;
+  userId?: string;
   createdAt: string;
 }
 
 export default function RealTimeLogsPage() {
   const { guildId } = useParams<{ guildId: string }>();
   const [logs, setLogs] = useState<RealTimeLog[]>([]);
-  const [filter, setFilter] = useState("");
-  const [typeFilter, setTypeFilter] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterType, setFilterType] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const socketRef = useRef<Socket | null>(null);
 
-  // Carregar logs iniciais
   const { data: initialLogs, isLoading } = trpc.realTimeLogs.getLogs.useQuery(
     { guildId: guildId || "", limit: 50 },
     { enabled: !!guildId }
@@ -65,12 +65,10 @@ export default function RealTimeLogsPage() {
     }
   }, [initialLogs]);
 
-  // Configurar Socket.IO
   useEffect(() => {
     if (!guildId) return;
 
-    // Conectar ao servidor (ajuste a URL se necessário)
-    const socket = io(window.location.origin);
+    const socket: Socket = io(window.location.origin);
     socketRef.current = socket;
 
     socket.on("connect", () => {
@@ -82,8 +80,8 @@ export default function RealTimeLogsPage() {
       setIsConnected(false);
     });
 
-    socket.on("new_log", (log: RealTimeLog) => {
-      setLogs((prev) => [log, ...prev].slice(0, 100));
+    socket.on("new_log", (newLog: RealTimeLog) => {
+      setLogs((prev) => [newLog, ...prev].slice(0, 100));
     });
 
     return () => {
@@ -92,177 +90,204 @@ export default function RealTimeLogsPage() {
   }, [guildId]);
 
   const filteredLogs = logs.filter(log => {
-    const matchesSearch = log.title.toLowerCase().includes(filter.toLowerCase()) || 
-                         log.description.toLowerCase().includes(filter.toLowerCase());
-    const matchesType = typeFilter ? log.type === typeFilter : true;
+    const matchesSearch = 
+      log.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      log.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      log.userName?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesType = !filterType || log.type === filterType;
+    
     return matchesSearch && matchesType;
   });
 
-  const getDiscordColor = (colorNum?: number) => {
-    if (!colorNum) return "#2f3136";
-    return `#${colorNum.toString(16).padStart(6, "0")}`;
+  const getLogIcon = (type?: string) => {
+    switch (type) {
+      case "WELCOME": return <Crown className="text-yellow-500" size={16} />;
+      case "EXIT": return <LogOut className="text-red-500" size={16} />;
+      case "TEST": return <FlaskConical className="text-cyan-500" size={16} />;
+      case "BOT": return <Bot className="text-primary" size={16} />;
+      case "SERVER": return <Server className="text-blue-500" size={16} />;
+      case "USER": return <User className="text-green-500" size={16} />;
+      default: return <Activity className="text-gray-400" size={16} />;
+    }
   };
 
-  const uniqueTypes = Array.from(new Set(logs.map(l => l.type).filter(Boolean)));
+  const formatColor = (color?: number) => {
+    if (!color) return "#313338";
+    return `#${color.toString(16).padStart(6, '0')}`;
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-primary flex items-center gap-2">
-            <Activity size={32} />
+        <div className="space-y-1">
+          <h1 className="text-3xl font-black text-white flex items-center gap-3 tracking-tighter italic uppercase">
+            <Activity className="text-primary animate-pulse" size={32} />
             Logs em Tempo Real
           </h1>
-          <p className="text-muted-foreground">Monitore todas as atividades do bot instantaneamente</p>
+          <p className="text-muted-foreground font-medium">Monitoramento instantâneo do império Magnatas</p>
         </div>
         <div className="flex items-center gap-3">
-          <Badge variant={isConnected ? "outline" : "destructive"} className={isConnected ? "border-green-500 text-green-500" : ""}>
+          <Badge variant={isConnected ? "outline" : "destructive"} className={isConnected ? "border-green-500 text-green-500 font-black uppercase italic" : "font-black uppercase italic"}>
             {isConnected ? <Wifi size={12} className="mr-1" /> : <WifiOff size={12} className="mr-1" />}
-            {isConnected ? "Conectado" : "Desconectado"}
+            {isConnected ? "● Conectado" : "○ Desconectado"}
           </Badge>
-          <Button variant="outline" size="sm" onClick={() => setLogs([])} className="gap-2">
+          <Button variant="outline" size="sm" onClick={() => setLogs([])} className="gap-2 font-black uppercase italic text-[10px] h-8">
             <Trash2 size={14} /> Limpar Painel
           </Button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Filtros Laterais */}
-        <div className="space-y-6">
-          <Card className="border-border bg-card shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                <Filter size={14} /> Filtros
+        {/* Sidebar Filters */}
+        <div className="space-y-4">
+          <Card className="bg-[#0A0A0A] border-border shadow-xl">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-black uppercase italic flex items-center gap-2">
+                <Filter size={16} className="text-primary" /> Filtros
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={14} />
                 <Input 
                   placeholder="Buscar logs..." 
-                  className="pl-9 bg-input border-border"
-                  value={filter}
-                  onChange={(e) => setFilter(e.target.value)}
+                  className="pl-9 bg-[#111] border-border/50 font-bold"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              
+              <Separator className="bg-border/50" />
               <div className="space-y-2">
-                <label className="text-xs font-bold text-muted-foreground uppercase">Tipo de Log</label>
+                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Tipo de Log</p>
                 <div className="flex flex-wrap gap-2">
-                  <Badge 
-                    variant={typeFilter === null ? "default" : "outline"}
-                    className="cursor-pointer"
-                    onClick={() => setTypeFilter(null)}
-                  >
-                    Todos
-                  </Badge>
-                  {uniqueTypes.map(type => (
-                    <Badge 
-                      key={type}
-                      variant={typeFilter === type ? "default" : "outline"}
-                      className="cursor-pointer"
-                      onClick={() => setTypeFilter(type as string)}
+                  {[
+                    { id: null, label: "Todos", icon: <Activity size={12} /> },
+                    { id: "WELCOME", label: "Entrada", icon: <Crown size={12} /> },
+                    { id: "EXIT", label: "Saída", icon: <LogOut size={12} /> },
+                    { id: "TEST", label: "Testes", icon: <FlaskConical size={12} /> },
+                    { id: "BOT", label: "Bot", icon: <Bot size={12} /> },
+                    { id: "SERVER", label: "Servidor", icon: <Server size={12} /> },
+                    { id: "USER", label: "Usuário", icon: <User size={12} /> },
+                  ].map((type) => (
+                    <Button
+                      key={type.id || "all"}
+                      variant={filterType === type.id ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setFilterType(type.id)}
+                      className="h-8 text-[10px] font-black uppercase italic gap-1.5"
                     >
-                      {type}
-                    </Badge>
+                      {type.icon} {type.label}
+                    </Button>
                   ))}
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-border bg-card shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                <Terminal size={14} /> Status do Sistema
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="flex justify-between text-xs">
-                <span className="text-muted-foreground">Total Carregado:</span>
-                <span className="font-mono">{logs.length}</span>
+          <Card className="bg-[#0A0A0A] border-border shadow-xl">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                <span>Status do Sistema</span>
+                <RefreshCw size={12} className={isConnected ? "animate-spin text-primary" : ""} />
               </div>
-              <div className="flex justify-between text-xs">
-                <span className="text-muted-foreground">Filtro Ativo:</span>
-                <span className="font-mono">{filteredLogs.length}</span>
+              <div className="mt-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-white">Logs Carregadas</span>
+                  <Badge variant="outline" className="text-[10px] font-black">{logs.length}</Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-white">Servidor Ativo</span>
+                  <span className="text-[10px] font-black text-primary uppercase italic">Magnatas 1v99</span>
+                </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Lista de Logs */}
+        {/* Logs Feed */}
         <div className="lg:col-span-3 space-y-4">
-          {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-20 space-y-4">
-              <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-              <p className="text-muted-foreground animate-pulse">Sincronizando logs...</p>
-            </div>
-          ) : filteredLogs.length === 0 ? (
-            <Card className="border-dashed border-2 border-border bg-transparent py-20">
-              <CardContent className="flex flex-col items-center justify-center text-center space-y-3">
-                <div className="p-4 bg-muted rounded-full">
-                  <Activity size={32} className="text-muted-foreground" />
-                </div>
-                <div className="space-y-1">
-                  <p className="font-bold text-lg">Nenhuma log encontrada</p>
-                  <p className="text-sm text-muted-foreground">Aguardando novas atividades ou ajuste seus filtros.</p>
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
+          <ScrollArea className="h-[calc(100vh-250px)] pr-4">
             <div className="space-y-4">
-              {filteredLogs.map((log) => (
-                <div 
-                  key={log._id} 
-                  className="flex flex-col border-l-4 rounded-r-lg bg-[#1e1f22] shadow-lg overflow-hidden animate-in slide-in-from-top-2 duration-300"
-                  style={{ borderLeftColor: getDiscordColor(log.color) }}
-                >
-                  <div className="p-4 space-y-3">
-                    <div className="flex justify-between items-start">
-                      <h4 className="font-bold text-white text-base flex items-center gap-2">
-                        {log.title}
-                      </h4>
-                      <div className="flex items-center gap-2 text-[10px] text-gray-400 font-mono">
-                        <Clock size={10} />
-                        {new Date(log.createdAt).toLocaleTimeString("pt-BR")}
-                      </div>
-                    </div>
+              {isLoading ? (
+                <div className="flex flex-col items-center justify-center py-20 gap-4">
+                  <RefreshCw className="animate-spin text-primary" size={40} />
+                  <p className="text-sm font-black uppercase italic text-muted-foreground">Carregando Logs...</p>
+                </div>
+              ) : filteredLogs.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 gap-4 border-2 border-dashed border-border/50 rounded-xl">
+                  <ShieldAlert className="text-muted-foreground" size={48} />
+                  <p className="text-sm font-black uppercase italic text-muted-foreground">Nenhuma log encontrada</p>
+                </div>
+              ) : (
+                filteredLogs.map((log) => (
+                  <div 
+                    key={log._id} 
+                    className="group relative bg-[#1e1f22] rounded-lg overflow-hidden border border-white/5 hover:border-primary/30 transition-all duration-300 shadow-lg"
+                  >
+                    {/* Color Bar */}
+                    <div 
+                      className="absolute left-0 top-0 bottom-0 w-1.5" 
+                      style={{ backgroundColor: formatColor(log.color) }}
+                    />
                     
-                    <p className="text-sm text-gray-300 whitespace-pre-wrap leading-relaxed">
-                      {log.description}
-                    </p>
-
-                    {log.fields && log.fields.length > 0 && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                        {log.fields.map((field, idx) => (
-                          <div key={idx} className={field.inline ? "col-span-1" : "col-span-full"}>
-                            <p className="text-xs font-bold text-white mb-1">{field.name}</p>
-                            <p className="text-sm text-gray-300 bg-black/20 p-2 rounded border border-white/5">{field.value}</p>
+                    <div className="p-4 pl-6">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="space-y-1 flex-1">
+                          <div className="flex items-center gap-2">
+                            {getLogIcon(log.type)}
+                            <h4 className="text-sm font-black text-white uppercase italic tracking-tight">
+                              {log.title}
+                            </h4>
+                            <Badge variant="outline" className="text-[9px] h-4 px-1.5 font-black border-white/10 text-gray-400">
+                              {log.type || "GERAL"}
+                            </Badge>
                           </div>
-                        ))}
+                          <p className="text-xs text-gray-300 font-medium leading-relaxed">
+                            {log.description}
+                          </p>
+                        </div>
+                        <div className="text-right space-y-1">
+                          <div className="flex items-center justify-end gap-1.5 text-[10px] font-black text-gray-500 uppercase">
+                            <Clock size={10} />
+                            {new Date(log.createdAt).toLocaleTimeString()}
+                          </div>
+                          {log.userName && (
+                            <div className="flex items-center justify-end gap-1.5 text-[10px] font-black text-primary uppercase italic">
+                              <User size={10} />
+                              {log.userName}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    )}
 
-                    {log.imageUrl && (
-                      <div className="mt-3 rounded-lg overflow-hidden border border-white/10 max-w-md">
-                        <img src={log.imageUrl} alt="Log attachment" className="w-full h-auto object-cover" />
-                      </div>
-                    )}
+                      {log.imageUrl && (
+                        <div className="mt-3 rounded-md overflow-hidden border border-white/5 max-w-md">
+                          <img src={log.imageUrl} alt="Log Attachment" className="w-full h-auto object-cover" />
+                        </div>
+                      )}
 
-                    <div className="pt-3 border-t border-white/5 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        {log.footer && <span className="text-[10px] text-gray-500 font-medium">{log.footer}</span>}
-                        {log.type && <Badge variant="secondary" className="text-[9px] h-4 px-1.5 bg-white/5 text-gray-400 border-none">{log.type}</Badge>}
+                      <div className="mt-3 pt-3 border-t border-white/5 flex items-center justify-between">
+                        <div className="text-[9px] font-black text-gray-600 uppercase tracking-widest">
+                          {log.footer || "Sistema Magnatas"}
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-1 text-[9px] font-black text-gray-600 uppercase">
+                            <Server size={10} /> {log.guildId.slice(0, 8)}...
+                          </div>
+                          {log.userId && (
+                            <div className="flex items-center gap-1 text-[9px] font-black text-gray-600 uppercase">
+                              <User size={10} /> {log.userId.slice(0, 8)}...
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 text-gray-500 hover:text-white">
-                        <ExternalLink size={12} />
-                      </Button>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
-          )}
+          </ScrollArea>
         </div>
       </div>
     </div>

@@ -382,6 +382,8 @@ const realTimeLogsRouter = router({
       footer: z.string().optional(),
       color: z.number().optional(),
       type: z.string().optional(),
+      userId: z.string().optional(),
+      userName: z.string().optional(),
     }))
     .mutation(async ({ input }) => {
       const { RealTimeLog, RealTimeLogConfig } = await import("./models");
@@ -617,7 +619,9 @@ const welcomeGoodbyeRouter = router({
         description: `Mensagem de boas-vindas enviada para ${results.filter(r => r.success).length} servidor(es).`,
         type: "WELCOME",
         color: 0x00FF00,
-        footer: "Sistema Magnatas"
+        footer: "Sistema Magnatas",
+        userName: ctx.user?.name,
+        userId: ctx.user?.discordId
       };
       
       const log = await RealTimeLog.create(logData);
@@ -626,6 +630,129 @@ const welcomeGoodbyeRouter = router({
       }
 
       return results;
+    }),
+  sendExit: protectedProcedure
+    .input(z.object({
+      guildId: z.string(),
+      channelId: z.string().nullable(),
+      mode: z.enum(["local", "global"]),
+      imageUrl: z.string(),
+      userName: z.string(),
+      userAvatar: z.string()
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const { guildId, channelId, mode, imageUrl, userName, userAvatar } = input;
+      const { GuildConfig } = await import("./models");
+      const { sendMessageViaBot } = await import("./bot-api-client");
+
+      let targetGuilds = [];
+      if (mode === "local") {
+        const s = await GuildConfig.findOne({ guildId });
+        if (s && channelId) {
+          targetGuilds.push({ guildId: s.guildId, channelId });
+        }
+      } else {
+        const configs = await GuildConfig.find({ alertChannelId: { $ne: null } });
+        targetGuilds = configs.map(c => ({ guildId: c.guildId, channelId: c.alertChannelId! }));
+      }
+
+      const results = await Promise.all(targetGuilds.map(async (target) => {
+        try {
+          await sendMessageViaBot({
+            guildId: target.guildId,
+            channelId: target.channelId,
+            message: "",
+            embeds: [{
+              title: "🚪 Um membro saiu...",
+              description: `📛 Usuário: **${userName}**\n⚠️ Saiu do Magnatas\n\n@${userName} saiu do império Magnatas.`,
+              image: { url: imageUrl },
+              thumbnail: { url: userAvatar },
+              footer: { text: "Magnatas.gg • Sistema Magnatas (Saída)" },
+              color: 0xFF0000,
+              timestamp: new Date(),
+            }]
+          });
+          return { guildId: target.guildId, success: true };
+        } catch (err: any) {
+          return { guildId: target.guildId, success: false, error: err.message };
+        }
+      }));
+
+      // Registrar Log em Tempo Real
+      const { RealTimeLog } = await import("./models");
+      const { io } = await import("./_core/socket");
+      
+      const logData = {
+        guildId,
+        title: "🚪 Saída Enviada",
+        description: `Mensagem de saída enviada para ${results.filter(r => r.success).length} servidor(es).`,
+        type: "EXIT",
+        color: 0xFF0000,
+        footer: "Sistema Magnatas",
+        userName: ctx.user?.name,
+        userId: ctx.user?.discordId
+      };
+      
+      const log = await RealTimeLog.create(logData);
+      if (io) {
+        io.to(`guild_${guildId}`).emit("new_log", log);
+      }
+
+      return results;
+    }),
+  sendTest: protectedProcedure
+    .input(z.object({
+      guildId: z.string(),
+      channelId: z.string(),
+      type: z.enum(["WELCOME", "EXIT", "LOG"]),
+      imageUrl: z.string().optional()
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const { guildId, channelId, type, imageUrl } = input;
+      const { sendMessageViaBot } = await import("./bot-api-client");
+
+      const testEmbed = {
+        title: "🧪 Teste de painel Magnatas",
+        description: `📛 Usuário: **Teste#0001**\n✅ Sistema funcionando corretamente\n\nEste é um envio de teste para validar a integração do painel ${type}.`,
+        image: imageUrl ? { url: imageUrl } : undefined,
+        thumbnail: { url: "https://cdn.discordapp.com/embed/avatars/0.png" },
+        footer: { text: "Magnatas.gg • Sistema de Teste" },
+        color: 0x00FF00,
+        timestamp: new Date(),
+      };
+
+      try {
+        await sendMessageViaBot({
+          guildId,
+          channelId,
+          message: "",
+          embeds: [testEmbed]
+        });
+
+        // Registrar Log de Teste
+        const { RealTimeLog } = await import("./models");
+        const { io } = await import("./_core/socket");
+        
+        const logData = {
+          guildId,
+          title: "🧪 Teste Realizado",
+          description: `Envio de teste do painel ${type} concluído com sucesso.`,
+          type: "TEST",
+          color: 0x00FFFF,
+          footer: "Sistema Magnatas",
+          userName: ctx.user?.name,
+          userId: ctx.user?.discordId
+        };
+        
+        const log = await RealTimeLog.create(logData);
+        if (io) {
+          io.to(`guild_${guildId}`).emit("new_log", log);
+        }
+
+        return { success: true };
+      } catch (err: any) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: err.message });
+      }
     }),
 });
 

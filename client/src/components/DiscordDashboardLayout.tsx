@@ -20,6 +20,7 @@ import {
   Lock,
   ListFilter,
   Crown,
+  DoorOpen,
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
@@ -46,7 +47,8 @@ const navItems: NavItemWithPermission[] = [
   { label: "Comandos", icon: <Terminal size={18} />, path: "/commands" },
   { label: "Mensagens", icon: <MessageSquare size={18} />, path: "/messages" },
   { label: "Boas-vindas", icon: <Activity size={18} />, path: "/welcome" },
-  { label: "Magnatas 1v99", icon: <Crown size={18} className="text-yellow-500" />, path: "/welcome-magnatas" },
+  { label: "Entrada Magnatas", icon: <Crown size={18} className="text-yellow-500" />, path: "/welcome-magnatas" },
+  { label: "Saída Magnatas", icon: <DoorOpen size={18} className="text-red-500" />, path: "/exit-magnatas" },
   { label: "Auto Moderação", icon: <Shield size={18} />, path: "/automod" },
   {
     label: "Notificações",
