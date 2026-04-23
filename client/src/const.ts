@@ -2,7 +2,7 @@ export { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 
 // Generate login URL at runtime so redirect URI reflects the current origin.
 export const getLoginUrl = () => {
-  const clientId = "1492325134550302952";
+  const clientId = process.env.VITE_DISCORD_CLIENT_ID || "";
   const redirectUri = encodeURIComponent(`${window.location.origin}/auth/discord/callback`);
   // Escopos mínimos necessários para identificar o usuário e ver seus servidores
   const scope = encodeURIComponent("identify guilds");
@@ -10,7 +10,7 @@ export const getLoginUrl = () => {
 };
 
 export const getBotInviteUrl = (guildId?: string) => {
-  const clientId = "1492325134550302952";
+  const clientId = process.env.VITE_DISCORD_CLIENT_ID || "";
   const redirectUri = encodeURIComponent(`${window.location.origin}/auth/discord/callback`);
   // Escopos para adicionar o bot e identificar o usuário ao mesmo tempo
   const scope = encodeURIComponent("identify guilds bot applications.commands");
