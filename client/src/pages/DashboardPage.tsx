@@ -19,57 +19,6 @@ interface DashboardPageProps {
   guildId: string;
 }
 
-const STAT_CARDS = [
-  {
-    label: "Total Members",
-    value: "1,247",
-    change: "+12",
-    icon: <Users size={20} />,
-    color: "text-blue-400",
-    bg: "bg-blue-500/10 border-blue-500/20",
-  },
-  {
-    label: "Text Channels",
-    value: "24",
-    change: "+2",
-    icon: <Hash size={20} />,
-    color: "text-green-400",
-    bg: "bg-green-500/10 border-green-500/20",
-  },
-  {
-    label: "Active Commands",
-    value: "12",
-    change: "0",
-    icon: <Terminal size={20} />,
-    color: "text-yellow-400",
-    bg: "bg-yellow-500/10 border-yellow-500/20",
-  },
-  {
-    label: "Live Monitors",
-    value: "3",
-    change: "+1",
-    icon: <Activity size={20} />,
-    color: "text-primary",
-    bg: "bg-primary/10 border-primary/20",
-  },
-  {
-    label: "Mod Actions",
-    value: "47",
-    change: "+5",
-    icon: <Shield size={20} />,
-    color: "text-orange-400",
-    bg: "bg-orange-500/10 border-orange-500/20",
-  },
-  {
-    label: "Messages Today",
-    value: "3,891",
-    change: "+284",
-    icon: <MessageSquare size={20} />,
-    color: "text-purple-400",
-    bg: "bg-purple-500/10 border-purple-500/20",
-  },
-];
-
 const RECENT_EVENTS = [
   {
     type: "member_join",
@@ -158,8 +107,11 @@ export default function DashboardPage({ guildId }: DashboardPageProps) {
       value: isBotPresent ? "Online" : "Offline",
       change: isBotPresent ? "Connected" : "Not Linked",
       icon: <Activity size={20} />,
-      color: isBotPresent ? "text-p  const guildName = guildDetails?.name ?? settings?.guildName ?? "Your Server";
-  const isBotPresent = botStatus?.botInGuild ?? false;
+      color: isBotPresent ? "text-primary" : "text-muted-foreground",
+      bg: isBotPresent ? "bg-primary/10 border-primary/20" : "bg-muted/10 border-muted/20",
+    },
+  ];
+
   // Redirecionamento automático desativado para permitir navegação mesmo sem o bot ou banco de dados
   useEffect(() => {
     console.log("Verificação de bot ativa, mas redirecionamento automático desativado por solicitação do usuário.");
@@ -316,60 +268,44 @@ export default function DashboardPage({ guildId }: DashboardPageProps) {
 
         {/* Server Info */}
         <div className="bg-card border border-border rounded-xl p-5">
-          <h2 className="font-semibold text-foreground text-sm mb-4">
-            Server Info
-          </h2>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between py-2 border-b border-border">
-              <span className="text-xs text-muted-foreground">Prefix</span>
-              <code className="text-xs font-mono bg-primary/10 text-primary px-2 py-0.5 rounded">
-                {settings?.prefix ?? "!"}
-              </code>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold text-foreground text-sm">
+              Server Info
+            </h2>
+            <div className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${isBotPresent ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}`}>
+              {isBotPresent ? 'Online' : 'Offline'}
             </div>
-            <div className="flex items-center justify-between py-2 border-b border-border">
-              <span className="text-xs text-muted-foreground">Language</span>
-              <span className="text-xs text-foreground font-medium uppercase">
-                {settings?.language ?? "EN"}
-              </span>
+          </div>
+          
+          <div className="space-y-4">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">Server ID</span>
+              <span className="text-foreground font-mono">{guildId}</span>
             </div>
-            <div className="flex items-center justify-between py-2 border-b border-border">
-              <span className="text-xs text-muted-foreground">Timezone</span>
-              <span className="text-xs text-foreground font-medium">
-                {settings?.timezone ?? "UTC"}
-              </span>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">Owner</span>
+              <span className="text-foreground">{settings?.ownerId || "Unknown"}</span>
             </div>
-            <div className="flex items-center justify-between py-2 border-b border-border">
-              <span className="text-xs text-muted-foreground">Bot Status</span>
-              <div className="flex items-center gap-1.5">
-                <div className={`w-2 h-2 rounded-full ${isBotPresent ? "bg-green-500 animate-pulse" : "bg-red-500"}`} />
-                <span className={`text-xs font-medium ${isBotPresent ? "text-green-400" : "text-red-400"}`}>
-                  {isBotPresent ? "Online" : "Offline / Not Added"}
-                </span>
-              </div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">Prefix</span>
+              <span className="bg-muted px-1.5 py-0.5 rounded text-primary font-bold">{settings?.prefix || "!"}</span>
             </div>
-            <div className="flex items-center justify-between py-2">
-              <span className="text-xs text-muted-foreground">Bot Enabled</span>
-              <span
-                className={`text-xs font-medium ${settings?.botEnabled !== false ? "text-green-400" : "text-red-400"}`}
-              >
-                {settings?.botEnabled !== false ? "Yes" : "No"}
-              </span>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">Language</span>
+              <span className="text-foreground uppercase">{settings?.language || "en"}</span>
             </div>
           </div>
 
-          {/* Quick Actions */}
-          <div className="mt-4 pt-4 border-t border-border">
-            <p className="text-xs text-muted-foreground mb-2 font-medium">
-              Quick Actions
-            </p>
+          <div className="mt-6 pt-6 border-t border-border">
+            <h3 className="text-xs font-bold text-foreground mb-3 uppercase tracking-wider">Quick Actions</h3>
             <div className="grid grid-cols-2 gap-2">
-              <button className="flex flex-col items-center gap-1 p-2 rounded-lg bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-colors">
-                <Bot size={16} className="text-primary" />
-                <span className="text-xs text-primary">Restart</span>
+              <button className="flex items-center justify-center gap-2 p-2 bg-muted hover:bg-muted/80 rounded-lg text-[10px] font-bold transition-colors">
+                <Bell size={12} />
+                Alerts
               </button>
-              <button className="flex flex-col items-center gap-1 p-2 rounded-lg bg-muted border border-border hover:bg-accent transition-colors">
-                <Bell size={16} className="text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">Alerts</span>
+              <button className="flex items-center justify-center gap-2 p-2 bg-muted hover:bg-muted/80 rounded-lg text-[10px] font-bold transition-colors">
+                <TrendingUp size={12} />
+                Growth
               </button>
             </div>
           </div>
