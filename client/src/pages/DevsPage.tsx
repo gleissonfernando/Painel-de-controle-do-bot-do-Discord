@@ -3,6 +3,9 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Activity,
   BarChart3,
@@ -15,11 +18,18 @@ import {
   Users,
   Server,
   Shield,
+  Send,
+  Play,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 
 interface DevSession {
   username: string;
+  discordUserId: string;
+  discordUsername: string;
   timestamp: number;
   expiresIn: number;
 }
@@ -29,7 +39,24 @@ export default function DevsPage() {
   const { user } = useAuth();
   const [session, setSession] = useState<DevSession | null>(null);
   const [timeRemaining, setTimeRemaining] = useState<string>("");
-  const [activeTab, setActiveTab] = useState<"overview" | "logs" | "stats" | "settings">("overview");
+  const [activeTab, setActiveTab] = useState<"control" | "test" | "logs" | "settings">("control");
+
+  // Estados para Bot Control
+  const [botEnabled, setBotEnabled] = useState(true);
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
+
+  // Estados para Teste de Mensagem
+  const [testChannel, setTestChannel] = useState("");
+  const [testMessage, setTestMessage] = useState("");
+  const [isTestingMessage, setIsTestingMessage] = useState(false);
+
+  // Estados para Teste Geral
+  const [isRunningGeneralTest, setIsRunningGeneralTest] = useState(false);
+  const [testResults, setTestResults] = useState<Array<{ name: string; status: "success" | "error" | "pending" }>>([]);
+
+  // Estados para Seletor de Call de Logs
+  const [logsChannel, setLogsChannel] = useState("");
+  const [channels, setChannels] = useState<Array<{ id: string; name: string; type: "text" | "voice" }>>([]);
 
   // Verificar se o usuario esta autenticado via Discord OAuth2
   useEffect(() => {
@@ -76,6 +103,14 @@ export default function DevsPage() {
         setTimeRemaining(`${hours}h ${minutes}m ${seconds}s`);
       }, 1000);
 
+      // Simular carregamento de canais
+      setChannels([
+        { id: "1", name: "general", type: "text" },
+        { id: "2", name: "announcements", type: "text" },
+        { id: "3", name: "voice-general", type: "voice" },
+        { id: "4", name: "logs-audit", type: "text" },
+      ]);
+
       return () => clearInterval(interval);
     } catch (error) {
       console.error("Erro ao verificar sessão dev:", error);
@@ -87,6 +122,94 @@ export default function DevsPage() {
     localStorage.removeItem("dev_session");
     toast.success("Sessão encerrada");
     setLocation("/");
+  };
+
+  const handleToggleBotStatus = async () => {
+    try {
+      setBotEnabled(!botEnabled);
+      toast.success(`Bot ${!botEnabled ? "ativado" : "desativado"} com sucesso!`);
+      // Aqui você faria uma chamada à API para atualizar o estado no servidor
+    } catch (error) {
+      toast.error("Erro ao alterar status do bot");
+    }
+  };
+
+  const handleToggleMaintenance = async () => {
+    try {
+      setMaintenanceMode(!maintenanceMode);
+      toast.success(`Modo de manutenção ${!maintenanceMode ? "ativado" : "desativado"}!`);
+      // Aqui você faria uma chamada à API para ativar/desativar manutenção
+    } catch (error) {
+      toast.error("Erro ao alterar modo de manutenção");
+    }
+  };
+
+  const handleSendTestMessage = async () => {
+    if (!testChannel || !testMessage.trim()) {
+      toast.error("Selecione um canal e digite uma mensagem");
+      return;
+    }
+
+    setIsTestingMessage(true);
+    try {
+      // Simular envio de mensagem
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      toast.success(`Mensagem enviada para #${testChannel}!`);
+      setTestMessage("");
+    } catch (error) {
+      toast.error("Erro ao enviar mensagem de teste");
+    } finally {
+      setIsTestingMessage(false);
+    }
+  };
+
+  const handleRunGeneralTest = async () => {
+    setIsRunningGeneralTest(true);
+    setTestResults([
+      { name: "Conexão com Discord", status: "pending" },
+      { name: "Banco de Dados", status: "pending" },
+      { name: "API de Comandos", status: "pending" },
+      { name: "Sistema de Voz", status: "pending" },
+      { name: "Verificação de Permissões", status: "pending" },
+    ]);
+
+    try {
+      // Simular testes
+      for (let i = 0; i < 5; i++) {
+        await new Promise(resolve => setTimeout(resolve, 800));
+        setTestResults(prev => {
+          const newResults = [...prev];
+          newResults[i].status = Math.random() > 0.1 ? "success" : "error";
+          return newResults;
+        });
+      }
+
+      const allPassed = testResults.every(r => r.status === "success");
+      if (allPassed) {
+        toast.success("✅ Todos os testes passaram!");
+      } else {
+        toast.warning("⚠️ Alguns testes falharam. Verifique os detalhes.");
+      }
+    } catch (error) {
+      toast.error("Erro ao executar testes");
+    } finally {
+      setIsRunningGeneralTest(false);
+    }
+  };
+
+  const handleSaveLogsChannel = async () => {
+    if (!logsChannel) {
+      toast.error("Selecione um canal para os logs");
+      return;
+    }
+
+    try {
+      // Simular salvamento
+      await new Promise(resolve => setTimeout(resolve, 500));
+      toast.success(`Canal de logs configurado para #${logsChannel}!`);
+    } catch (error) {
+      toast.error("Erro ao configurar canal de logs");
+    }
   };
 
   if (!session) {
@@ -101,9 +224,9 @@ export default function DevsPage() {
           <div>
             <h1 className="text-4xl font-bold text-foreground flex items-center gap-3">
               <Shield className="text-primary" size={32} />
-              Painel de Desenvolvedores
+              Painel de Controle - Devs
             </h1>
-            <p className="text-muted-foreground mt-1">Bem-vindo, {session.username} 🔐</p>
+            <p className="text-muted-foreground mt-1">Bem-vindo, {session.discordUsername} 🔐</p>
           </div>
           <div className="flex items-center gap-4">
             <div className="px-4 py-2 bg-card border border-border rounded-lg">
@@ -127,10 +250,12 @@ export default function DevsPage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Servidores Ativos</p>
-                  <p className="text-3xl font-bold text-foreground mt-1">12</p>
+                  <p className="text-sm text-muted-foreground">Status do Bot</p>
+                  <p className={`text-3xl font-bold mt-1 ${botEnabled ? "text-green-500" : "text-red-500"}`}>
+                    {botEnabled ? "🟢 Online" : "🔴 Offline"}
+                  </p>
                 </div>
-                <Server className="text-primary/50" size={32} />
+                <Server className={botEnabled ? "text-green-500/50" : "text-red-500/50"} size={32} />
               </div>
             </CardContent>
           </Card>
@@ -139,10 +264,12 @@ export default function DevsPage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Usuários Totais</p>
-                  <p className="text-3xl font-bold text-foreground mt-1">2.4K</p>
+                  <p className="text-sm text-muted-foreground">Modo Manutenção</p>
+                  <p className={`text-3xl font-bold mt-1 ${maintenanceMode ? "text-yellow-500" : "text-gray-500"}`}>
+                    {maintenanceMode ? "🟡 Ativo" : "⚫ Inativo"}
+                  </p>
                 </div>
-                <Users className="text-blue-500/50" size={32} />
+                <AlertTriangle className={maintenanceMode ? "text-yellow-500/50" : "text-gray-500/50"} size={32} />
               </div>
             </CardContent>
           </Card>
@@ -166,24 +293,24 @@ export default function DevsPage() {
                   <p className="text-sm text-muted-foreground">Erros (24h)</p>
                   <p className="text-3xl font-bold text-foreground mt-1">3</p>
                 </div>
-                <AlertTriangle className="text-yellow-500/50" size={32} />
+                <AlertCircle className="text-yellow-500/50" size={32} />
               </div>
             </CardContent>
           </Card>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-2 border-b border-border">
+        <div className="flex gap-2 border-b border-border overflow-x-auto">
           {[
-            { id: "overview", label: "Visão Geral", icon: BarChart3 },
-            { id: "logs", label: "Logs Brutos", icon: Database },
-            { id: "stats", label: "Estatísticas", icon: Activity },
+            { id: "control", label: "Controle do Bot", icon: Zap },
+            { id: "test", label: "Testes", icon: Play },
+            { id: "logs", label: "Configurar Logs", icon: Database },
             { id: "settings", label: "Configurações", icon: Settings },
           ].map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               onClick={() => setActiveTab(id as typeof activeTab)}
-              className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
+              className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === id
                   ? "border-primary text-primary"
                   : "border-transparent text-muted-foreground hover:text-foreground"
@@ -197,87 +324,195 @@ export default function DevsPage() {
 
         {/* Tab Content */}
         <div className="space-y-4">
-          {activeTab === "overview" && (
-            <Card className="bg-card border-border">
-              <CardHeader>
-                <CardTitle>Visão Geral do Sistema</CardTitle>
-                <CardDescription>Informações gerais sobre o estado do bot</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 bg-muted/50 rounded-lg">
-                    <p className="text-sm text-muted-foreground mb-2">Status do Bot</p>
-                    <p className="text-lg font-bold text-green-500">🟢 Online</p>
+          {/* Control Tab */}
+          {activeTab === "control" && (
+            <div className="space-y-4">
+              <Card className="bg-card border-border">
+                <CardHeader>
+                  <CardTitle>Controle do Bot</CardTitle>
+                  <CardDescription>Gerencie o estado operacional do bot</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                    <div>
+                      <p className="font-semibold">Status do Bot</p>
+                      <p className="text-sm text-muted-foreground">Ativar ou desativar o bot</p>
+                    </div>
+                    <Button
+                      onClick={handleToggleBotStatus}
+                      className={botEnabled ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"}
+                    >
+                      {botEnabled ? "Desativar" : "Ativar"}
+                    </Button>
                   </div>
-                  <div className="p-4 bg-muted/50 rounded-lg">
-                    <p className="text-sm text-muted-foreground mb-2">Banco de Dados</p>
-                    <p className="text-lg font-bold text-green-500">🟢 Conectado</p>
+
+                  <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                    <div>
+                      <p className="font-semibold">Modo de Manutenção</p>
+                      <p className="text-sm text-muted-foreground">Avisa usuários sobre atualizações</p>
+                    </div>
+                    <Button
+                      onClick={handleToggleMaintenance}
+                      className={maintenanceMode ? "bg-yellow-600 hover:bg-yellow-700" : "bg-gray-600 hover:bg-gray-700"}
+                    >
+                      {maintenanceMode ? "Desativar" : "Ativar"}
+                    </Button>
                   </div>
-                  <div className="p-4 bg-muted/50 rounded-lg">
-                    <p className="text-sm text-muted-foreground mb-2">API Discord</p>
-                    <p className="text-lg font-bold text-green-500">🟢 Respondendo</p>
-                  </div>
-                  <div className="p-4 bg-muted/50 rounded-lg">
-                    <p className="text-sm text-muted-foreground mb-2">Modo Manutenção</p>
-                    <p className="text-lg font-bold text-red-500">🔴 Desativado</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
           )}
 
+          {/* Test Tab */}
+          {activeTab === "test" && (
+            <div className="space-y-4">
+              {/* Teste de Mensagem */}
+              <Card className="bg-card border-border">
+                <CardHeader>
+                  <CardTitle>Teste de Mensagem</CardTitle>
+                  <CardDescription>Envie uma mensagem de teste para um canal</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold">Selecione o Canal</label>
+                    <Select value={testChannel} onValueChange={setTestChannel}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Escolha um canal..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {channels.map(ch => (
+                          <SelectItem key={ch.id} value={ch.name}>
+                            #{ch.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold">Mensagem de Teste</label>
+                    <Textarea
+                      placeholder="Digite a mensagem de teste..."
+                      value={testMessage}
+                      onChange={(e) => setTestMessage(e.target.value)}
+                      className="min-h-24"
+                    />
+                  </div>
+
+                  <Button
+                    onClick={handleSendTestMessage}
+                    disabled={isTestingMessage || !testChannel || !testMessage.trim()}
+                    className="w-full gap-2"
+                  >
+                    {isTestingMessage ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" />
+                        Enviando...
+                      </>
+                    ) : (
+                      <>
+                        <Send size={16} />
+                        Enviar Teste
+                      </>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Teste Geral */}
+              <Card className="bg-card border-border">
+                <CardHeader>
+                  <CardTitle>Teste Geral do Bot</CardTitle>
+                  <CardDescription>Execute testes em todos os sistemas do bot</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <Button
+                    onClick={handleRunGeneralTest}
+                    disabled={isRunningGeneralTest}
+                    className="w-full gap-2"
+                  >
+                    {isRunningGeneralTest ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" />
+                        Executando Testes...
+                      </>
+                    ) : (
+                      <>
+                        <Play size={16} />
+                        Executar Teste Geral
+                      </>
+                    )}
+                  </Button>
+
+                  {testResults.length > 0 && (
+                    <div className="space-y-2 mt-4">
+                      {testResults.map((result, idx) => (
+                        <div key={idx} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                          {result.status === "pending" && (
+                            <Loader2 size={18} className="text-blue-500 animate-spin" />
+                          )}
+                          {result.status === "success" && (
+                            <CheckCircle2 size={18} className="text-green-500" />
+                          )}
+                          {result.status === "error" && (
+                            <AlertCircle size={18} className="text-red-500" />
+                          )}
+                          <span className="text-sm font-medium">{result.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Logs Tab */}
           {activeTab === "logs" && (
             <Card className="bg-card border-border">
               <CardHeader>
-                <CardTitle>Logs Brutos do Sistema</CardTitle>
-                <CardDescription>Últimos eventos do servidor</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 font-mono text-sm">
-                  <div className="p-2 bg-muted/50 rounded text-green-500">[INFO] Bot iniciado com sucesso</div>
-                  <div className="p-2 bg-muted/50 rounded text-blue-500">[DEBUG] Conectando ao banco de dados...</div>
-                  <div className="p-2 bg-muted/50 rounded text-green-500">[INFO] 12 servidores carregados</div>
-                  <div className="p-2 bg-muted/50 rounded text-yellow-500">[WARN] Taxa de requisições elevada</div>
-                  <div className="p-2 bg-muted/50 rounded text-green-500">[INFO] Sincronização concluída</div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {activeTab === "stats" && (
-            <Card className="bg-card border-border">
-              <CardHeader>
-                <CardTitle>Estatísticas Globais</CardTitle>
-                <CardDescription>Análise de uso e performance</CardDescription>
+                <CardTitle>Configurar Canal de Logs</CardTitle>
+                <CardDescription>Selecione o canal onde os logs de auditoria serão enviados</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-2">Comandos Executados (24h)</p>
-                    <p className="text-2xl font-bold">15,234</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-2">Mensagens Processadas</p>
-                    <p className="text-2xl font-bold">89,456</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-2">Tempo Médio de Resposta</p>
-                    <p className="text-2xl font-bold">125ms</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-2">Taxa de Sucesso</p>
-                    <p className="text-2xl font-bold text-green-500">99.8%</p>
-                  </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold">Canal para Logs</label>
+                  <Select value={logsChannel} onValueChange={setLogsChannel}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Escolha um canal para logs..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {channels.map(ch => (
+                        <SelectItem key={ch.id} value={ch.name}>
+                          {ch.type === "voice" ? "🔊" : "#"} {ch.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
+
+                <div className="p-4 bg-muted/50 rounded-lg">
+                  <p className="text-sm text-muted-foreground mb-2">Canal Selecionado:</p>
+                  <p className="text-lg font-bold">{logsChannel ? `#${logsChannel}` : "Nenhum canal selecionado"}</p>
+                </div>
+
+                <Button
+                  onClick={handleSaveLogsChannel}
+                  disabled={!logsChannel}
+                  className="w-full"
+                >
+                  Salvar Configuração de Logs
+                </Button>
               </CardContent>
             </Card>
           )}
 
+          {/* Settings Tab */}
           {activeTab === "settings" && (
             <Card className="bg-card border-border">
               <CardHeader>
-                <CardTitle>Configurações de Desenvolvedor</CardTitle>
-                <CardDescription>Ajustes avançados do sistema</CardDescription>
+                <CardTitle>Configurações Avançadas</CardTitle>
+                <CardDescription>Ajustes técnicos do sistema</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
@@ -285,27 +520,14 @@ export default function DevsPage() {
                     <p className="font-semibold">Debug Mode</p>
                     <p className="text-sm text-muted-foreground">Ativa logs detalhados</p>
                   </div>
-                  <button className="px-3 py-1 bg-primary text-primary-foreground rounded text-sm">
-                    Ativar
-                  </button>
+                  <Button variant="outline" size="sm">Ativar</Button>
                 </div>
                 <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
                   <div>
-                    <p className="font-semibold">Rate Limit Override</p>
-                    <p className="text-sm text-muted-foreground">Ignora limites de requisição</p>
+                    <p className="font-semibold">Limpar Cache</p>
+                    <p className="text-sm text-muted-foreground">Remove cache do sistema</p>
                   </div>
-                  <button className="px-3 py-1 bg-muted text-foreground rounded text-sm">
-                    Desativar
-                  </button>
-                </div>
-                <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                  <div>
-                    <p className="font-semibold">Cache Limpo</p>
-                    <p className="text-sm text-muted-foreground">Limpa cache do sistema</p>
-                  </div>
-                  <button className="px-3 py-1 bg-destructive text-destructive-foreground rounded text-sm">
-                    Limpar
-                  </button>
+                  <Button variant="destructive" size="sm">Limpar</Button>
                 </div>
               </CardContent>
             </Card>
