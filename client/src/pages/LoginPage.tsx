@@ -2,22 +2,35 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Bot, Shield, Zap, Bell, Globe } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 
 export default function LoginPage() {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, refresh } = useAuth();
+  const [isProcessing, setIsProcessing] = useState(false);
   const { language, setLanguage, t } = useLanguage();
   const [, navigate] = useLocation();
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+    
+    if (code && !isAuthenticated && !isProcessing) {
+      setIsProcessing(true);
+      // O backend já tem a rota /api/oauth/callback que processa o code
+      // Vamos redirecionar para ela para completar o login
+      const state = btoa(window.location.origin + "/api/oauth/callback");
+      window.location.href = `/api/oauth/callback?code=${code}&state=${state}`;
+      return;
+    }
+
     if (!loading && isAuthenticated) {
       navigate("/servers");
     }
-  }, [isAuthenticated, loading, navigate]);
+  }, [isAuthenticated, loading, navigate, isProcessing]);
 
-  if (loading) {
+  if (loading || isProcessing) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
