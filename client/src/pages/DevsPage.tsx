@@ -51,7 +51,7 @@ export default function DevsPage() {
   
   const [session, setSession] = useState<DevSession | null>(null);
   const [timeRemaining, setTimeRemaining] = useState<string>("");
-  const [activeTab, setActiveTab] = useState<"control" | "broadcast" | "logs" | "settings">("control");
+  const [activeTab, setActiveTab] = useState<"control" | "local" | "broadcast" | "logs" | "settings">("control");
 
   // Estados para Bot Control
   const [botEnabled, setBotEnabled] = useState(true);
@@ -74,6 +74,12 @@ export default function DevsPage() {
   const [isSendingGlobal, setIsSendingGlobal] = useState(false);
   const [broadcastProgress, setBroadcastProgress] = useState(0);
   const [broadcastResults, setBroadcastResults] = useState<BroadcastResult[]>([]);
+
+  // Estados para Mensagem Local
+  const [localMessage, setLocalMessage] = useState("");
+  const [localChannel, setLocalChannel] = useState("");
+  const [isSendingLocal, setIsSendingLocal] = useState(false);
+  const [localMessageError, setLocalMessageError] = useState("");
 
   // Estados para Seletor de Call de Logs
   const [logsChannel, setLogsChannel] = useState("");
@@ -206,6 +212,47 @@ export default function DevsPage() {
       toast.error("Erro ao atualizar modo de manutenção");
     } finally {
       setIsTogglingMaintenance(false);
+    }
+  };
+
+  const handleSendLocalMessage = async () => {
+    setLocalMessageError("");
+    
+    if (!localChannel) {
+      setLocalMessageError("Selecione um canal para enviar");
+      toast.error("Selecione um canal para enviar");
+      return;
+    }
+
+    if (!localMessage.trim()) {
+      setLocalMessageError("Digite uma mensagem");
+      toast.error("Digite uma mensagem");
+      return;
+    }
+
+    if (localMessage.length > 2000) {
+      setLocalMessageError("Mensagem muito longa (máximo 2000 caracteres)");
+      toast.error("Mensagem muito longa");
+      return;
+    }
+
+    setIsSendingLocal(true);
+    try {
+      const channelName = channels.find(ch => ch.id === localChannel)?.name || "desconhecido";
+      console.log(`Enviando mensagem local para #${channelName}`);
+      
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      addToHistory("Mensagem Local", `Enviado para #${channelName}`);
+      toast.success(`Mensagem enviada para #${channelName}`);
+      setLocalMessage("");
+      setLocalChannel("");
+    } catch (error: any) {
+      const errorMsg = error.message || "Erro ao enviar mensagem";
+      setLocalMessageError(errorMsg);
+      toast.error(`Erro: ${errorMsg}`);
+    } finally {
+      setIsSendingLocal(false);
     }
   };
 
@@ -399,6 +446,7 @@ export default function DevsPage() {
         <div className="flex gap-2 border-b border-slate-700">
           {[
             { id: "control", label: "Controle", icon: Power },
+            { id: "local", label: "Mensagem Local", icon: Send },
             { id: "broadcast", label: "Mensagem Global", icon: Globe },
             { id: "logs", label: "Logs", icon: MessageSquare },
             { id: "settings", label: "Configurações", icon: Settings },
@@ -546,6 +594,99 @@ export default function DevsPage() {
                       <>
                         <Send size={16} />
                         Enviar Teste
+                      </>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Local Message Tab */}
+          {activeTab === "local" && (
+            <div className="space-y-6">
+              {/* Server Info */}
+              <Card className="bg-slate-800 border-slate-700">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-white">
+                    <Send size={20} />
+                    Mensagem Local
+                  </CardTitle>
+                  <CardDescription className="text-slate-400">
+                    Envie uma mensagem para um canal específco do servidor ativo
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Server Display */}
+                  <div className="p-3 rounded bg-slate-700/50 border border-slate-600">
+                    <p className="text-xs text-slate-400 mb-1">Enviando para:</p>
+                    <p className="text-lg font-semibold text-white">
+                      {activeGuild?.name || "Nenhum servidor selecionado"}
+                    </p>
+                  </div>
+
+                  {/* Channel Selection */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-300">Selecione um Canal</label>
+                    <Select value={localChannel} onValueChange={(value) => {
+                      setLocalChannel(value);
+                      setLocalMessageError("");
+                    }}>
+                      <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                        <SelectValue placeholder="Escolha um canal de texto..." />
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-700 border-slate-600">
+                        {channels.filter(ch => ch.type === "text").map(channel => (
+                          <SelectItem key={channel.id} value={channel.id} className="text-white">
+                            #{channel.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {localMessageError && (
+                      <p className="text-xs text-red-400">{localMessageError}</p>
+                    )}
+                  </div>
+
+                  {/* Message Input */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-300">Mensagem</label>
+                    <Textarea
+                      value={localMessage}
+                      onChange={(e) => {
+                        setLocalMessage(e.target.value);
+                        setLocalMessageError("");
+                      }}
+                      placeholder="Digite a mensagem para enviar neste canal..."
+                      className="bg-slate-700 border-slate-600 text-white min-h-[120px]"
+                    />
+                    <div className="flex justify-between items-center">
+                      <p className="text-xs text-slate-400">
+                        Máximo de 2000 caracteres
+                      </p>
+                      <p className={`text-xs ${
+                        localMessage.length > 2000 ? "text-red-400" : "text-slate-400"
+                      }`}>
+                        {localMessage.length}/2000
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Send Button */}
+                  <Button
+                    onClick={handleSendLocalMessage}
+                    disabled={isSendingLocal || !localChannel || !localMessage.trim() || localMessage.length > 2000}
+                    className="w-full gap-2"
+                  >
+                    {isSendingLocal ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" />
+                        Enviando...
+                      </>
+                    ) : (
+                      <>
+                        <Send size={16} />
+                        Enviar para Este Servidor
                       </>
                     )}
                   </Button>

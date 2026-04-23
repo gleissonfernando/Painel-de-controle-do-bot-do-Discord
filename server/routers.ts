@@ -29,6 +29,7 @@ import {
   checkBotInGuild,
 } from "./discord";
 import { sendBroadcastToAllGuilds } from "./discord-broadcast";
+import { sendAdminWelcomeMessage, sendGuildJoinWelcome } from "./welcome-admin";
 
 // ─── Auth Router ──────────────────────────────────────────────────────────────
 
@@ -323,6 +324,74 @@ const settingsRouter = router({
       });
 
       return { success: true, message: "Modo Dev ativado com sucesso!" };
+    }),
+
+  sendLocalMessage: protectedProcedure
+    .input(
+      z.object({
+        guildId: z.string(),
+        channelId: z.string(),
+        message: z.string().max(2000),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      // Validar que o usuário tem permissão
+      const DEVELOPER_ID = "761011766440230932";
+      if (ctx.user.openId !== DEVELOPER_ID) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Apenas o Desenvolvedor Mestre pode enviar mensagens locais.",
+        });
+      }
+
+      // Validar que o bot está no servidor
+      const isBotPresent = await checkBotInGuild(input.guildId);
+      if (!isBotPresent) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "BOT_NOT_IN_GUILD",
+        });
+      }
+
+      // Validar que o canal existe
+      const channels = await fetchGuildChannels(input.guildId);
+      const channelExists = channels.some(ch => ch.id === input.channelId);
+      if (!channelExists) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Canal não encontrado no servidor.",
+        });
+      }
+
+      try {
+        const { sendMessageToChannel, sendAuditLog } = await import("./discord");
+        await sendMessageToChannel(input.channelId, input.message);
+        
+        // Log de Auditoria
+        const channelName = channels.find(ch => ch.id === input.channelId)?.name || "desconhecido";
+        await sendAuditLog(input.guildId, {
+          title: "📨 Mensagem Local Enviada",
+          description: `O desenvolvedor **${ctx.user.name}** enviou uma mensagem no canal <#${input.channelId}>.`,
+          color: 0x3498DB
+        });
+
+        return { success: true, channelName };
+      } catch (error: any) {
+        console.error("Error sending local message:", error);
+        
+        // Verificar se é erro de permissão do Discord
+        if (error.response?.status === 403) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "O bot não tem permissão para enviar mensagens neste canal.",
+          });
+        }
+        
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error.response?.data?.message || "Erro ao enviar mensagem",
+        });
+      }
     }),
 
   testMessage: protectedProcedure
