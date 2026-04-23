@@ -3,8 +3,10 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
-import { ThemeProvider } from "./contexts/ThemeContext";
+import { ThemeProvider as ShadcnThemeProvider } from "./contexts/ThemeContext";
+import { ThemeProvider } from "./contexts/ThemeProviderContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
+import "./styles/theme.css";
 import { SessionProvider } from "./contexts/SessionContext";
 import LoginPage from "./pages/LoginPage";
 import ServerSelectPage from "./pages/ServerSelectPage";
@@ -101,16 +103,18 @@ function App() {
   return (
     <div translate="no">
       <ErrorBoundary>
-        <LanguageProvider>
-          <ThemeProvider defaultTheme="dark">
-            <SessionProvider>
-              <TooltipProvider>
-                <Toaster />
-                <Router />
-              </TooltipProvider>
-            </SessionProvider>
-          </ThemeProvider>
-        </LanguageProvider>
+        <ThemeProvider>
+          <LanguageProvider>
+            <ShadcnThemeProvider defaultTheme="dark">
+              <SessionProvider>
+                <TooltipProvider>
+                  <Toaster />
+                  <Router />
+                </TooltipProvider>
+              </SessionProvider>
+            </ShadcnThemeProvider>
+          </LanguageProvider>
+        </ThemeProvider>
       </ErrorBoundary>
     </div>
   );
