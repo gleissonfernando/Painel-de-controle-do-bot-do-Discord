@@ -124,7 +124,7 @@ export function registerOAuthRoutes(app: Express) {
         openId: userInfo.openId,
         name: userInfo.name || null,
         email: userInfo.email ?? null,
-        avatar: userInfo.avatar || (userInfo as any).avatar || null,
+        avatar: null,
         accessToken: tokenResponse.accessToken,
         refreshToken: tokenResponse.refreshToken,
         loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,

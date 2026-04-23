@@ -231,6 +231,7 @@ const settingsRouter = router({
           adminRoleId: null,
           welcomeChannelId: null,
           logsChannelId: null,
+          botToken: null,
           botEnabled: true,
           guildName: null,
           guildIcon: null,

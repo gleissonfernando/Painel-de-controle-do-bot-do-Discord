@@ -41,7 +41,7 @@ async function startServer() {
   // ABSOLUTE FORCE PORT 80 FOR SHARD CLOUD
   // We ignore process.env.PORT entirely because Shard Cloud sets it to 3000
   // but their proxy only looks for port 80.
-  const port = 80;
+  const port = process.env.NODE_ENV === "development" ? 3000 : 80;
   const host = "0.0.0.0";
 
   server.listen(port, host, () => {
