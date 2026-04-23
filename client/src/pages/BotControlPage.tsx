@@ -31,7 +31,16 @@ export default function BotControlPage() {
   const { user } = useAuth();
 
   // Verificar se o usuário é desenvolvedor
-  const isDeveloper = user?.id === "761011766440230932";
+  const isDeveloper = user?.openId === "761011766440230932";
+  
+  // DEBUG: Log do ID do usuário para verificação
+  useEffect(() => {
+    if (user) {
+      console.log("[DEV DEBUG] User openId:", user.openId);
+      console.log("[DEV DEBUG] Is Developer:", isDeveloper);
+      console.log("[DEV DEBUG] Full user object:", user);
+    }
+  }, [user, isDeveloper]);
 
   if (!isDeveloper) {
     return (

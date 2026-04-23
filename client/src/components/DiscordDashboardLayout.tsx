@@ -167,7 +167,7 @@ export default function DiscordDashboardLayout({
         </p>
         {navItems.map(item => {
           // Esconder itens exclusivos de dev se o usuário não for o desenvolvedor
-          if (item.devOnly && user?.id !== "761011766440230932") {
+          if (item.devOnly && user?.openId !== "761011766440230932") {
             return null;
           }
           const active = isActive(item.path);

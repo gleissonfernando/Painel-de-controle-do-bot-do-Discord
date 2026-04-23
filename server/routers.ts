@@ -263,8 +263,8 @@ const settingsRouter = router({
       
       // APENAS O DESENVOLVEDOR PODE ALTERAR MODO DE MANUTENÇÃO
       if (rest.maintenanceMode !== undefined) {
-        const DEVELOPER_ID = "761011766440230932";
-        if (ctx.user.id !== DEVELOPER_ID) {
+    const DEVELOPER_ID = "761011766440230932";
+    if (ctx.user.openId !== DEVELOPER_ID) {
           throw new TRPCError({
             code: "FORBIDDEN",
             message: "Apenas o Desenvolvedor Mestre pode ativar o Modo de Manutenção.",
