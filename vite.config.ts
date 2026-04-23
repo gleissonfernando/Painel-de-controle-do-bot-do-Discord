@@ -173,6 +173,16 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    sourcemap: false, // Desativar sourcemaps para economizar memória
+    minify: "esbuild",
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Dividir bibliotecas grandes em chunks separados
+          vendor: ["react", "react-dom", "recharts", "lucide-react"],
+        },
+      },
+    },
   },
   server: {
     host: true,
