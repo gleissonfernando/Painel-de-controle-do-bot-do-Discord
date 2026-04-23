@@ -10,7 +10,7 @@ function getQueryParam(req: Request, key: string): string | undefined {
 }
 
 export function registerOAuthRoutes(app: Express) {
-  app.get("/api/oauth/callback", async (req: Request, res: Response) => {
+  const oauthHandler = async (req: Request, res: Response) => {
     const code = getQueryParam(req, "code") || (req.query.code as string);
     const state = getQueryParam(req, "state") || (req.query.state as string);
     const guildId = getQueryParam(req, "guild_id") || (req.query.guild_id as string);
@@ -46,7 +46,7 @@ export function registerOAuthRoutes(app: Express) {
         // FALLBACK: Troca de código direta com o Discord
         const protocol = req.headers["x-forwarded-proto"] || req.protocol;
         const host = req.headers["x-forwarded-host"] || req.get("host");
-        const redirectUri = `${protocol}://${host}/api/oauth/callback`;
+        const redirectUri = `${protocol}://${host}${req.path}`;
 
         console.log(`[OAuth] Exchanging code for token with redirect_uri: ${redirectUri}`);
 
@@ -164,5 +164,9 @@ export function registerOAuthRoutes(app: Express) {
       }
       res.status(500).json({ error: "OAuth callback failed" });
     }
-  });
+  };
+
+  // Registra ambas as rotas para garantir compatibilidade
+  app.get("/api/oauth/callback", oauthHandler);
+  app.get("/auth/discord/callback", oauthHandler);
 }
