@@ -6,15 +6,10 @@ import { useLocation } from "wouter";
 import { Bot, ArrowRight, Check, Zap } from "lucide-react";
 
 const getBotInviteUrl = () => {
-  const clientId =
-    import.meta.env.VITE_DISCORD_CLIENT_ID || "YOUR_BOT_CLIENT_ID";
-  const redirectUri = encodeURIComponent(
-    `${window.location.origin}/api/discord/callback`
-  );
-  return `https://discord.com/oauth2/authorize?client_id=${clientId}&permissions=0&response_type=code&redirect_uri=https%3A%2F%2Fmagnatas-dashboard.shardweb.app&integration_type=0&scope=identify+bot`;
+  const clientId = "1492325134550302952";
+  const redirectUri = encodeURIComponent(`${window.location.origin}/api/discord/callback`);
+  return `https://discord.com/oauth2/authorize?client_id=${clientId}&permissions=0&response_type=code&redirect_uri=${redirectUri}&integration_type=0&scope=identify+bot+applications.commands`;
 };
-
-const BOT_INVITE_URL = getBotInviteUrl();
 
 export default function OnboardingPage() {
   const { isAuthenticated, loading, user } = useAuth();
@@ -37,6 +32,8 @@ export default function OnboardingPage() {
       </div>
     );
   }
+
+  const inviteUrl = getBotInviteUrl();
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -153,9 +150,7 @@ export default function OnboardingPage() {
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
-              href={BOT_INVITE_URL}
-              target="_blank"
-              rel="noopener noreferrer"
+              href={inviteUrl}
               className="flex-1"
             >
               <Button className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold gap-2 text-base">
