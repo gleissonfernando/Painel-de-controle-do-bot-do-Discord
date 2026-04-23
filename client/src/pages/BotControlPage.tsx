@@ -23,10 +23,35 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Send, Power, AlertTriangle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { useAuth } from "@/lib/auth";
 
 export default function BotControlPage() {
   const { guildId } = useParams<{ guildId: string }>();
   const { t } = useLanguage();
+  const { user } = useAuth();
+
+  // Verificar se o usuário é desenvolvedor
+  const isDeveloper = user?.id === "761011766440230932";
+
+  if (!isDeveloper) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Card className="w-full max-w-md border-destructive/50 bg-destructive/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle size={20} />
+              Acesso Restrito
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Esta página é exclusiva para desenvolvedores. Você não tem permissão para acessar este recurso.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
   const [selectedChannel, setSelectedChannel] = useState<string>("");
   const [testMessage, setTestMessage] = useState<string>("");
   const [botEnabled, setBotEnabled] = useState<boolean>(true);

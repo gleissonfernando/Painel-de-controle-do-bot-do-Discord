@@ -32,13 +32,17 @@ interface DiscordDashboardLayoutProps {
   children: React.ReactNode;
 }
 
-const navItems: NavItem[] = [
+interface NavItemWithPermission extends NavItem {
+  devOnly?: boolean;
+}
+
+const navItems: NavItemWithPermission[] = [
   { label: "Dashboard", icon: <LayoutDashboard size={18} />, path: "" },
   { label: "General Settings", icon: <Settings size={18} />, path: "/general" },
   { label: "Commands", icon: <Terminal size={18} />, path: "/commands" },
   { label: "Messages", icon: <MessageSquare size={18} />, path: "/messages" },
   { label: "Welcome/Goodbye", icon: <Activity size={18} />, path: "/welcome" },
-  { label: "Bot Control", icon: <Terminal size={18} />, path: "/control" },
+  { label: "Bot Control", icon: <Terminal size={18} />, path: "/control", devOnly: true },
   { label: "Auto Moderation", icon: <Shield size={18} />, path: "/automod" },
   {
     label: "Social Notifications",
@@ -162,6 +166,10 @@ export default function DiscordDashboardLayout({
           Management
         </p>
         {navItems.map(item => {
+          // Esconder itens exclusivos de dev se o usuário não for o desenvolvedor
+          if (item.devOnly && user?.id !== "761011766440230932") {
+            return null;
+          }
           const active = isActive(item.path);
           return (
             <Link key={item.path} href={`/dashboard/${guildId}${item.path}`}>
