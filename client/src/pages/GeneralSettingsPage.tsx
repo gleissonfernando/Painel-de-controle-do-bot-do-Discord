@@ -47,6 +47,7 @@ export default function GeneralSettingsPage({
     adminRoleId: "",
     welcomeChannelId: "",
     logsChannelId: "",
+    botToken: "",
     botEnabled: true,
   });
 
@@ -59,6 +60,7 @@ export default function GeneralSettingsPage({
         adminRoleId: settings.adminRoleId ?? "",
         welcomeChannelId: settings.welcomeChannelId ?? "",
         logsChannelId: settings.logsChannelId ?? "",
+        botToken: settings.botToken ?? "",
         botEnabled: settings.botEnabled ?? true,
       });
     }
@@ -83,6 +85,7 @@ export default function GeneralSettingsPage({
       adminRoleId: form.adminRoleId || null,
       welcomeChannelId: form.welcomeChannelId || null,
       logsChannelId: form.logsChannelId || null,
+      botToken: form.botToken || null,
       botEnabled: form.botEnabled,
     });
   };
@@ -154,6 +157,24 @@ export default function GeneralSettingsPage({
             />
             <p className="text-xs text-muted-foreground mt-1">
               The prefix used to trigger bot commands (e.g., ! or /)
+            </p>
+          </div>
+
+          {/* Bot Token */}
+          <div className="col-span-1 sm:col-span-2">
+            <label className="block text-sm font-medium text-foreground mb-1.5">
+              <Save size={14} className="inline mr-1.5 text-muted-foreground" />
+              Bot Token (Overrides Environment Variable)
+            </label>
+            <input
+              type="password"
+              value={form.botToken}
+              onChange={e => setForm({ ...form, botToken: e.target.value })}
+              placeholder="MTAy..."
+              className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              If your bot is not connecting, paste your bot token here. This will be used specifically for this server.
             </p>
           </div>
 

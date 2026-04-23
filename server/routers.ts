@@ -249,6 +249,7 @@ const settingsRouter = router({
         adminRoleId: z.string().nullable().optional(),
         welcomeChannelId: z.string().nullable().optional(),
         logsChannelId: z.string().nullable().optional(),
+        botToken: z.string().nullable().optional(),
         botEnabled: z.boolean().optional(),
         guildName: z.string().nullable().optional(),
         guildIcon: z.string().nullable().optional(),

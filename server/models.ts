@@ -46,6 +46,7 @@ export interface IGuildSettings extends Document {
   adminRoleId?: string;
   welcomeChannelId?: string;
   logsChannelId?: string;
+  botToken?: string;
   botEnabled: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -63,6 +64,7 @@ const GuildSettingsSchema = new Schema<IGuildSettings>(
     adminRoleId: String,
     welcomeChannelId: String,
     logsChannelId: String,
+    botToken: String,
     botEnabled: { type: Boolean, default: true },
   },
   { timestamps: true }

@@ -1,7 +1,26 @@
 import axios from "axios";
+import { getGuildSettings } from "./db";
 
 const DISCORD_API = "https://discord.com/api/v10";
-const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
+const DEFAULT_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
+
+/**
+ * Resolve o melhor token para um servidor específico.
+ * Prioridade: 1. Token no Banco de Dados | 2. Variável de Ambiente
+ */
+async function resolveBotToken(guildId?: string): Promise<string | undefined> {
+  if (guildId) {
+    try {
+      const settings = await getGuildSettings(guildId);
+      if (settings?.botToken) {
+        return settings.botToken;
+      }
+    } catch (err) {
+      console.error(`[Discord] Erro ao buscar token no DB para guild ${guildId}:`, err);
+    }
+  }
+  return DEFAULT_BOT_TOKEN;
+}
 
 // ─── User-level calls (uses user access token) ────────────────────────────────
 
@@ -21,12 +40,14 @@ export async function fetchDiscordGuilds(accessToken: string) {
 // ─── Bot-level calls (uses bot token) ────────────────────────────────────────
 
 export async function fetchGuildDetails(guildId: string) {
-  if (!BOT_TOKEN) return getMockGuildDetails(guildId);
+  const token = await resolveBotToken(guildId);
+  if (!token) return getMockGuildDetails(guildId);
+  
   try {
     const res = await axios.get(
       `${DISCORD_API}/guilds/${guildId}?with_counts=true`,
       {
-        headers: { Authorization: `Bot ${BOT_TOKEN}` },
+        headers: { Authorization: `Bot ${token}` },
       }
     );
     return res.data as {
@@ -38,36 +59,64 @@ export async function fetchGuildDetails(guildId: string) {
       approximate_presence_count?: number;
       channels?: unknown[];
     };
-  } catch {
+  } catch (error: any) {
+    console.error(`[Discord] Erro ao buscar detalhes da guild ${guildId}:`, error.response?.status || error.message);
     return getMockGuildDetails(guildId);
   }
 }
 
 export async function fetchGuildChannels(guildId: string) {
-  if (!BOT_TOKEN) return getMockChannels(guildId);
+  const token = await resolveBotToken(guildId);
+  if (!token) return getMockChannels(guildId);
+  
   try {
     const res = await axios.get(`${DISCORD_API}/guilds/${guildId}/channels`, {
-      headers: { Authorization: `Bot ${BOT_TOKEN}` },
+      headers: { Authorization: `Bot ${token}` },
     });
     return (
       res.data as Array<{ id: string; name: string; type: number }>
     ).filter(
       c => c.type === 0 // text channels only
     );
-  } catch {
+  } catch (error: any) {
+    console.error(`[Discord] Erro ao buscar canais da guild ${guildId}:`, error.response?.status || error.message);
     return getMockChannels(guildId);
   }
 }
 
 export async function fetchGuildRoles(guildId: string) {
-  if (!BOT_TOKEN) return getMockRoles(guildId);
+  const token = await resolveBotToken(guildId);
+  if (!token) return getMockRoles(guildId);
+  
   try {
     const res = await axios.get(`${DISCORD_API}/guilds/${guildId}/roles`, {
-      headers: { Authorization: `Bot ${BOT_TOKEN}` },
+      headers: { Authorization: `Bot ${token}` },
     });
     return res.data as Array<{ id: string; name: string; color: number }>;
-  } catch {
+  } catch (error: any) {
+    console.error(`[Discord] Erro ao buscar cargos da guild ${guildId}:`, error.response?.status || error.message);
     return getMockRoles(guildId);
+  }
+}
+
+export async function checkBotInGuild(guildId: string) {
+  const token = await resolveBotToken(guildId);
+  if (!token) return false;
+  
+  try {
+    const res = await axios.get(
+      `${DISCORD_API}/guilds/${guildId}/members/me`,
+      {
+        headers: { Authorization: `Bot ${token}` },
+      }
+    );
+    return res.status === 200;
+  } catch (error: any) {
+    if (error.response?.status === 404 || error.response?.status === 401) {
+      return false;
+    }
+    console.error(`[Discord] Erro ao verificar bot na guild ${guildId}:`, error.response?.status || error.message);
+    return false;
   }
 }
 
@@ -95,33 +144,12 @@ function getMockRoles(_guildId: string) {
 function getMockGuildDetails(guildId: string) {
   return {
     id: guildId,
-    name: "Demo Server",
+    name: "Server (Desconectado)",
     icon: null,
-    owner_id: "123456789",
-    approximate_member_count: 1500,
-    approximate_presence_count: 450,
+    owner_id: "0",
+    approximate_member_count: 0,
+    approximate_presence_count: 0,
   };
-}
-
-// ─── Mock guilds for demo mode ────────────────────────────────────────────────
-
-export async function checkBotInGuild(guildId: string) {
-  if (!BOT_TOKEN) return true; // Return true in demo mode
-  try {
-    const res = await axios.get(
-      `${DISCORD_API}/guilds/${guildId}/members/me`,
-      {
-        headers: { Authorization: `Bot ${BOT_TOKEN}` },
-      }
-    );
-    return res.status === 200; // Bot is in the guild
-  } catch (error: any) {
-    if (error.response?.status === 404) {
-      return false; // Bot is not in the guild
-    }
-    console.error("Error checking bot in guild:", error);
-    return false;
-  }
 }
 
 export function getMockGuilds() {
@@ -134,24 +162,6 @@ export function getMockGuilds() {
       permissions: "8",
       memberCount: 1247,
       botPresent: true,
-    },
-    {
-      id: "1002",
-      name: "Gaming Community",
-      icon: null,
-      owner: false,
-      permissions: "8",
-      memberCount: 5832,
-      botPresent: true,
-    },
-    {
-      id: "1003",
-      name: "Dev Hub",
-      icon: null,
-      owner: false,
-      permissions: "8",
-      memberCount: 342,
-      botPresent: false,
     },
   ];
 }
