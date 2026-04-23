@@ -136,6 +136,40 @@ const AutoModSettingsSchema = new Schema<IAutoModSettings>(
 
 export const AutoModSettings = mongoose.model<IAutoModSettings>("AutoModSettings", AutoModSettingsSchema);
 
+// --- Social Notifications ---
+export interface ISocialNotification extends Document {
+  guildId: string;
+  platform: "youtube" | "twitch" | "tiktok";
+  channelUsername: string;
+  channelId?: string;
+  channelDisplayName?: string;
+  discordChannelId: string;
+  message?: string;
+  enabled: boolean;
+  isLive: boolean;
+  lastNotifiedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const SocialNotificationSchema = new Schema<ISocialNotification>(
+  {
+    guildId: { type: String, required: true },
+    platform: { type: String, enum: ["youtube", "twitch", "tiktok"], required: true },
+    channelUsername: { type: String, required: true },
+    channelId: String,
+    channelDisplayName: String,
+    discordChannelId: { type: String, required: true },
+    message: String,
+    enabled: { type: Boolean, default: true },
+    isLive: { type: Boolean, default: false },
+    lastNotifiedAt: Date,
+  },
+  { timestamps: true }
+);
+
+export const SocialNotification = mongoose.model<ISocialNotification>("SocialNotification", SocialNotificationSchema);
+
 // --- Server Logs ---
 export interface IServerLog extends Document {
   guildId: string;
@@ -168,6 +202,32 @@ const ServerLogSchema = new Schema<IServerLog>(
 );
 
 export const ServerLog = mongoose.model<IServerLog>("ServerLog", ServerLogSchema);
+
+// --- Command Settings ---
+export interface ICommandSetting extends Document {
+  guildId: string;
+  commandName: string;
+  enabled: boolean;
+  cooldown: number;
+  requiredRoleId?: string;
+  allowedChannels: string[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const CommandSettingSchema = new Schema<ICommandSetting>(
+  {
+    guildId: { type: String, required: true },
+    commandName: { type: String, required: true },
+    enabled: { type: Boolean, default: true },
+    cooldown: { type: Number, default: 0 },
+    requiredRoleId: String,
+    allowedChannels: { type: [String], default: [] },
+  },
+  { timestamps: true }
+);
+
+export const CommandSetting = mongoose.model<ICommandSetting>("CommandSetting", CommandSettingSchema);
 
 // --- Welcome Messages ---
 export interface IWelcomeMessage extends Document {
@@ -204,6 +264,48 @@ const WelcomeMessageSchema = new Schema<IWelcomeMessage>(
 );
 
 export const WelcomeMessage = mongoose.model<IWelcomeMessage>("WelcomeMessage", WelcomeMessageSchema);
+
+// --- Dev Audit Log ---
+export interface IDevAuditLog extends Document {
+  devUserId: string;
+  action: string;
+  details: Record<string, any>;
+  timestamp: Date;
+}
+
+const DevAuditLogSchema = new Schema<IDevAuditLog>(
+  {
+    devUserId: { type: String, required: true },
+    action: { type: String, required: true },
+    details: { type: Schema.Types.Mixed, default: {} },
+    timestamp: { type: Date, default: Date.now },
+  },
+  { timestamps: false }
+);
+
+export const DevAuditLog = mongoose.model<IDevAuditLog>("DevAuditLog", DevAuditLogSchema);
+
+// --- Guild Removal Log ---
+export interface IGuildRemovalLog extends Document {
+  guildId: string;
+  guildName?: string;
+  removedBy: string;
+  reason?: string;
+  timestamp: Date;
+}
+
+const GuildRemovalLogSchema = new Schema<IGuildRemovalLog>(
+  {
+    guildId: { type: String, required: true },
+    guildName: String,
+    removedBy: { type: String, required: true },
+    reason: String,
+    timestamp: { type: Date, default: Date.now },
+  },
+  { timestamps: false }
+);
+
+export const GuildRemovalLog = mongoose.model<IGuildRemovalLog>("GuildRemovalLog", GuildRemovalLogSchema);
 
 // --- Dev Users ---
 export type DevRole = "master" | "creator" | "helper";
