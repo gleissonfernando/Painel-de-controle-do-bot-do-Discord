@@ -25,16 +25,24 @@ async function resolveBotToken(guildId?: string): Promise<string | undefined> {
 // ─── User-level calls (uses user access token) ────────────────────────────────
 
 export async function fetchDiscordGuilds(accessToken: string) {
-  const res = await axios.get(`${DISCORD_API}/users/@me/guilds`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-  return res.data as Array<{
-    id: string;
-    name: string;
-    icon: string | null;
-    owner: boolean;
-    permissions: string;
-  }>;
+  try {
+    const res = await axios.get(`${DISCORD_API}/users/@me/guilds`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    return res.data as Array<{
+      id: string;
+      name: string;
+      icon: string | null;
+      owner: boolean;
+      permissions: string;
+    }>;
+  } catch (error: any) {
+    if (error.response?.status === 429) {
+      console.warn("[Discord] Rate limit atingido ao buscar guilds. Retornando lista vazia temporária.");
+      return [];
+    }
+    throw error;
+  }
 }
 
 // ─── Bot-level calls (uses bot token) ────────────────────────────────────────
