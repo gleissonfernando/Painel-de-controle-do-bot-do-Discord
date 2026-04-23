@@ -106,6 +106,19 @@ export function registerOAuthRoutes(app: Express) {
         return;
       }
 
+      // Busca os servidores do usuário para sincronização imediata
+      let userGuilds = [];
+      try {
+        const guildsResponse = await fetch("https://discord.com/api/v10/users/@me/guilds", {
+          headers: { Authorization: `Bearer ${tokenResponse.accessToken}` },
+        });
+        if (guildsResponse.ok) {
+          userGuilds = await guildsResponse.ok ? await guildsResponse.json() : [];
+        }
+      } catch (e) {
+        console.error("[OAuth] Failed to fetch user guilds during login:", e);
+      }
+
       await db.upsertUser({
         openId: userInfo.openId,
         name: userInfo.name || null,
@@ -115,6 +128,7 @@ export function registerOAuthRoutes(app: Express) {
         refreshToken: tokenResponse.refreshToken,
         loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
         lastSignedIn: new Date(),
+        // Opcional: Salvar guilds no banco se o modelo suportar, mas aqui focamos no token
       });
 
       const sessionToken = await sdk.createSessionToken(userInfo.openId, {

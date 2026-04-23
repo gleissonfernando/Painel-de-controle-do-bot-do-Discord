@@ -64,18 +64,18 @@ const guildsRouter = router({
 
     try {
       // Fetch all guilds the user is in
-      console.log(`[Guilds] Fetching guilds for user ${user.openId} with token: ${user.accessToken?.substring(0, 10)}...`);
+      console.log(`[Guilds] Fetching guilds for user ${user.openId} to sync with bot presence...`);
       const userGuilds = await fetchDiscordGuilds(user.accessToken);
-      console.log(`[Guilds] Found ${userGuilds.length} guilds total`);
       
       // Filter guilds where user has MANAGE_GUILD (0x20) or ADMINISTRATOR (0x8) permission
-      // Or is the owner. Using bitwise operators on the permission string.
       const adminGuilds = userGuilds.filter(g => {
         const perms = parseInt(g.permissions);
         const isAdmin = (perms & 0x8) === 0x8;
         const canManage = (perms & 0x20) === 0x20;
         return g.owner || isAdmin || canManage;
       });
+
+      console.log(`[Guilds] User is admin in ${adminGuilds.length} guilds. Checking bot presence for each...`);
 
       // Check which of these guilds the bot is actually in
       const results = await Promise.all(
