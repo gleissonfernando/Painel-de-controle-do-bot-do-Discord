@@ -17,6 +17,7 @@ import {
   Shield,
   Terminal,
   X,
+  Lock,
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
@@ -199,6 +200,16 @@ export default function DiscordDashboardLayout({
           );
         })}
       </nav>
+
+      {/* Devs Button */}
+      <div className="px-3 py-2 border-t border-sidebar-border">
+        <Link href="/devs/login">
+          <button className="w-full flex items-center gap-2 px-3 py-2 rounded-md bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary transition-colors">
+            <Lock size={16} />
+            <span className="text-xs font-bold">Devs</span>
+          </button>
+        </Link>
+      </div>
 
       {/* User Profile */}
       <div className="px-3 py-3 border-t border-sidebar-border">
