@@ -30,6 +30,7 @@ import {
 } from "./discord";
 import { sendBroadcastToAllGuilds } from "./discord-broadcast";
 import { sendAdminWelcomeMessage, sendGuildJoinWelcome } from "./welcome-admin";
+import { sendMessageToChannel, getGuildTextChannels } from "./discord-messages";
 
 // ─── Auth Router ──────────────────────────────────────────────────────────────
 
@@ -391,6 +392,18 @@ const settingsRouter = router({
           code: "INTERNAL_SERVER_ERROR",
           message: error.response?.data?.message || "Erro ao enviar mensagem",
         });
+      }
+    }),
+
+  getTextChannels: protectedProcedure
+    .input(z.object({ guildId: z.string() }))
+    .query(async ({ input }) => {
+      try {
+        const channels = await getGuildTextChannels(input.guildId);
+        return channels;
+      } catch (error) {
+        console.error("Error fetching text channels:", error);
+        return [];
       }
     }),
 
