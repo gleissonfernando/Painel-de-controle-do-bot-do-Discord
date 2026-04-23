@@ -69,10 +69,24 @@ const EVENT_LABELS: Record<string, string> = {
 };
 
 export default function DashboardPage({ guildId }: DashboardPageProps) {
-  const { data: guildDetails } = trpc.guilds.details.useQuery({ guildId });
+  // Busca detalhes do servidor com atualização automática a cada 15 segundos (Polling)
+  const { data: guildDetails } = trpc.guilds.details.useQuery(
+    { guildId },
+    { refetchInterval: 15000, staleTime: 10000 }
+  );
+  
   const { data: settings } = trpc.settings.get.useQuery({ guildId });
-  const { data: logs } = trpc.logs.list.useQuery({ guildId, limit: 5 });
-  const { data: botStatus } = trpc.guilds.checkBotStatus.useQuery({ guildId });
+  
+  // Busca logs recentes com atualização a cada 10 segundos para ver eventos em tempo real
+  const { data: logs } = trpc.logs.list.useQuery(
+    { guildId, limit: 5 },
+    { refetchInterval: 10000, staleTime: 5000 }
+  );
+  
+  const { data: botStatus } = trpc.guilds.checkBotStatus.useQuery(
+    { guildId },
+    { refetchInterval: 30000 }
+  );
 
   const guildName = guildDetails?.name ?? settings?.guildName ?? "Your Server";
   const isBotPresent = botStatus?.botInGuild ?? false;
