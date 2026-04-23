@@ -61,7 +61,9 @@ export function registerOAuthRoutes(app: Express) {
         });
 
         if (!discordResponse.ok) {
-          throw new Error(`Discord token exchange failed: ${await discordResponse.text()}`);
+          const errorBody = await discordResponse.text();
+          console.error(`[OAuth] Discord token exchange failed. Status: ${discordResponse.status}, Body:`, errorBody);
+          throw new Error(`Discord token exchange failed: ${errorBody}`);
         }
 
         const discordTokens = await discordResponse.json();
