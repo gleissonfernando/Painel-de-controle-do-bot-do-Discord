@@ -47,13 +47,15 @@ type Step = "idle" | "verifying_bot" | "authenticating" | "verifying_role" | "re
 
 export default function UnifiedDashboard() {
   const { user, logout, isAuthenticated } = useAuth();
-  const { guilds = [], isLoadingGuilds, refreshGuilds } = useSession();
+  const { guilds = [], isLoadingGuilds, refreshGuilds, setActiveGuild } = useSession();
   const [step, setStep] = useState<Step>("idle");
   const [progress, setProgress] = useState(0);
   const [selectedGuild, setSelectedGuild] = useState<Guild | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [hasPermission, setHasPermission] = useState(true); // Simulação de cargo ADM
-  const [botInServer, setBotInServer] = useState(true); // Simulação de bot no servidor
+  const [hasPermission, setHasPermission] = useState(true); // Simulação de cargo ADM (Pode ser integrado com backend depois)
+
+  // O bot está no servidor se houver pelo menos um servidor na lista (já que o backend filtra por botPresent: true)
+  const botInServer = guilds.length > 0;
 
   // Fluxo de autenticação e carregamento baseado no FLUXO enviado pelo usuário
   useEffect(() => {
@@ -68,7 +70,7 @@ export default function UnifiedDashboard() {
     setProgress(25);
     await new Promise(r => setTimeout(r, 800));
     
-    // PASSO 2: Autenticação OAuth2 (já ocorreu se isAuthenticated for true)
+    // PASSO 2: Autenticação OAuth2 e Busca de Servidores
     setStep("authenticating");
     setProgress(50);
     await refreshGuilds();
@@ -89,6 +91,13 @@ export default function UnifiedDashboard() {
 
   const getInitials = (name: string) =>
     name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
+
+  const handleSelectGuild = (guild: Guild) => {
+    setSelectedGuild(guild);
+    setActiveGuild(guild.id);
+    // Redirecionar para o dashboard principal do servidor selecionado
+    window.location.href = `/dashboard/${guild.id}`;
+  };
 
   // Chip do usuário verificado (sempre visível)
   const UserChip = () => (
@@ -130,7 +139,7 @@ export default function UnifiedDashboard() {
   }
 
   // Tela de Carregamento com Barra de Progresso
-  if (step !== "ready") {
+  if (step !== "ready" || isLoadingGuilds) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4">
         <div className="w-full max-w-sm space-y-6">
@@ -141,6 +150,7 @@ export default function UnifiedDashboard() {
                 {step === "verifying_bot" && "Checando Presença do Bot..."}
                 {step === "authenticating" && "Validando Acesso..."}
                 {step === "verifying_role" && "Verificando Permissões..."}
+                {isLoadingGuilds && "Carregando Império..."}
               </h2>
             </div>
             <span className="text-xs font-mono text-[#888888]">{progress}%</span>
@@ -155,7 +165,7 @@ export default function UnifiedDashboard() {
     );
   }
 
-  // PASSO 1: SE o bot NÃO estiver no servidor (Tela Adicionar Bot)
+  // PASSO 1: SE o bot NÃO estiver em nenhum servidor administrativo (Tela Adicionar Bot)
   if (!botInServer) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center p-6">
@@ -169,7 +179,7 @@ export default function UnifiedDashboard() {
           </div>
           <h2 className="text-3xl font-black text-white mb-4 uppercase italic tracking-tighter">Adicionar Bot</h2>
           <p className="text-[#888888] text-sm mb-10 leading-relaxed max-w-sm mx-auto font-bold uppercase">
-            O bot <span className="text-white">Magnatas</span> ainda não está presente no servidor. Adicione-o para começar a gerenciar.
+            O bot <span className="text-white">Magnatas</span> ainda não está presente em nenhum servidor onde você possui permissões administrativas.
           </p>
           <Button 
             className="w-full bg-[#e63329] hover:bg-[#c0392b] h-14 text-white font-black uppercase italic rounded-2xl gap-3 text-lg shadow-xl shadow-[#e63329]/20"
@@ -177,6 +187,14 @@ export default function UnifiedDashboard() {
           >
             Adicionar Bot ao Servidor
             <ExternalLink size={20} />
+          </Button>
+          <Button 
+            variant="ghost" 
+            className="w-full mt-4 text-[#888888] hover:text-white h-12 font-bold uppercase italic"
+            onClick={() => refreshGuilds()}
+          >
+            <RefreshCw size={16} className="mr-2" />
+            Já convidei, atualizar agora
           </Button>
         </motion.div>
       </div>
@@ -261,7 +279,7 @@ export default function UnifiedDashboard() {
               <motion.button
                 key={guild.id}
                 whileHover={{ y: -4 }}
-                onClick={() => setSelectedGuild(guild)}
+                onClick={() => handleSelectGuild(guild)}
                 className={`flex flex-col p-6 rounded-3xl border transition-all text-left group relative overflow-hidden ${
                   selectedGuild?.id === guild.id 
                     ? "bg-[#e63329]/5 border-[#e63329] shadow-lg shadow-[#e63329]/5" 
@@ -299,6 +317,20 @@ export default function UnifiedDashboard() {
               </motion.button>
             ))}
           </div>
+          
+          {filteredGuilds.length === 0 && !isLoadingGuilds && (
+            <div className="text-center py-20 bg-[#111111] border border-[#1f1f1f] rounded-3xl">
+              <Bot size={48} className="text-[#1f1f1f] mx-auto mb-4" />
+              <p className="text-[#888888] font-bold uppercase italic">Nenhum servidor encontrado com o bot Magnatas.</p>
+              <Button 
+                variant="link" 
+                className="text-[#e63329] mt-2 font-black uppercase italic"
+                onClick={() => window.open(getBotInviteUrl(), "_blank")}
+              >
+                Convidar Bot para novos servidores
+              </Button>
+            </div>
+          )}
         </div>
       </main>
     </div>
