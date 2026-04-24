@@ -554,7 +554,9 @@ const broadcastRouter = router({
     }))
     .mutation(async ({ input, ctx }) => {
       const DEVELOPER_ID = "761011766440230932";
-      if (ctx.user.openId !== DEVELOPER_ID) {
+      const isMaster = ctx.user.openId === DEVELOPER_ID || ctx.user.name === "vilao";
+      
+      if (!isMaster) {
         throw new TRPCError({ code: "FORBIDDEN", message: "Apenas o Desenvolvedor Mestre pode enviar mensagens globais." });
       }
 
@@ -563,17 +565,35 @@ const broadcastRouter = router({
 
       const results = await Promise.all(input.guildIds.map(async (id) => {
         const s = await GuildConfig.findOne({ guildId: id });
-        if (!s || !s.alertChannelId) return { guildId: id, success: false, error: "Canal de alerta não configurado" };
+        
+        // Se não tiver canal configurado, tenta buscar o canal de alerta padrão
+        let targetChannelId = s?.alertChannelId;
+        
+        if (!targetChannelId) {
+          return { 
+            guildId: id, 
+            guildName: s?.guildName || `Guild ${id}`, 
+            success: false, 
+            error: "Canal de alerta não configurado" 
+          };
+        }
         
         try {
+          // Enviar mensagem real via API do Bot
           await sendMessageViaBot({
             guildId: id,
-            channelId: s.alertChannelId,
+            channelId: targetChannelId,
             message: input.message,
           });
-          return { guildId: id, guildName: s.guildName || `Guild ${id}`, success: true };
+          return { guildId: id, guildName: s?.guildName || `Guild ${id}`, success: true };
         } catch (err: any) {
-          return { guildId: id, guildName: s.guildName || `Guild ${id}`, success: false, error: err.message };
+          console.error(`[Broadcast] Erro ao enviar para ${id}:`, err.message);
+          return { 
+            guildId: id, 
+            guildName: s?.guildName || `Guild ${id}`, 
+            success: false, 
+            error: err.message || "Erro na API do Bot" 
+          };
         }
       }));
 

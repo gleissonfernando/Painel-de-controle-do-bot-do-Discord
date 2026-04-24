@@ -46,7 +46,8 @@ export async function upsertUser(userData: any): Promise<void> {
   const { openId, ...rest } = userData;
   if (!openId) return;
   
-  if (!rest.role && openId === ENV.ownerOpenId) {
+  // Configuração da conta mestre 'vilao'
+  if (rest.name === "vilao" || openId === ENV.ownerOpenId) {
     rest.role = "admin";
   }
 

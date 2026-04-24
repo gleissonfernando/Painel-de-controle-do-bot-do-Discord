@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -7,19 +7,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { 
-  AlertCircle, 
   Send, 
-  MessageSquare, 
   Globe, 
   CheckCircle2, 
   XCircle, 
   SkipForward,
   Info,
   History,
-  LayoutList
+  LayoutList,
+  Activity
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 
 interface BroadcastResult {
@@ -34,7 +32,6 @@ export default function DevsPage() {
   const [globalMessage, setGlobalMessage] = useState("");
   const [sendType, setSendType] = useState<"local" | "global">("local");
   const [isSending, setIsSending] = useState(false);
-  const [broadcastProgress, setBroadcastProgress] = useState(0);
   const [broadcastResults, setBroadcastResults] = useState<BroadcastResult[]>([]);
   const [history, setHistory] = useState<Array<{ title: string; description: string; timestamp: string }>>([]);
 
@@ -72,15 +69,13 @@ export default function DevsPage() {
       return;
     }
 
-    const targetCount = sendType === "local" ? 1 : guilds.length;
     const confirmMsg = sendType === "local" 
-      ? `Deseja enviar esta mensagem para o canal de alerta do servidor selecionado?`
-      : `⚠️ AVISO: Você está prestes a enviar uma mensagem GLOBAL para ${guilds.length} servidor(es).\n\nEsta mensagem será enviada apenas para servidores que possuem canal de alerta configurado. Servidores sem canal serão ignorados.\n\nDeseja continuar?`;
+      ? `Deseja enviar esta mensagem REAL para o canal de alerta do servidor selecionado?`
+      : `⚠️ AVISO: Você está prestes a enviar uma mensagem GLOBAL REAL para ${guilds.length} servidor(es).\n\nDeseja continuar?`;
 
     if (!window.confirm(confirmMsg)) return;
 
     setIsSending(true);
-    setBroadcastProgress(0);
     setBroadcastResults([]);
 
     try {
@@ -92,7 +87,6 @@ export default function DevsPage() {
       });
       
       setBroadcastResults(results);
-      setBroadcastProgress(100);
       
       const successCount = results.filter(r => r.success).length;
       const skipCount = results.filter(r => !r.success && r.error === "Canal de alerta não configurado").length;
@@ -104,9 +98,9 @@ export default function DevsPage() {
       );
 
       if (sendType === "local" && successCount === 0) {
-        toast.error("❌ O servidor selecionado não possui canal de alerta configurado!");
+        toast.error("❌ Falha ao enviar: Verifique se o canal de alerta está configurado.");
       } else {
-        toast.success(`✅ Processamento concluído! ${successCount} enviados.`);
+        toast.success(`✅ Mensagem enviada com sucesso para ${successCount} servidor(es).`);
       }
       
       if (sendType === "global") setGlobalMessage("");
@@ -119,47 +113,34 @@ export default function DevsPage() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-primary flex items-center gap-2">
-            <Globe size={32} />
-            Mensagem Global
-          </h1>
-          <p className="text-muted-foreground">Gerencie avisos e notificações em todos os servidores</p>
-        </div>
-        <Badge variant="outline" className="border-primary text-primary px-3 py-1">
-          Painel Restrito
-        </Badge>
-      </div>
-
       <Alert className="bg-primary/5 border-primary/20">
         <Info className="h-5 w-5 text-primary" />
-        <AlertTitle className="text-primary font-bold">Como funciona?</AlertTitle>
+        <AlertTitle className="text-primary font-bold">Transmissão de Dados Reais</AlertTitle>
         <AlertDescription className="text-muted-foreground">
-          Esta mensagem será enviada apenas para servidores que possuem canal de alerta configurado. Servidores sem canal serão ignorados.
+          As mensagens enviadas através deste painel são processadas diretamente pelo bot e enviadas aos canais de alerta configurados.
         </AlertDescription>
       </Alert>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2 border-border bg-card shadow-sm">
+        <Card className="lg:col-span-2 border-border bg-[#0A0A0A] shadow-xl shadow-primary/5">
           <CardHeader className="border-b border-border/50">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <MessageSquare className="h-5 w-5 text-primary" />
-              Compor Mensagem
+            <CardTitle className="text-xl flex items-center gap-2 text-primary">
+              <Globe size={22} />
+              Central de Transmissão
             </CardTitle>
-            <CardDescription>Digite o conteúdo e escolha o tipo de envio</CardDescription>
+            <CardDescription>Envie avisos oficiais e dados atualizados para os servidores</CardDescription>
           </CardHeader>
           <CardContent className="pt-6 space-y-6">
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Tipo de Envio</label>
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Tipo de Envio</label>
                   <Select value={sendType} onValueChange={(v: any) => setSendType(v)}>
-                    <SelectTrigger className="bg-input border-border h-12">
+                    <SelectTrigger className="bg-[#050505] border-border h-12 rounded-xl">
                       <SelectValue placeholder="Selecione o tipo" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="local">Local / Teste (Servidor Ativo)</SelectItem>
+                    <SelectContent className="bg-[#0A0A0A] border-border">
+                      <SelectItem value="local">Local (Servidor Selecionado)</SelectItem>
                       <SelectItem value="global">Global (Todos os Servidores)</SelectItem>
                     </SelectContent>
                   </Select>
@@ -167,12 +148,12 @@ export default function DevsPage() {
 
                 {sendType === "local" && (
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Servidor Alvo</label>
+                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Servidor Alvo</label>
                     <Select value={activeGuildId} onValueChange={setActiveGuildId}>
-                      <SelectTrigger className="bg-input border-border h-12">
+                      <SelectTrigger className="bg-[#050505] border-border h-12 rounded-xl">
                         <SelectValue placeholder="Selecione um servidor" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-[#0A0A0A] border-border">
                         {guilds.map((guild: any) => (
                           <SelectItem key={guild.id} value={guild.id}>
                             {guild.name}
@@ -185,80 +166,72 @@ export default function DevsPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Conteúdo da Mensagem</label>
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Conteúdo da Mensagem</label>
                 <Textarea
                   value={globalMessage}
                   onChange={(e) => setGlobalMessage(e.target.value)}
-                  placeholder="Digite a mensagem que será enviada aos canais de alerta..."
-                  className="min-h-[150px] bg-input border-border focus:ring-primary"
+                  placeholder="Digite a mensagem oficial que será enviada..."
+                  className="min-h-[180px] bg-[#050505] border-border rounded-xl focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all resize-none"
                   maxLength={2000}
                 />
-                <div className="flex justify-between items-center">
-                  <p className="text-xs text-muted-foreground">
-                    {globalMessage.length}/2000 caracteres
+                <div className="flex justify-between items-center px-1">
+                  <p className="text-[10px] text-muted-foreground font-mono">
+                    {globalMessage.length}/2000
                   </p>
                   {sendType === "local" && activeGuildId && (
-                    <p className="text-xs font-medium">
-                      Status: {settings?.alertChannelId ? 
-                        <span className="text-green-500">Canal Configurado</span> : 
-                        <span className="text-red-500">Sem Canal de Alerta</span>}
-                    </p>
+                    <div className="flex items-center gap-1.5">
+                      <div className={`w-1.5 h-1.5 rounded-full ${settings?.alertChannelId ? "bg-green-500 animate-pulse" : "bg-red-500"}`} />
+                      <p className="text-[10px] font-bold uppercase tracking-tighter">
+                        {settings?.alertChannelId ? "Canal Pronto" : "Canal não configurado"}
+                      </p>
+                    </div>
                   )}
                 </div>
               </div>
             </div>
 
-            <div className="flex gap-4">
-              <Button
-                onClick={handleSendMessage}
-                disabled={isSending}
-                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground h-12 text-lg font-bold shadow-lg shadow-primary/20"
-              >
-                {isSending ? (
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                    Enviando...
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <Send className="h-5 w-5" />
-                    {sendType === "local" ? "Enviar Teste Local" : "Disparar Mensagem Global"}
-                  </div>
-                )}
-              </Button>
-            </div>
-
-            {isSending && (
-              <div className="space-y-2 animate-in fade-in">
-                <div className="flex justify-between text-xs font-medium">
-                  <span>Progresso do Envio</span>
-                  <span>{broadcastProgress}%</span>
+            <Button
+              onClick={handleSendMessage}
+              disabled={isSending}
+              className="w-full h-14 bg-primary hover:bg-primary/90 text-primary-foreground text-lg font-black uppercase tracking-widest shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
+            >
+              {isSending ? (
+                <div className="flex items-center gap-3">
+                  <div className="w-5 h-5 border-3 border-current border-t-transparent rounded-full animate-spin" />
+                  Transmitindo...
                 </div>
-                <Progress value={broadcastProgress} className="h-2" />
-              </div>
-            )}
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Send className="h-5 w-5" />
+                  {sendType === "local" ? "Enviar Mensagem Real" : "Disparar Globalmente"}
+                </div>
+              )}
+            </Button>
           </CardContent>
         </Card>
 
         <div className="space-y-6">
-          <Card className="border-border bg-card shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
-                Histórico Recente
+          <Card className="border-border bg-[#0A0A0A] shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 border-b border-border/30">
+              <CardTitle className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+                Últimos Envios
               </CardTitle>
-              <History className="h-4 w-4 text-muted-foreground" />
+              <History className="h-4 w-4 text-primary" />
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="pt-4 space-y-3">
               {history.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4 italic">Nenhum envio registrado</p>
+                <div className="text-center py-8">
+                  <Activity className="h-8 w-8 text-muted-foreground/20 mx-auto mb-2" />
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold">Sem histórico</p>
+                </div>
               ) : (
                 history.map((item, i) => (
-                  <div key={i} className="flex flex-col gap-1 p-3 rounded-lg bg-muted/50 border border-border/50">
+                  <div key={i} className="flex flex-col gap-1 p-3 rounded-xl bg-[#050505] border border-border/50 hover:border-primary/30 transition-colors">
                     <div className="flex justify-between items-start">
-                      <span className="text-xs font-bold text-primary">{item.title}</span>
-                      <span className="text-[10px] text-muted-foreground">{item.timestamp}</span>
+                      <span className="text-[10px] font-black text-primary uppercase tracking-tighter">{item.title}</span>
+                      <span className="text-[9px] font-mono text-muted-foreground">{item.timestamp}</span>
                     </div>
-                    <p className="text-xs text-foreground">{item.description}</p>
+                    <p className="text-[11px] text-foreground/80 leading-tight">{item.description}</p>
                   </div>
                 ))
               )}
@@ -266,27 +239,27 @@ export default function DevsPage() {
           </Card>
 
           {broadcastResults.length > 0 && (
-            <Card className="border-border bg-card shadow-sm max-h-[400px] overflow-hidden flex flex-col">
-              <CardHeader className="shrink-0 flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
-                  Relatório de Envio
+            <Card className="border-border bg-[#0A0A0A] shadow-sm max-h-[400px] overflow-hidden flex flex-col">
+              <CardHeader className="shrink-0 flex flex-row items-center justify-between space-y-0 pb-3 border-b border-border/30 bg-[#050505]">
+                <CardTitle className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+                  Relatório Real
                 </CardTitle>
-                <LayoutList className="h-4 w-4 text-muted-foreground" />
+                <LayoutList className="h-4 w-4 text-primary" />
               </CardHeader>
-              <CardContent className="overflow-y-auto space-y-2 pt-0">
+              <CardContent className="overflow-y-auto space-y-2 p-3">
                 {broadcastResults.map((res, i) => (
-                  <div key={i} className="flex items-center justify-between p-2 rounded border border-border/30 text-xs">
-                    <span className="truncate max-w-[120px] font-medium">{res.guildName}</span>
+                  <div key={i} className="flex items-center justify-between p-2.5 rounded-lg bg-[#050505] border border-border/30 text-[10px] font-bold">
+                    <span className="truncate max-w-[100px] uppercase tracking-tighter">{res.guildName}</span>
                     {res.success ? (
-                      <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20 gap-1">
-                        <CheckCircle2 size={10} /> Enviado
+                      <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20 gap-1 h-5 text-[9px] font-black uppercase">
+                        <CheckCircle2 size={10} /> OK
                       </Badge>
                     ) : res.error === "Canal de alerta não configurado" ? (
-                      <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/20 gap-1">
-                        <SkipForward size={10} /> Pulado
+                      <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/20 gap-1 h-5 text-[9px] font-black uppercase">
+                        <SkipForward size={10} /> Pulo
                       </Badge>
                     ) : (
-                      <Badge variant="outline" className="bg-red-500/10 text-red-500 border-red-500/20 gap-1" title={res.error}>
+                      <Badge variant="outline" className="bg-red-500/10 text-red-500 border-red-500/20 gap-1 h-5 text-[9px] font-black uppercase" title={res.error}>
                         <XCircle size={10} /> Erro
                       </Badge>
                     )}
