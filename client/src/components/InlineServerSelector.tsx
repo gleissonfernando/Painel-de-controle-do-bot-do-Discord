@@ -1,21 +1,22 @@
 import { useState, useRef, useEffect } from "react";
 import { useSession, Guild } from "@/contexts/SessionContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { 
-  ChevronDown, 
-  Search, 
-  Plus, 
-  Settings, 
-  Check, 
-  Users, 
-  ArrowRight,
-  Loader2
-} from "lucide-react";
+import * as LucideIcons from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
 
 export function InlineServerSelector() {
-  const { guilds, activeGuild, setActiveGuild, isLoadingGuilds } = useSession();
+  const { guilds = [], activeGuild, setActiveGuild, isLoadingGuilds } = useSession();
+  
+  // Acessar ícones de forma segura para evitar undefined
+  const ChevronDown = LucideIcons.ChevronDown || (() => null);
+  const Search = LucideIcons.Search || (() => null);
+  const Plus = LucideIcons.Plus || (() => null);
+  const Settings = LucideIcons.Settings || (() => null);
+  const Check = LucideIcons.Check || (() => null);
+  const Users = LucideIcons.Users || (() => null);
+  const ArrowRight = LucideIcons.ArrowRight || (() => null);
+  const Loader2 = LucideIcons.Loader2 || (() => null);
   const [, setLocation] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");

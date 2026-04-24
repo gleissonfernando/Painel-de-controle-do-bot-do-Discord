@@ -81,7 +81,11 @@ export default function DiscordDashboardLayout({
   // Verificar se o usuário é o mestre 'vilao' ou o dono
   const isMaster = user?.name === "vilao" || user?.openId === "761011766440230932";
 
-  const SidebarContent = () => (
+  const SidebarContent = () => {
+    // Verificações de segurança para evitar erros de renderização
+    if (!user) return null;
+
+    return (
     <div className="flex flex-col h-full bg-[#0A0A0A]" translate="no">
       {/* Logo / Brand */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border bg-[#050505]">
@@ -211,7 +215,7 @@ export default function DiscordDashboardLayout({
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setSidebarOpen(false)}
           />
-          <aside className="relative w-60 bg-sidebar border-r border-sidebar-border flex flex-col z-10">
+          <aside className="relative w-60 bg-[#0A0A0A] border-r border-sidebar-border flex flex-col z-10">
             <button
               className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
               onClick={() => setSidebarOpen(false)}
