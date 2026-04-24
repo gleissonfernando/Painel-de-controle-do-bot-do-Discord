@@ -40,7 +40,8 @@ import {
   Cpu,
   HardDrive,
   Terminal,
-  ChevronRight
+  ChevronRight,
+  Info
 } from "lucide-react";
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -56,6 +57,12 @@ import {
   Bar,
   Cell
 } from "recharts";
+import {
+  Tooltip as UITooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export default function MonitorPage() {
   const { guildId } = useParams<{ guildId: string }>();
@@ -380,13 +387,31 @@ export default function MonitorPage() {
             <CardContent className="p-0">
               <ScrollArea className="h-[200px]">
                 <div className="p-4 space-y-3">
-                  {logs && logs.slice(0, 5).map((log: any) => (
-                    <div key={log._id} className="flex items-center gap-3 p-2 bg-[#111] rounded-lg border border-white/5">
-                      <div className={`w-1.5 h-1.5 rounded-full ${log.status === "Online" ? "bg-green-500" : "bg-red-500"}`} />
+                  {logs && logs.slice(0, 10).map((log: any) => (
+                    <div key={log._id} className="flex items-center gap-3 p-2 bg-[#111] rounded-lg border border-white/5 group relative">
+                      <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${log.status === "Online" ? "bg-green-500" : "bg-red-500"}`} />
                       <div className="flex-1 min-w-0">
-                        <p className="text-[10px] font-black text-white uppercase truncate">{log.service}</p>
-                        <p className="text-[9px] text-muted-foreground uppercase">{new Date(log.createdAt).toLocaleTimeString()}</p>
+                        <div className="flex items-center justify-between">
+                          <p className="text-[10px] font-black text-white uppercase truncate">{log.service}</p>
+                          <p className="text-[9px] text-muted-foreground uppercase">{new Date(log.createdAt).toLocaleTimeString()}</p>
+                        </div>
+                        <p className="text-[9px] text-muted-foreground truncate">{log.message}</p>
                       </div>
+                      {log.errorDetail && (
+                        <TooltipProvider>
+                          <UITooltip>
+                            <TooltipTrigger asChild>
+                              <div className="cursor-help text-red-500/50 hover:text-red-500 transition-colors">
+                                <Info size={12} />
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent className="bg-[#050505] border-red-500/50 text-white text-[10px] max-w-[200px] break-words">
+                              <p className="font-black text-red-500 uppercase mb-1">Causa do Erro:</p>
+                              {log.errorDetail}
+                            </TooltipContent>
+                          </UITooltip>
+                        </TooltipProvider>
+                      )}
                     </div>
                   ))}
                 </div>

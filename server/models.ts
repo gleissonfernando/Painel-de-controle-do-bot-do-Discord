@@ -474,6 +474,7 @@ export interface IMonitorLog extends Document {
   service: string;
   status: string;
   message?: string;
+  errorDetail?: string;
   createdAt: Date;
 }
 
@@ -483,6 +484,7 @@ const MonitorLogSchema = new Schema<IMonitorLog>(
     service: { type: String, required: true },
     status: { type: String, required: true },
     message: String,
+    errorDetail: String,
     createdAt: { type: Date, default: Date.now },
   }
 );
