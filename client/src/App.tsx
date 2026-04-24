@@ -31,11 +31,13 @@ import DevActivationPage from "./pages/DevActivationPage";
 import DevsLoginPage from "./pages/DevsLoginPage";
 import DevsPage from "./pages/DevsPage";
 import DashboardLayout from "./components/DiscordDashboardLayout";
+import UnifiedDashboard from "./pages/UnifiedDashboard";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={LoginPage} />
+      <Route path="/unified" component={UnifiedDashboard} />
       <Route path="/onboarding" component={OnboardingPage} />
       <Route path="/servers" component={ServerSelectPage} />
       <Route path="/dashboard/:guildId">
