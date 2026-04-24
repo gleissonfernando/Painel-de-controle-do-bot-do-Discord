@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
+import { InlineServerSelector } from "./InlineServerSelector";
 
 interface NavItem {
   label: string;
@@ -95,35 +96,7 @@ export default function DiscordDashboardLayout({
 
       {/* Server Selector */}
       <div className="px-3 py-3 border-b border-sidebar-border">
-        <div className="space-y-1">
-          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-2 mb-1">
-            Servidor Atual
-          </p>
-          <div className="relative group">
-            <Link href="/servers">
-              <div className="flex items-center gap-2 px-2 py-2 rounded-md hover:bg-sidebar-accent cursor-pointer transition-colors border border-transparent hover:border-sidebar-border">
-                <Avatar className="w-8 h-8">
-                  {guildIcon ? (
-                    <AvatarImage
-                      src={`https://cdn.discordapp.com/icons/${guildId}/${guildIcon}.png`}
-                      alt={guildName}
-                    />
-                  ) : null}
-                  <AvatarFallback className="bg-primary/20 text-primary text-xs font-bold">
-                    {getInitials(guildName)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-foreground truncate">
-                    {guildName}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground">Trocar servidor</p>
-                </div>
-                <ChevronLeft size={14} className="text-muted-foreground group-hover:text-primary transition-colors" />
-              </div>
-            </Link>
-          </div>
-        </div>
+        <InlineServerSelector />
       </div>
 
       {/* Navigation */}
@@ -264,7 +237,17 @@ export default function DiscordDashboardLayout({
               <Menu size={18} />
             </Button>
             <div className="flex items-center gap-2">
-              <Server size={16} className="text-muted-foreground" />
+              <Avatar className="w-6 h-6 border border-white/5">
+                {guildIcon ? (
+                  <AvatarImage
+                    src={`https://cdn.discordapp.com/icons/${guildId}/${guildIcon}.png`}
+                    alt={guildName}
+                  />
+                ) : null}
+                <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-bold">
+                  {getInitials(guildName)}
+                </AvatarFallback>
+              </Avatar>
               <span className="text-sm font-semibold text-foreground">
                 {guildName}
               </span>
