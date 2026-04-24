@@ -10,6 +10,7 @@ export interface IUser extends Document {
   accessToken?: string;
   refreshToken?: string;
   loginMethod?: string;
+  steamHex?: string;
   role: "user" | "admin";
   createdAt: Date;
   updatedAt: Date;
@@ -26,6 +27,7 @@ const UserSchema = new Schema<IUser>(
     accessToken: String,
     refreshToken: String,
     loginMethod: String,
+    steamHex: String,
     role: { type: String, enum: ["user", "admin"], default: "user" },
     lastSignedIn: { type: Date, default: Date.now },
   },

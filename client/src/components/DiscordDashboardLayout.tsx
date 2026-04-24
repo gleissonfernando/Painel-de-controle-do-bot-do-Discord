@@ -86,120 +86,121 @@ export default function DiscordDashboardLayout({
     if (!user) return null;
 
     return (
-    <div className="flex flex-col h-full bg-[#0A0A0A]" translate="no">
-      {/* Logo / Brand */}
-      <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border bg-[#050505]">
-        <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center shadow-lg shadow-primary/30">
-          <Bot size={20} className="text-primary-foreground" />
+      <div className="flex flex-col h-full bg-[#0A0A0A]" translate="no">
+        {/* Logo / Brand */}
+        <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border bg-[#050505]">
+          <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center shadow-lg shadow-primary/30">
+            <Bot size={20} className="text-primary-foreground" />
+          </div>
+          <div>
+            <p className="text-sm font-bold text-foreground uppercase tracking-tight">Magnatas</p>
+            <p className="text-[10px] text-muted-foreground font-medium">Dashboard</p>
+          </div>
         </div>
-        <div>
-          <p className="text-sm font-bold text-foreground uppercase tracking-tight">Magnatas</p>
-          <p className="text-[10px] text-muted-foreground font-medium">Dashboard</p>
+
+        {/* Server Selector */}
+        <div className="px-3 py-3 border-b border-sidebar-border">
+          <InlineServerSelector />
         </div>
-      </div>
 
-      {/* Server Selector */}
-      <div className="px-3 py-3 border-b border-sidebar-border">
-        <InlineServerSelector />
-      </div>
-
-      {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5">
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2 mb-2">
-          Gerenciamento
-        </p>
-        {navItems.map(item => {
-          const active = isActive(item.path);
-          return (
-            <Link key={item.path} href={`/dashboard/${guildId}${item.path}`}>
-              <div
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-md cursor-pointer transition-all duration-150 group ${
-                  active
-                    ? "bg-primary/15 text-primary border border-primary/20"
-                    : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-foreground"
-                }`}
-                onClick={() => setSidebarOpen(false)}
-              >
-                <span
-                  className={`transition-colors ${
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2 mb-2">
+            Gerenciamento
+          </p>
+          {navItems.map(item => {
+            const active = isActive(item.path);
+            return (
+              <Link key={item.path} href={`/dashboard/${guildId}${item.path}`}>
+                <div
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-md cursor-pointer transition-all duration-150 group ${
                     active
-                      ? "text-primary"
-                      : "text-muted-foreground group-hover:text-foreground"
+                      ? "bg-primary/15 text-primary border border-primary/20"
+                      : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-foreground"
                   }`}
+                  onClick={() => setSidebarOpen(false)}
                 >
-                  {item.icon}
-                </span>
-                <span className="text-sm font-medium">{item.label}</span>
-                {active && (
-                  <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />
-                )}
-              </div>
-            </Link>
-          );
-        })}
+                  <span
+                    className={`transition-colors ${
+                      active
+                        ? "text-primary"
+                        : "text-muted-foreground group-hover:text-foreground"
+                    }`}
+                  >
+                    {item.icon}
+                  </span>
+                  <span className="text-sm font-medium">{item.label}</span>
+                  {active && (
+                    <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />
+                  )}
+                </div>
+              </Link>
+            );
+          })}
 
-        {/* Aba Dev - Apenas para Master */}
-        {isMaster && (
-          <div className="mt-6">
-            <p className="text-xs font-semibold text-primary uppercase tracking-wider px-2 mb-2 flex items-center gap-2">
-              <Code size={14} />
-              Desenvolvedor
-            </p>
-            <Link href={`/dashboard/${guildId}/dev-central`}>
-              <div
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-md cursor-pointer transition-all duration-150 group ${
-                  location.includes("/dev-central")
-                    ? "bg-primary/15 text-primary border border-primary/20"
-                    : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-foreground"
-                }`}
-                onClick={() => setSidebarOpen(false)}
-              >
-                <span className={location.includes("/dev-central") ? "text-primary" : "text-muted-foreground group-hover:text-foreground"}>
-                  <Terminal size={18} />
-                </span>
-                <span className="text-sm font-medium">Central Dev</span>
-              </div>
-            </Link>
-          </div>
-        )}
-      </nav>
-
-      {/* User Profile */}
-      <div className="px-3 py-3 border-t border-sidebar-border">
-        <div className="flex items-center gap-2 px-2 py-2 rounded-md bg-sidebar-accent/50 border border-sidebar-border/50">
-          <Avatar className="w-8 h-8 border border-primary/20">
-            {user?.avatar ? (
-              <AvatarImage
-                src={user.avatar}
-                alt={user?.name ?? ""}
-              />
-            ) : null}
-            <AvatarFallback className="bg-primary/20 text-primary text-xs font-bold">
-              {getInitials(user?.name ?? "U")}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1 min-w-0">
-            <p className="text-[11px] font-bold text-foreground truncate">
-              {user?.name ?? "User"}
-            </p>
-            <div className="flex items-center gap-1">
-              <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-              <p className="text-[10px] text-muted-foreground">Conectado</p>
+          {/* Aba Dev - Apenas para Master */}
+          {isMaster && (
+            <div className="mt-6">
+              <p className="text-xs font-semibold text-primary uppercase tracking-wider px-2 mb-2 flex items-center gap-2">
+                <Code size={14} />
+                Desenvolvedor
+              </p>
+              <Link href={`/dashboard/${guildId}/dev-central`}>
+                <div
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-md cursor-pointer transition-all duration-150 group ${
+                    location.includes("/dev-central")
+                      ? "bg-primary/15 text-primary border border-primary/20"
+                      : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-foreground"
+                  }`}
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  <span className={location.includes("/dev-central") ? "text-primary" : "text-muted-foreground group-hover:text-foreground"}>
+                    <Terminal size={18} />
+                  </span>
+                  <span className="text-sm font-medium">Central Dev</span>
+                </div>
+              </Link>
             </div>
+          )}
+        </nav>
+
+        {/* User Profile */}
+        <div className="px-3 py-3 border-t border-sidebar-border">
+          <div className="flex items-center gap-2 px-2 py-2 rounded-md bg-sidebar-accent/50 border border-sidebar-border/50">
+            <Avatar className="w-8 h-8 border border-primary/20">
+              {user?.avatar ? (
+                <AvatarImage
+                  src={user.avatar}
+                  alt={user?.name ?? ""}
+                />
+              ) : null}
+              <AvatarFallback className="bg-primary/20 text-primary text-xs font-bold">
+                {getInitials(user?.name ?? "U")}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] font-bold text-foreground truncate">
+                {user?.name ?? "User"}
+              </p>
+              <div className="flex items-center gap-1">
+                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                <p className="text-[10px] text-muted-foreground">Conectado</p>
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+              onClick={logout}
+              title="Sair"
+            >
+              <LogOut size={14} />
+            </Button>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-            onClick={logout}
-            title="Sair"
-          >
-            <LogOut size={14} />
-          </Button>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="flex h-screen bg-[#050505] overflow-hidden">

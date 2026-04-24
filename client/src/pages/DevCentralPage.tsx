@@ -18,7 +18,9 @@ import {
   Bell,
   Lock,
   Unlock,
-  Info
+  Info,
+  RefreshCw,
+  Loader2
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
@@ -42,6 +44,7 @@ export default function DevCentralPage() {
 
   const { data: guilds = [] } = trpc.guilds.list.useQuery();
   const { data: globalConfig } = trpc.maintenance.getGlobal.useQuery();
+  const { data: syncedUsers = [], isLoading: isLoadingSync } = trpc.userSync.list.useQuery();
   
   const { data: channels } = trpc.guilds.channels.useQuery(
     { guildId: targetGuildId },
@@ -316,6 +319,9 @@ export default function DevCentralPage() {
               <TabsTrigger value="monitor" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground gap-2 py-2 px-4 text-xs font-bold uppercase">
                 <ShieldAlert size={14} /> NOC
               </TabsTrigger>
+              <TabsTrigger value="sync" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground gap-2 py-2 px-4 text-xs font-bold uppercase">
+                <RefreshCw size={14} /> Steam Sync
+              </TabsTrigger>
               <TabsTrigger value="broadcast" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground gap-2 py-2 px-4 text-xs font-bold uppercase">
                 <Globe size={14} /> Global
               </TabsTrigger>
@@ -331,6 +337,85 @@ export default function DevCentralPage() {
 
             <TabsContent value="broadcast" className="mt-0 border-none p-0 outline-none">
               <DevsPage />
+            </TabsContent>
+
+            <TabsContent value="sync" className="mt-0 border-none p-0 outline-none">
+              <Card className="bg-[#0A0A0A] border-border shadow-xl min-h-[500px]">
+                <CardHeader className="border-b border-border bg-[#050505]/50">
+                  <CardTitle className="text-sm font-black uppercase italic tracking-widest flex items-center gap-2">
+                    <RefreshCw size={16} className="text-primary" />
+                    Sincronização Steam & Discord
+                  </CardTitle>
+                  <CardDescription className="font-bold">Visualize os usuários verificados e seus vínculos Steam Hex</CardDescription>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="border-b border-border bg-[#050505]">
+                          <th className="p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Usuário</th>
+                          <th className="p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Discord ID</th>
+                          <th className="p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Steam Hex</th>
+                          <th className="p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Status</th>
+                          <th className="p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">Sincronizado em</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {isLoadingSync ? (
+                          <tr>
+                            <td colSpan={5} className="p-10 text-center">
+                              <Loader2 className="animate-spin text-primary mx-auto mb-2" size={24} />
+                              <p className="text-xs text-muted-foreground font-bold">Carregando vínculos...</p>
+                            </td>
+                          </tr>
+                        ) : syncedUsers.length === 0 ? (
+                          <tr>
+                            <td colSpan={5} className="p-10 text-center">
+                              <Info className="text-muted-foreground mx-auto mb-2" size={24} />
+                              <p className="text-xs text-muted-foreground font-bold">Nenhum usuário sincronizado encontrado.</p>
+                            </td>
+                          </tr>
+                        ) : (
+                          syncedUsers.map((u: any) => (
+                            <tr key={u.id} className="border-b border-border/50 hover:bg-white/5 transition-colors group">
+                              <td className="p-4">
+                                <div className="flex items-center gap-3">
+                                  <Avatar className="w-8 h-8 border border-primary/20">
+                                    <AvatarImage src={u.avatar} />
+                                    <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-bold">
+                                      {u.name?.[0]?.toUpperCase()}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <span className="text-sm font-bold text-white">{u.name}</span>
+                                </div>
+                              </td>
+                              <td className="p-4 font-mono text-[10px] text-muted-foreground group-hover:text-primary transition-colors">
+                                {u.discordId}
+                              </td>
+                              <td className="p-4">
+                                <div className="flex items-center gap-2">
+                                  <div className="px-2 py-1 rounded bg-primary/10 border border-primary/20 text-[10px] font-black text-primary font-mono">
+                                    {u.steamHex}
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="p-4">
+                                <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-500/10 border border-green-500/20 w-fit">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                                  <span className="text-[9px] font-black text-green-500 uppercase">Sincronizado</span>
+                                </div>
+                              </td>
+                              <td className="p-4 text-right text-[10px] text-muted-foreground font-bold">
+                                {new Date(u.updatedAt).toLocaleString("pt-BR")}
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
           </Tabs>
         </div>

@@ -903,6 +903,41 @@ const devManagementRouter = router({
   }),
 });
 
+// --- User Sync Router (Steam Hex & Discord) ---
+const userSyncRouter = router({
+  list: protectedProcedure.query(async ({ ctx }) => {
+    // Apenas Master ou Admin pode ver a lista completa
+    const isMaster = ctx.user?.name === "vilao" || ctx.user?.openId === "761011766440230932";
+    if (!isMaster && ctx.user?.role !== "admin") {
+      throw new TRPCError({ code: "FORBIDDEN", message: "Acesso negado." });
+    }
+
+    const { User } = await import("./models");
+    const users = await User.find({ steamHex: { $exists: true, $ne: null } }).sort({ updatedAt: -1 });
+    
+    return users.map(u => ({
+      id: u._id,
+      name: u.name,
+      discordId: u.discordId,
+      avatar: u.avatar,
+      steamHex: u.steamHex,
+      updatedAt: u.updatedAt,
+    }));
+  }),
+  
+  sync: protectedProcedure
+    .input(z.object({ steamHex: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      const { User } = await import("./models");
+      const user = await User.findOneAndUpdate(
+        { openId: ctx.user.openId },
+        { steamHex: input.steamHex },
+        { new: true }
+      );
+      return { success: true, user };
+    }),
+});
+
 // --- Guild Management Router ---
 const guildManagementRouter = router({
   removeBot: protectedProcedure
@@ -927,6 +962,7 @@ export const appRouter = router({
   maintenance: maintenanceRouter,
   broadcast: broadcastRouter,
   devManagement: devManagementRouter,
+  userSync: userSyncRouter,
   guildManagement: guildManagementRouter,
   realTimeLogs: realTimeLogsRouter,
   monitor: monitorRouter,
