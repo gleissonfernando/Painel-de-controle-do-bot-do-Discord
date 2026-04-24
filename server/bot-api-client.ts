@@ -150,3 +150,116 @@ export async function fetchBotGuilds() {
     return { success: false, guilds: [] };
   }
 }
+
+// ─── Integração de Logs ───────────────────────────────────────────────────────
+
+export interface BotLogEntry {
+  _id: string;
+  guildId: string;
+  type: string;
+  title: string;
+  description?: string;
+  userId?: string;
+  userName?: string;
+  userAvatar?: string;
+  channelId?: string;
+  channelName?: string;
+  metadata?: Record<string, any>;
+  severity: "low" | "medium" | "high" | "critical";
+  createdAt: string;
+}
+
+export interface BotLogsResponse {
+  logs: BotLogEntry[];
+  total: number;
+  limit: number;
+  skip: number;
+  hasMore: boolean;
+}
+
+export interface BotLogStatsEntry {
+  _id: string;   // tipo do log
+  count: number;
+  lastOccurrence: string;
+}
+
+export interface BotLogStatsResponse {
+  guildId: string;
+  total: number;
+  byType: BotLogStatsEntry[];
+}
+
+/**
+ * Busca os logs de um servidor diretamente da API do bot.
+ * Equivalente a GET /api/panel/logs/:guildId
+ */
+export async function fetchLogsFromBot(
+  guildId: string,
+  options: {
+    type?: string;
+    userId?: string;
+    limit?: number;
+    skip?: number;
+    startDate?: string;
+    endDate?: string;
+  } = {}
+): Promise<BotLogsResponse> {
+  try {
+    const params = new URLSearchParams();
+    if (options.type)      params.set("type",      options.type);
+    if (options.userId)    params.set("userId",    options.userId);
+    if (options.limit)     params.set("limit",     String(options.limit));
+    if (options.skip)      params.set("skip",      String(options.skip));
+    if (options.startDate) params.set("startDate", options.startDate);
+    if (options.endDate)   params.set("endDate",   options.endDate);
+
+    const url = `${BOT_API_URL}/api/panel/logs/${guildId}?${params.toString()}`;
+    const response = await axios.get(url, { timeout: 10000 });
+    return response.data;
+  } catch (error: any) {
+    console.error("[Bot API Client] Erro ao buscar logs do bot:", error.message);
+    return { logs: [], total: 0, limit: 50, skip: 0, hasMore: false };
+  }
+}
+
+/**
+ * Busca estatísticas de logs de um servidor diretamente da API do bot.
+ * Equivalente a GET /api/panel/logs/:guildId/stats
+ */
+export async function fetchLogStatsFromBot(
+  guildId: string
+): Promise<BotLogStatsResponse> {
+  try {
+    const response = await axios.get(
+      `${BOT_API_URL}/api/panel/logs/${guildId}/stats`,
+      { timeout: 10000 }
+    );
+    return response.data;
+  } catch (error: any) {
+    console.error("[Bot API Client] Erro ao buscar estatísticas de logs:", error.message);
+    return { guildId, total: 0, byType: [] };
+  }
+}
+
+/**
+ * Exporta os logs de um servidor em CSV diretamente da API do bot.
+ * Equivalente a GET /api/panel/logs/:guildId/export
+ */
+export async function exportLogsFromBot(
+  guildId: string,
+  options: { type?: string; startDate?: string; endDate?: string } = {}
+): Promise<string> {
+  try {
+    const params = new URLSearchParams();
+    if (options.type)      params.set("type",      options.type);
+    if (options.startDate) params.set("startDate", options.startDate);
+    if (options.endDate)   params.set("endDate",   options.endDate);
+
+    const url = `${BOT_API_URL}/api/panel/logs/${guildId}/export?${params.toString()}`;
+    const response = await axios.get(url, { timeout: 30000, responseType: "text" });
+    return response.data;
+  } catch (error: any) {
+    console.error("[Bot API Client] Erro ao exportar logs:", error.message);
+    throw new Error(error.response?.data?.error || "Falha ao exportar logs do bot");
+  }
+}

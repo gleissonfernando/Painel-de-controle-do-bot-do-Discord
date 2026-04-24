@@ -642,10 +642,91 @@ const notificationsRouter = router({
 
 // --- Logs Router ---
 const logsRouter = router({
+  /**
+   * Lista logs armazenados localmente no banco do painel.
+   */
   list: protectedProcedure
     .input(z.object({ guildId: z.string(), limit: z.number().optional() }))
     .query(async ({ input }) => {
       return await getServerLogs(input.guildId, input.limit);
+    }),
+
+  /**
+   * Busca logs diretamente da API do bot (MongoDB do bot).
+   * Suporta filtros por tipo, usuário, data e paginação.
+   */
+  listFromBot: protectedProcedure
+    .input(z.object({
+      guildId:   z.string(),
+      type:      z.string().optional(),
+      userId:    z.string().optional(),
+      limit:     z.number().min(1).max(100).default(50),
+      skip:      z.number().min(0).default(0),
+      startDate: z.string().optional(),
+      endDate:   z.string().optional(),
+    }))
+    .query(async ({ input }) => {
+      const { fetchLogsFromBot } = await import("./bot-api-client");
+      return await fetchLogsFromBot(input.guildId, {
+        type:      input.type,
+        userId:    input.userId,
+        limit:     input.limit,
+        skip:      input.skip,
+        startDate: input.startDate,
+        endDate:   input.endDate,
+      });
+    }),
+
+  /**
+   * Retorna estatísticas de logs (contagem por tipo) da API do bot.
+   */
+  statsFromBot: protectedProcedure
+    .input(z.object({ guildId: z.string() }))
+    .query(async ({ input }) => {
+      const { fetchLogStatsFromBot } = await import("./bot-api-client");
+      return await fetchLogStatsFromBot(input.guildId);
+    }),
+
+  /**
+   * Exporta logs em CSV diretamente da API do bot.
+   * Retorna o conteúdo CSV como string.
+   */
+  exportFromBot: protectedProcedure
+    .input(z.object({
+      guildId:   z.string(),
+      type:      z.string().optional(),
+      startDate: z.string().optional(),
+      endDate:   z.string().optional(),
+    }))
+    .query(async ({ input }) => {
+      const { exportLogsFromBot } = await import("./bot-api-client");
+      const csv = await exportLogsFromBot(input.guildId, {
+        type:      input.type,
+        startDate: input.startDate,
+        endDate:   input.endDate,
+      });
+      return { csv };
+    }),
+
+  /**
+   * Salva um log gerado pelo painel no banco local.
+   */
+  create: protectedProcedure
+    .input(z.object({
+      guildId:     z.string(),
+      eventType:   z.string(),
+      userId:      z.string().optional(),
+      userName:    z.string().optional(),
+      userAvatar:  z.string().optional(),
+      targetId:    z.string().optional(),
+      targetName:  z.string().optional(),
+      details:     z.record(z.any()).optional(),
+      channelId:   z.string().optional(),
+      channelName: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      await createServerLog(input);
+      return { success: true };
     }),
 });
 

@@ -54,9 +54,21 @@ export default function RealTimeLogsPage() {
   const [isConnected, setIsConnected] = useState(false);
   const socketRef = useRef<Socket | null>(null);
 
+  const [activeTab, setActiveTab] = useState<"realtime" | "bot">("realtime");
+
   const { data: initialLogs, isLoading } = trpc.realTimeLogs.getLogs.useQuery(
     { guildId: guildId || "", limit: 50 },
-    { enabled: !!guildId }
+    { enabled: !!guildId && activeTab === "realtime" }
+  );
+
+  const { data: botLogsData, isLoading: isBotLoading, refetch: refetchBotLogs } = trpc.logs.listFromBot.useQuery(
+    { guildId: guildId || "", limit: 50 },
+    { enabled: !!guildId && activeTab === "bot" }
+  );
+
+  const { data: botStats } = trpc.logs.statsFromBot.useQuery(
+    { guildId: guildId || "" },
+    { enabled: !!guildId && activeTab === "bot" }
   );
 
   useEffect(() => {
@@ -102,20 +114,57 @@ export default function RealTimeLogsPage() {
 
   const getLogIcon = (type?: string) => {
     switch (type) {
-      case "WELCOME": return <Crown className="text-yellow-500" size={16} />;
-      case "EXIT": return <LogOut className="text-red-500" size={16} />;
-      case "TEST": return <FlaskConical className="text-cyan-500" size={16} />;
-      case "BOT": return <Bot className="text-primary" size={16} />;
-      case "SERVER": return <Server className="text-blue-500" size={16} />;
-      case "USER": return <User className="text-green-500" size={16} />;
-      default: return <Activity className="text-gray-400" size={16} />;
+      case "WELCOME":
+      case "member_join":    return <Crown className="text-yellow-500" size={16} />;
+      case "EXIT":
+      case "member_leave":   return <LogOut className="text-red-500" size={16} />;
+      case "ban":            return <ShieldAlert className="text-red-500" size={16} />;
+      case "kick":           return <LogOut className="text-orange-500" size={16} />;
+      case "message_delete": return <Trash2 className="text-orange-400" size={16} />;
+      case "TEST":           return <FlaskConical className="text-cyan-500" size={16} />;
+      case "BOT":
+      case "command":        return <Bot className="text-primary" size={16} />;
+      case "SERVER":
+      case "config_updated": return <Server className="text-blue-500" size={16} />;
+      case "error":          return <ShieldAlert className="text-red-600" size={16} />;
+      case "USER":
+      case "info":           return <User className="text-green-500" size={16} />;
+      default:               return <Activity className="text-gray-400" size={16} />;
     }
+  };
+
+  const getBotLogColor = (type?: string): string => {
+    const colorMap: Record<string, string> = {
+      member_join:         "#2ECC71",
+      member_leave:        "#FF6B6B",
+      ban:                 "#FF0000",
+      kick:                "#FF8C00",
+      message_delete:      "#FFA500",
+      config_updated:      "#3498DB",
+      maintenance_started: "#FF0000",
+      maintenance_ended:   "#2ECC71",
+      error:               "#FF0000",
+      warning:             "#FFA500",
+      command:             "#5865F2",
+      info:                "#5865F2",
+    };
+    return colorMap[type || ""] || "#313338";
   };
 
   const formatColor = (color?: number) => {
     if (!color) return "#313338";
     return `#${color.toString(16).padStart(6, '0')}`;
   };
+
+  const botLogs = botLogsData?.logs || [];
+  const filteredBotLogs = botLogs.filter((log: any) => {
+    const matchesSearch =
+      log.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      log.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      log.userName?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesType = !filterType || log.type === filterType;
+    return matchesSearch && matchesType;
+  });
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -136,6 +185,31 @@ export default function RealTimeLogsPage() {
             <Trash2 size={14} /> Limpar Painel
           </Button>
         </div>
+      </div>
+
+      {/* Tabs: Tempo Real vs Histórico do Bot */}
+      <div className="flex gap-2">
+        <Button
+          variant={activeTab === "realtime" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setActiveTab("realtime")}
+          className="gap-2 font-black uppercase italic text-[10px] h-8"
+        >
+          <Wifi size={12} /> Tempo Real
+        </Button>
+        <Button
+          variant={activeTab === "bot" ? "default" : "outline"}
+          size="sm"
+          onClick={() => { setActiveTab("bot"); refetchBotLogs(); }}
+          className="gap-2 font-black uppercase italic text-[10px] h-8"
+        >
+          <Bot size={12} /> Histórico do Bot
+          {botStats && (
+            <Badge variant="secondary" className="ml-1 text-[9px] font-black h-4 px-1">
+              {botStats.total}
+            </Badge>
+          )}
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -161,15 +235,24 @@ export default function RealTimeLogsPage() {
               <div className="space-y-2">
                 <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Tipo de Log</p>
                 <div className="flex flex-wrap gap-2">
-                  {[
-                    { id: null, label: "Todos", icon: <Activity size={12} /> },
-                    { id: "WELCOME", label: "Entrada", icon: <Crown size={12} /> },
-                    { id: "EXIT", label: "Saída", icon: <LogOut size={12} /> },
-                    { id: "TEST", label: "Testes", icon: <FlaskConical size={12} /> },
-                    { id: "BOT", label: "Bot", icon: <Bot size={12} /> },
-                    { id: "SERVER", label: "Servidor", icon: <Server size={12} /> },
-                    { id: "USER", label: "Usuário", icon: <User size={12} /> },
-                  ].map((type) => (
+                  {(activeTab === "realtime" ? [
+                    { id: null,      label: "Todos",    icon: <Activity size={12} /> },
+                    { id: "WELCOME", label: "Entrada",  icon: <Crown size={12} /> },
+                    { id: "EXIT",    label: "Saída",    icon: <LogOut size={12} /> },
+                    { id: "TEST",    label: "Testes",   icon: <FlaskConical size={12} /> },
+                    { id: "BOT",     label: "Bot",      icon: <Bot size={12} /> },
+                    { id: "SERVER",  label: "Servidor", icon: <Server size={12} /> },
+                    { id: "USER",    label: "Usuário",  icon: <User size={12} /> },
+                  ] : [
+                    { id: null,             label: "Todos",    icon: <Activity size={12} /> },
+                    { id: "member_join",    label: "Entrada",  icon: <Crown size={12} /> },
+                    { id: "member_leave",   label: "Saída",    icon: <LogOut size={12} /> },
+                    { id: "ban",            label: "Ban",      icon: <ShieldAlert size={12} /> },
+                    { id: "kick",           label: "Kick",     icon: <LogOut size={12} /> },
+                    { id: "message_delete", label: "Clear",    icon: <Trash2 size={12} /> },
+                    { id: "config_updated", label: "Config",   icon: <Server size={12} /> },
+                    { id: "error",          label: "Erro",     icon: <ShieldAlert size={12} /> },
+                  ]).map((type) => (
                     <Button
                       key={type.id || "all"}
                       variant={filterType === type.id ? "default" : "outline"}
@@ -209,82 +292,145 @@ export default function RealTimeLogsPage() {
         <div className="lg:col-span-3 space-y-4">
           <ScrollArea className="h-[calc(100vh-250px)] pr-4">
             <div className="space-y-4">
-              {isLoading ? (
-                <div className="flex flex-col items-center justify-center py-20 gap-4">
-                  <RefreshCw className="animate-spin text-primary" size={40} />
-                  <p className="text-sm font-black uppercase italic text-muted-foreground">Carregando Logs...</p>
-                </div>
-              ) : filteredLogs.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20 gap-4 border-2 border-dashed border-border/50 rounded-xl">
-                  <ShieldAlert className="text-muted-foreground" size={48} />
-                  <p className="text-sm font-black uppercase italic text-muted-foreground">Nenhuma log encontrada</p>
-                </div>
-              ) : (
-                filteredLogs.map((log) => (
-                  <div 
-                    key={log._id} 
-                    className="group relative bg-[#1e1f22] rounded-lg overflow-hidden border border-white/5 hover:border-primary/30 transition-all duration-300 shadow-lg"
-                  >
-                    {/* Color Bar */}
-                    <div 
-                      className="absolute left-0 top-0 bottom-0 w-1.5" 
-                      style={{ backgroundColor: formatColor(log.color) }}
-                    />
-                    
-                    <div className="p-4 pl-6">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="space-y-1 flex-1">
-                          <div className="flex items-center gap-2">
-                            {getLogIcon(log.type)}
-                            <h4 className="text-sm font-black text-white uppercase italic tracking-tight">
-                              {log.title}
-                            </h4>
-                            <Badge variant="outline" className="text-[9px] h-4 px-1.5 font-black border-white/10 text-gray-400">
-                              {log.type || "GERAL"}
-                            </Badge>
-                          </div>
-                          <p className="text-xs text-gray-300 font-medium leading-relaxed">
-                            {log.description}
-                          </p>
-                        </div>
-                        <div className="text-right space-y-1">
-                          <div className="flex items-center justify-end gap-1.5 text-[10px] font-black text-gray-500 uppercase">
-                            <Clock size={10} />
-                            {new Date(log.createdAt).toLocaleTimeString()}
-                          </div>
-                          {log.userName && (
-                            <div className="flex items-center justify-end gap-1.5 text-[10px] font-black text-primary uppercase italic">
-                              <User size={10} />
-                              {log.userName}
+              {/* ─── Aba: Tempo Real ─── */}
+              {activeTab === "realtime" && (
+                isLoading ? (
+                  <div className="flex flex-col items-center justify-center py-20 gap-4">
+                    <RefreshCw className="animate-spin text-primary" size={40} />
+                    <p className="text-sm font-black uppercase italic text-muted-foreground">Carregando Logs...</p>
+                  </div>
+                ) : filteredLogs.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-20 gap-4 border-2 border-dashed border-border/50 rounded-xl">
+                    <ShieldAlert className="text-muted-foreground" size={48} />
+                    <p className="text-sm font-black uppercase italic text-muted-foreground">Nenhuma log encontrada</p>
+                  </div>
+                ) : (
+                  filteredLogs.map((log) => (
+                    <div
+                      key={log._id}
+                      className="group relative bg-[#1e1f22] rounded-lg overflow-hidden border border-white/5 hover:border-primary/30 transition-all duration-300 shadow-lg"
+                    >
+                      <div className="absolute left-0 top-0 bottom-0 w-1.5" style={{ backgroundColor: formatColor(log.color) }} />
+                      <div className="p-4 pl-6">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="space-y-1 flex-1">
+                            <div className="flex items-center gap-2">
+                              {getLogIcon(log.type)}
+                              <h4 className="text-sm font-black text-white uppercase italic tracking-tight">{log.title}</h4>
+                              <Badge variant="outline" className="text-[9px] h-4 px-1.5 font-black border-white/10 text-gray-400">{log.type || "GERAL"}</Badge>
                             </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {log.imageUrl && (
-                        <div className="mt-3 rounded-md overflow-hidden border border-white/5 max-w-md">
-                          <img src={log.imageUrl} alt="Log Attachment" className="w-full h-auto object-cover" />
-                        </div>
-                      )}
-
-                      <div className="mt-3 pt-3 border-t border-white/5 flex items-center justify-between">
-                        <div className="text-[9px] font-black text-gray-600 uppercase tracking-widest">
-                          {log.footer || "Sistema Magnatas"}
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <div className="flex items-center gap-1 text-[9px] font-black text-gray-600 uppercase">
-                            <Server size={10} /> {log.guildId.slice(0, 8)}...
+                            <p className="text-xs text-gray-300 font-medium leading-relaxed">{log.description}</p>
                           </div>
-                          {log.userId && (
+                          <div className="text-right space-y-1">
+                            <div className="flex items-center justify-end gap-1.5 text-[10px] font-black text-gray-500 uppercase">
+                              <Clock size={10} /> {new Date(log.createdAt).toLocaleTimeString()}
+                            </div>
+                            {log.userName && (
+                              <div className="flex items-center justify-end gap-1.5 text-[10px] font-black text-primary uppercase italic">
+                                <User size={10} /> {log.userName}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        {log.imageUrl && (
+                          <div className="mt-3 rounded-md overflow-hidden border border-white/5 max-w-md">
+                            <img src={log.imageUrl} alt="Log Attachment" className="w-full h-auto object-cover" />
+                          </div>
+                        )}
+                        <div className="mt-3 pt-3 border-t border-white/5 flex items-center justify-between">
+                          <div className="text-[9px] font-black text-gray-600 uppercase tracking-widest">{log.footer || "Sistema Magnatas"}</div>
+                          <div className="flex items-center gap-3">
                             <div className="flex items-center gap-1 text-[9px] font-black text-gray-600 uppercase">
-                              <User size={10} /> {log.userId.slice(0, 8)}...
+                              <Server size={10} /> {log.guildId.slice(0, 8)}...
                             </div>
-                          )}
+                            {log.userId && (
+                              <div className="flex items-center gap-1 text-[9px] font-black text-gray-600 uppercase">
+                                <User size={10} /> {log.userId.slice(0, 8)}...
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
+                  ))
+                )
+              )}
+
+              {/* ─── Aba: Histórico do Bot ─── */}
+              {activeTab === "bot" && (
+                isBotLoading ? (
+                  <div className="flex flex-col items-center justify-center py-20 gap-4">
+                    <RefreshCw className="animate-spin text-primary" size={40} />
+                    <p className="text-sm font-black uppercase italic text-muted-foreground">Buscando logs do bot...</p>
                   </div>
-                ))
+                ) : filteredBotLogs.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-20 gap-4 border-2 border-dashed border-border/50 rounded-xl">
+                    <Bot className="text-muted-foreground" size={48} />
+                    <p className="text-sm font-black uppercase italic text-muted-foreground">Nenhum log do bot encontrado</p>
+                    <p className="text-xs text-muted-foreground">Certifique-se que o bot está online e a variável BOT_API_URL está configurada.</p>
+                  </div>
+                ) : (
+                  filteredBotLogs.map((log: any) => (
+                    <div
+                      key={log._id}
+                      className="group relative bg-[#1e1f22] rounded-lg overflow-hidden border border-white/5 hover:border-primary/30 transition-all duration-300 shadow-lg"
+                    >
+                      <div className="absolute left-0 top-0 bottom-0 w-1.5" style={{ backgroundColor: getBotLogColor(log.type) }} />
+                      <div className="p-4 pl-6">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="space-y-1 flex-1">
+                            <div className="flex items-center gap-2">
+                              {getLogIcon(log.type)}
+                              <h4 className="text-sm font-black text-white uppercase italic tracking-tight">{log.title}</h4>
+                              <Badge variant="outline" className="text-[9px] h-4 px-1.5 font-black border-white/10 text-gray-400">{log.type || "GERAL"}</Badge>
+                              <Badge
+                                variant="outline"
+                                className={`text-[9px] h-4 px-1.5 font-black ${
+                                  log.severity === "high" || log.severity === "critical"
+                                    ? "border-red-500/50 text-red-400"
+                                    : log.severity === "medium"
+                                    ? "border-orange-500/50 text-orange-400"
+                                    : "border-white/10 text-gray-500"
+                                }`}
+                              >
+                                {log.severity}
+                              </Badge>
+                            </div>
+                            <p className="text-xs text-gray-300 font-medium leading-relaxed">{log.description}</p>
+                          </div>
+                          <div className="text-right space-y-1">
+                            <div className="flex items-center justify-end gap-1.5 text-[10px] font-black text-gray-500 uppercase">
+                              <Clock size={10} /> {new Date(log.createdAt).toLocaleTimeString()}
+                            </div>
+                            <div className="flex items-center justify-end gap-1 text-[9px] font-black text-gray-600 uppercase">
+                              <Clock size={9} /> {new Date(log.createdAt).toLocaleDateString("pt-BR")}
+                            </div>
+                            {log.userName && (
+                              <div className="flex items-center justify-end gap-1.5 text-[10px] font-black text-primary uppercase italic">
+                                <User size={10} /> {log.userName}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="mt-3 pt-3 border-t border-white/5 flex items-center justify-between">
+                          <div className="text-[9px] font-black text-gray-600 uppercase tracking-widest">Magnatas.gg • Bot</div>
+                          <div className="flex items-center gap-3">
+                            {log.channelName && (
+                              <div className="flex items-center gap-1 text-[9px] font-black text-gray-600 uppercase">
+                                <Server size={10} /> #{log.channelName}
+                              </div>
+                            )}
+                            {log.userId && (
+                              <div className="flex items-center gap-1 text-[9px] font-black text-gray-600 uppercase">
+                                <User size={10} /> {log.userId.slice(0, 8)}...
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )
               )}
             </div>
           </ScrollArea>
