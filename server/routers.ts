@@ -28,6 +28,7 @@ import {
   getMockGuilds,
   checkBotInGuild,
 } from "./discord";
+import axios from "axios";
 import { sendBroadcastToAllGuilds } from "./discord-broadcast";
 import { sendAdminWelcomeMessage, sendGuildJoinWelcome } from "./welcome-admin";
 import { sendMessageToChannel, getGuildTextChannels } from "./discord-messages";
@@ -947,7 +948,35 @@ const guildManagementRouter = router({
     }),
 });
 
+// --- Debug Router ---
+const debugRouter = router({
+  testBotConnection: protectedProcedure.mutation(async () => {
+    const BOT_API_URL = process.env.BOT_API_URL || "http://localhost:3000";
+    const startTime = Date.now();
+    
+    try {
+      const response = await axios.get(`${BOT_API_URL}/api/panel/diagnostic`, { timeout: 5000 });
+      return {
+        success: true,
+        duration: Date.now() - startTime,
+        botUrl: BOT_API_URL,
+        data: response.data
+      };
+    } catch (err: any) {
+      return {
+        success: false,
+        duration: Date.now() - startTime,
+        botUrl: BOT_API_URL,
+        error: err.message,
+        code: err.code,
+        response: err.response?.data
+      };
+    }
+  }),
+});
+
 export const appRouter = router({
+  debug: debugRouter,
   system: systemRouter,
   auth: authRouter,
   guilds: guildsRouter,

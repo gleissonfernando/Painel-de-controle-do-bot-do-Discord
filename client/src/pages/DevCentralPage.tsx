@@ -20,7 +20,11 @@ import {
   Unlock,
   Info,
   RefreshCw,
-  Loader2
+  Loader2,
+  Wifi,
+  AlertTriangle,
+  CheckCircle,
+  FlaskConical
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
@@ -41,6 +45,8 @@ export default function DevCentralPage() {
   const [targetGuildId, setTargetGuildId] = useState("");
   const [targetChannelId, setTargetChannelId] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [debugResult, setDebugResult] = useState<any>(null);
+  const [isDebugging, setIsDebugging] = useState(false);
 
   const { data: guilds = [] } = trpc.guilds.list.useQuery();
   const { data: globalConfig } = trpc.maintenance.getGlobal.useQuery();
@@ -68,6 +74,21 @@ export default function DevCentralPage() {
   const sendAlertTestMutation = trpc.monitor.testAlert.useMutation({
     onSuccess: () => toast.success("🧪 Alerta de teste enviado!"),
     onError: (err) => toast.error(`Erro no alerta: ${err.message}`)
+  });
+
+  const testConnectionMutation = trpc.debug.testBotConnection.useMutation({
+    onSuccess: (data) => {
+      setDebugResult(data);
+      if (data.success) {
+        toast.success("Conexão com o Bot estabelecida!");
+      } else {
+        toast.error("Falha na conexão com o Bot.");
+      }
+    },
+    onError: (err) => {
+      setDebugResult({ success: false, error: err.message });
+      toast.error("Erro ao tentar conectar.");
+    }
   });
 
   useEffect(() => {
@@ -140,6 +161,16 @@ export default function DevCentralPage() {
         type,
         imageUrl: "https://i.imgur.com/8nNfQfR.png"
       });
+    }
+  };
+
+  const handleTestConnection = async () => {
+    setIsDebugging(true);
+    setDebugResult(null);
+    try {
+      await testConnectionMutation.mutateAsync();
+    } finally {
+      setIsDebugging(false);
     }
   };
 
@@ -239,6 +270,41 @@ export default function DevCentralPage() {
                   Ao ativar, o bot enviará automaticamente alertas para os <strong>canais de alerta</strong> configurados em cada servidor.
                 </p>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Card de Diagnóstico de Conexão */}
+          <Card className="bg-[#0A0A0A] border-border shadow-lg">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
+                <Wifi size={14} className="text-primary" />
+                Conexão Bot API
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Button 
+                onClick={handleTestConnection} 
+                disabled={isDebugging}
+                className="w-full h-10 bg-[#111111] hover:bg-[#151515] border border-border text-[10px] font-black uppercase italic"
+              >
+                {isDebugging ? <Loader2 className="animate-spin mr-2" size={14} /> : <Activity className="mr-2" size={14} />}
+                Testar Conexão IP
+              </Button>
+
+              {debugResult && (
+                <div className={`p-3 rounded-xl border text-[10px] font-bold uppercase space-y-2 ${debugResult.success ? "bg-green-500/10 border-green-500/20 text-green-500" : "bg-red-500/10 border-red-500/20 text-red-500"}`}>
+                  <div className="flex items-center gap-2">
+                    {debugResult.success ? <CheckCircle size={14} /> : <AlertTriangle size={14} />}
+                    <span>{debugResult.success ? "Conectado!" : "Erro de Conexão"}</span>
+                  </div>
+                  <div className="space-y-1 font-mono text-[9px] lowercase normal-case">
+                    <p className="opacity-70">URL: {debugResult.botUrl}</p>
+                    {debugResult.duration && <p className="opacity-70">Latência: {debugResult.duration}ms</p>}
+                    {debugResult.error && <p className="text-red-400 mt-1 font-bold">Erro: {debugResult.error}</p>}
+                    {debugResult.code && <p className="text-red-400">Código: {debugResult.code}</p>}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
