@@ -30,7 +30,7 @@ type Step = "idle" | "authenticating" | "fetching_guilds" | "verifying_bot" | "r
 
 export default function UnifiedDashboard() {
   const { user, logout, isAuthenticated } = useAuth();
-  const { guilds, isLoadingGuilds, refreshGuilds } = useSession();
+  const { guilds = [], isLoadingGuilds, refreshGuilds } = useSession();
   const [step, setStep] = useState<Step>("idle");
   const [progress, setProgress] = useState(0);
   const [selectedGuild, setSelectedGuild] = useState<Guild | null>(null);
@@ -73,7 +73,7 @@ export default function UnifiedDashboard() {
       <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
       <Avatar className="w-5 h-5 border border-green-500/30">
         <AvatarImage src={user?.avatar} />
-        <AvatarFallback className="text-[8px]">{getInitials(user?.name || "U")}</AvatarFallback>
+        <AvatarFallback className="text-[8px] bg-primary/10 text-primary">{getInitials(user?.name || "U")}</AvatarFallback>
       </Avatar>
       <span className="text-[10px] font-bold text-green-500 uppercase tracking-wider">
         {user?.name} Verificado
@@ -88,7 +88,7 @@ export default function UnifiedDashboard() {
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-md bg-[#0A0A0A] border border-white/5 rounded-2xl p-8 text-center shadow-2xl"
+          className="w-full max-w-md bg-[#18181c] border border-white/5 rounded-2xl p-8 text-center shadow-2xl"
         >
           <div className="w-20 h-20 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto mb-6">
             <Bot size={40} className="text-primary" />
@@ -97,7 +97,7 @@ export default function UnifiedDashboard() {
           <p className="text-muted-foreground text-sm mb-8">Acesse o painel de controle do seu bot de forma segura.</p>
           <Button 
             className="w-full bg-[#5865F2] hover:bg-[#4752C4] h-12 text-white font-bold"
-            onClick={() => window.location.href = "/"} // Link para a raiz que já tem o botão de login
+            onClick={() => window.location.href = "/"}
           >
             Entrar com Discord
           </Button>
@@ -142,13 +142,13 @@ export default function UnifiedDashboard() {
         <motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="w-full max-w-lg bg-[#0A0A0A] border border-white/5 rounded-3xl p-10 text-center relative overflow-hidden"
+          className="w-full max-w-lg bg-[#18181c] border border-white/5 rounded-3xl p-10 text-center relative overflow-hidden"
         >
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary/0 via-primary to-primary/0" />
           
-          <div className="w-24 h-24 rounded-full bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center mx-auto mb-8 relative">
-            <Shield size={48} className="text-yellow-500" />
-            <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-[#0A0A0A] border border-white/5 flex items-center justify-center">
+          <div className="w-24 h-24 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto mb-8 relative">
+            <Shield size={48} className="text-primary" />
+            <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-[#18181c] border border-white/5 flex items-center justify-center">
               <Plus size={16} className="text-white" />
             </div>
           </div>
@@ -188,7 +188,7 @@ export default function UnifiedDashboard() {
   return (
     <div className="min-h-screen bg-[#050505] flex flex-col">
       {/* Header */}
-      <header className="h-20 border-b border-white/5 px-6 flex items-center justify-between bg-[#0A0A0A]/50 backdrop-blur-xl sticky top-0 z-50">
+      <header className="h-20 border-b border-white/5 px-6 flex items-center justify-between bg-[#18181c]/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="flex items-center gap-4">
           <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
             <Bot size={22} className="text-white" />
@@ -216,7 +216,7 @@ export default function UnifiedDashboard() {
                 placeholder="Filtrar servidores..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-[#0A0A0A] border border-white/5 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:border-primary/50 transition-colors"
+                className="w-full bg-[#18181c] border border-white/5 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:border-primary/50 transition-colors"
               />
             </div>
           </div>
@@ -230,7 +230,7 @@ export default function UnifiedDashboard() {
                 className={`flex items-center gap-4 p-4 rounded-2xl border transition-all text-left ${
                   selectedGuild?.id === guild.id 
                     ? "bg-primary/5 border-primary shadow-lg shadow-primary/5" 
-                    : "bg-[#0A0A0A] border-white/5 hover:border-white/10"
+                    : "bg-[#18181c] border-white/5 hover:border-white/10"
                 }`}
               >
                 <Avatar className="w-14 h-14 rounded-2xl border border-white/5">
@@ -266,12 +266,12 @@ export default function UnifiedDashboard() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
-                className="bg-[#0A0A0A] border border-white/5 rounded-3xl p-6 sticky top-28"
+                className="bg-[#18181c] border border-white/5 rounded-3xl p-6 sticky top-28 shadow-xl"
               >
                 <div className="text-center mb-8">
                   <Avatar className="w-20 h-20 rounded-3xl border-2 border-primary/20 mx-auto mb-4">
                     <AvatarImage src={`https://cdn.discordapp.com/icons/${selectedGuild.id}/${selectedGuild.icon}.png`} />
-                    <AvatarFallback className="text-2xl font-bold">{getInitials(selectedGuild.name)}</AvatarFallback>
+                    <AvatarFallback className="text-2xl font-bold bg-primary/10 text-primary">{getInitials(selectedGuild.name)}</AvatarFallback>
                   </Avatar>
                   <h3 className="font-bold text-white text-lg truncate px-2">{selectedGuild.name}</h3>
                   <div className="flex items-center justify-center gap-2 mt-2">
@@ -312,7 +312,7 @@ export default function UnifiedDashboard() {
                 </div>
               </motion.div>
             ) : (
-              <div className="bg-[#0A0A0A]/50 border border-dashed border-white/10 rounded-3xl p-10 text-center sticky top-28">
+              <div className="bg-[#18181c]/50 border border-dashed border-white/10 rounded-3xl p-10 text-center sticky top-28">
                 <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-4">
                   <Activity size={32} className="text-muted-foreground/50" />
                 </div>
