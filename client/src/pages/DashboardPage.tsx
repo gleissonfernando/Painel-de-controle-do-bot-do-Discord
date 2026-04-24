@@ -10,10 +10,8 @@ import {
   Terminal,
   Users,
   Zap,
-  Globe,
   MessageSquare,
   AlertCircle,
-  CheckCircle2,
   Hand
 } from "lucide-react";
 import { toast } from "sonner";
@@ -25,6 +23,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface DashboardPageProps {
   guildId: string;

@@ -88,8 +88,8 @@ export default function DiscordDashboardLayout({
           <Bot size={20} className="text-primary-foreground" />
         </div>
         <div>
-          <p className="text-sm font-bold text-foreground">Magnatas</p>
-          <p className="text-xs text-muted-foreground">Dashboard</p>
+          <p className="text-sm font-bold text-foreground uppercase tracking-tight">Magnatas</p>
+          <p className="text-[10px] text-muted-foreground font-medium">Dashboard</p>
         </div>
       </div>
 
