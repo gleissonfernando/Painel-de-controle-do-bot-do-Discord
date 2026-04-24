@@ -20,8 +20,10 @@ import {
   Power,
   MessageSquare,
   CheckCircle2,
-  XCircle
+  XCircle,
+  ArrowLeft
 } from "lucide-react";
+import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import RealTimeLogsPage from "./RealTimeLogsPage";
@@ -110,10 +112,21 @@ export default function DevCentralPage() {
     }
   };
 
+  const [, setLocation] = useLocation();
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
+        <div className="flex flex-col gap-2">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => setLocation("/")}
+            className="w-fit h-8 gap-2 text-muted-foreground hover:text-primary hover:bg-primary/10 -ml-2"
+          >
+            <ArrowLeft size={14} />
+            Voltar ao Dashboard
+          </Button>
           <h1 className="text-3xl font-bold text-primary flex items-center gap-2">
             <Terminal size={32} />
             Central do Desenvolvedor
