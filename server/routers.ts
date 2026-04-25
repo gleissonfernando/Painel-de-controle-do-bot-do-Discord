@@ -20,6 +20,8 @@ import {
   upsertWelcomeMessages,
   updateSocialNotification,
 } from "./db";
+import { widgetRouter } from "./routers/widget";
+import { webhookRouter } from "./routers/webhook";
 import {
   fetchDiscordGuilds,
   fetchGuildDetails,
@@ -682,6 +684,8 @@ export const appRouter = router({
   commands: commandsRouter,
   messages: messagesRouter,
   welcomeGoodbye: welcomeGoodbyeRouter,
+  widget: widgetRouter,
+  webhook: webhookRouter,
 });
 
 export type AppRouter = typeof appRouter;
