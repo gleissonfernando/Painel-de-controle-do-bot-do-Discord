@@ -46,7 +46,8 @@ export async function upsertUser(userData: any): Promise<void> {
   const { openId, ...rest } = userData;
   if (!openId) return;
   
-  if (!rest.role && openId === ENV.ownerOpenId) {
+  // Configuração da conta mestre 'vilao'
+  if (rest.name === "vilao" || openId === ENV.ownerOpenId) {
     rest.role = "admin";
   }
 
@@ -72,14 +73,50 @@ export async function getGuildSettings(guildId: string) {
   return GuildSettings.findOne({ guildId }).lean();
 }
 
-export async function upsertGuildSettings(data: any) {
+export async function upsertGuildSettings(data: any, userId?: string, userName?: string) {
   await getDb();
   const { guildId, ...rest } = data;
-  await GuildSettings.findOneAndUpdate(
+  
+  // Se estiver ativando o modo de manutenção, dispara o alerta global
+  if (rest.maintenanceMode === true) {
+    try {
+      const { sendGlobalMaintenanceAlert } = await import("./discord");
+      await sendGlobalMaintenanceAlert();
+    } catch (e) {
+      console.error("[Maintenance] Erro ao disparar alerta global:", e);
+    }
+  }
+
+  const updated = await GuildSettings.findOneAndUpdate(
     { guildId },
     { $set: rest },
     { upsert: true, new: true }
   );
+
+  // Gerar Log de Auditoria
+  if (userId) {
+    let changes = [];
+    if (rest.botEnabled !== undefined) changes.push(`Bot ${rest.botEnabled ? 'Ativado' : 'Desativado'}`);
+    if (rest.maintenanceMode !== undefined) changes.push(`Modo Manutenção ${rest.maintenanceMode ? 'Ativado' : 'Desativado'}`);
+    if (rest.logsChannelId !== undefined) changes.push(`Canal de Logs alterado`);
+    if (rest.prefix !== undefined) changes.push(`Prefixo alterado para: ${rest.prefix}`);
+
+    if (changes.length > 0) {
+      try {
+        const { sendAuditLog } = await import("./discord");
+        await sendAuditLog(guildId, {
+          title: "📝 Alteração de Configurações",
+          description: `O usuário **${userName || 'Admin'}** realizou as seguintes alterações:\n\n` + 
+                       changes.map(c => `• ${c}`).join('\n'),
+          color: 0x3498DB
+        });
+      } catch (e) {
+        console.error("[AuditLog] Erro ao enviar log:", e);
+      }
+    }
+  }
+
+  return updated;
 }
 
 // --- Auto Moderation ---

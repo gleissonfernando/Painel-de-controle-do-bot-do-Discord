@@ -10,7 +10,7 @@ function getQueryParam(req: Request, key: string): string | undefined {
 }
 
 export function registerOAuthRoutes(app: Express) {
-  app.get("/api/oauth/callback", async (req: Request, res: Response) => {
+  const oauthHandler = async (req: Request, res: Response) => {
     const code = getQueryParam(req, "code") || (req.query.code as string);
     const state = getQueryParam(req, "state") || (req.query.state as string);
     const guildId = getQueryParam(req, "guild_id") || (req.query.guild_id as string);
@@ -44,24 +44,30 @@ export function registerOAuthRoutes(app: Express) {
         console.warn("[OAuth] Using direct Discord exchange (SDK fallback/no state).");
         
         // FALLBACK: Troca de código direta com o Discord
-        // De acordo com a documentação, client_id e client_secret podem ser enviados no body ou via Basic Auth
+        const protocol = req.headers["x-forwarded-proto"] || req.protocol;
+        const host = req.headers["x-forwarded-host"] || req.get("host");
+        const redirectUri = `${protocol}://${host}${req.path}`;
+
+        console.log(`[OAuth] Exchanging code for token with redirect_uri: ${redirectUri}`);
+
         const discordResponse = await fetch("https://discord.com/api/v10/oauth2/token", {
           method: "POST",
           headers: { 
             "Content-Type": "application/x-www-form-urlencoded",
-            // Algumas implementações preferem Basic Auth, mas o body é padrão para x-www-form-urlencoded
           },
           body: new URLSearchParams({
             client_id: process.env.VITE_DISCORD_CLIENT_ID || "1492325134550302952",
             client_secret: process.env.DISCORD_CLIENT_SECRET || "",
             grant_type: "authorization_code",
             code: code,
-            redirect_uri: `https://magnatas-dashboard.shardweb.app/api/oauth/callback`,
+            redirect_uri: redirectUri,
           }),
         });
 
         if (!discordResponse.ok) {
-          throw new Error(`Discord token exchange failed: ${await discordResponse.text()}`);
+          const errorBody = await discordResponse.text();
+          console.error(`[OAuth] Discord token exchange failed. Status: ${discordResponse.status}, Body:`, errorBody);
+          throw new Error(`Discord token exchange failed: ${errorBody}`);
         }
 
         const discordTokens = await discordResponse.json();
@@ -158,5 +164,9 @@ export function registerOAuthRoutes(app: Express) {
       }
       res.status(500).json({ error: "OAuth callback failed" });
     }
-  });
+  };
+
+  // Registra ambas as rotas para garantir compatibilidade
+  app.get("/api/oauth/callback", oauthHandler);
+  app.get("/auth/discord/callback", oauthHandler);
 }

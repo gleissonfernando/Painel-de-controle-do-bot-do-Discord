@@ -16,15 +16,15 @@ interface LogsPageProps {
 }
 
 const EVENT_TYPES = [
-  { value: "all", label: "All Events" },
-  { value: "member_join", label: "Member Join" },
-  { value: "member_leave", label: "Member Leave" },
-  { value: "member_ban", label: "Member Ban" },
-  { value: "member_unban", label: "Member Unban" },
-  { value: "message_delete", label: "Message Delete" },
-  { value: "message_edit", label: "Message Edit" },
-  { value: "command_used", label: "Command Used" },
-  { value: "live_notification", label: "Live Notification" },
+  { value: "all", label: "Todos os Eventos" },
+  { value: "member_join", label: "Entrada de Membro" },
+  { value: "member_leave", label: "Saída de Membro" },
+  { value: "member_ban", label: "Banimento" },
+  { value: "member_unban", label: "Desbanimento" },
+  { value: "message_delete", label: "Mensagem Deletada" },
+  { value: "message_edit", label: "Mensagem Editada" },
+  { value: "command_used", label: "Comando Utilizado" },
+  { value: "live_notification", label: "Notificação ao Vivo" },
 ];
 
 const EVENT_ICONS: Record<string, React.ReactNode> = {
@@ -39,25 +39,25 @@ const EVENT_ICONS: Record<string, React.ReactNode> = {
 };
 
 const EVENT_COLORS: Record<string, string> = {
-  member_join: "text-green-400 bg-green-500/10 border-green-500/20",
-  member_leave: "text-yellow-400 bg-yellow-500/10 border-yellow-500/20",
-  member_ban: "text-red-400 bg-red-500/10 border-red-500/20",
-  member_unban: "text-blue-400 bg-blue-500/10 border-blue-500/20",
-  message_delete: "text-orange-400 bg-orange-500/10 border-orange-500/20",
-  message_edit: "text-purple-400 bg-purple-500/10 border-purple-500/20",
-  command_used: "text-blue-400 bg-blue-500/10 border-blue-500/20",
+  member_join: "text-primary bg-primary/10 border-primary/20",
+  member_leave: "text-muted-foreground bg-muted/10 border-border",
+  member_ban: "text-red-500 bg-red-500/10 border-red-500/20",
+  member_unban: "text-primary bg-primary/10 border-primary/20",
+  message_delete: "text-red-400 bg-red-400/10 border-red-400/20",
+  message_edit: "text-primary bg-primary/10 border-primary/20",
+  command_used: "text-primary bg-primary/10 border-primary/20",
   live_notification: "text-primary bg-primary/10 border-primary/20",
 };
 
 const EVENT_LABELS: Record<string, string> = {
-  member_join: "Member Joined",
-  member_leave: "Member Left",
-  member_ban: "Member Banned",
-  member_unban: "Member Unbanned",
-  message_delete: "Message Deleted",
-  message_edit: "Message Edited",
-  command_used: "Command Used",
-  live_notification: "Live Notification",
+  member_join: "Entrada de Membro",
+  member_leave: "Saída de Membro",
+  member_ban: "Membro Banido",
+  member_unban: "Membro Desbanido",
+  message_delete: "Mensagem Deletada",
+  message_edit: "Mensagem Editada",
+  command_used: "Comando Utilizado",
+  live_notification: "Notificação ao Vivo",
 };
 
 export default function LogsPage({ guildId }: LogsPageProps) {
@@ -96,7 +96,7 @@ export default function LogsPage({ guildId }: LogsPageProps) {
           Logs
         </h1>
         <p className="text-sm text-muted-foreground mt-0.5">
-          View all server events and bot activity
+          Veja todos os eventos do servidor e atividades do bot
         </p>
       </div>
 
@@ -104,28 +104,28 @@ export default function LogsPage({ guildId }: LogsPageProps) {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           {
-            label: "Total Events",
+            label: "Total de Eventos",
             value: logs?.length ?? 0,
             color: "text-foreground",
           },
           {
-            label: "Member Events",
+            label: "Eventos de Membros",
             value: (logs ?? []).filter(l => l.eventType?.startsWith("member"))
               .length,
-            color: "text-blue-400",
+            color: "text-primary",
           },
           {
-            label: "Mod Actions",
+            label: "Ações de Mod",
             value: (logs ?? []).filter(l =>
               ["member_ban", "member_unban"].includes(l.eventType ?? "")
             ).length,
-            color: "text-red-400",
+            color: "text-red-500",
           },
           {
-            label: "Messages",
+            label: "Mensagens",
             value: (logs ?? []).filter(l => l.eventType?.startsWith("message"))
               .length,
-            color: "text-purple-400",
+            color: "text-primary",
           },
         ].map(s => (
           <div
@@ -147,7 +147,7 @@ export default function LogsPage({ guildId }: LogsPageProps) {
           />
           <input
             type="text"
-            placeholder="Search by user, event or details..."
+            placeholder="Pesquisar por usuário, evento ou detalhes..."
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="w-full pl-9 pr-4 py-2 bg-card border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors"
@@ -174,16 +174,16 @@ export default function LogsPage({ guildId }: LogsPageProps) {
         {/* Table Header */}
         <div className="grid grid-cols-12 gap-4 px-5 py-3 border-b border-border bg-muted/30">
           <div className="col-span-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            Event
+            Evento
           </div>
           <div className="col-span-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            User
+            Usuário
           </div>
           <div className="col-span-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            Details
+            Detalhes
           </div>
           <div className="col-span-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider text-right">
-            Time
+            Hora
           </div>
         </div>
 
@@ -208,10 +208,10 @@ export default function LogsPage({ guildId }: LogsPageProps) {
               size={32}
               className="text-muted-foreground mx-auto mb-2"
             />
-            <p className="text-muted-foreground text-sm">No logs found</p>
+            <p className="text-muted-foreground text-sm">Nenhum log encontrado</p>
             {search && (
               <p className="text-xs text-muted-foreground mt-1">
-                Try adjusting your search or filter
+                Tente ajustar sua pesquisa ou filtro
               </p>
             )}
           </div>
@@ -266,13 +266,13 @@ export default function LogsPage({ guildId }: LogsPageProps) {
                   {/* Time */}
                   <div className="col-span-2 text-right">
                     <p className="text-xs text-muted-foreground">
-                      {new Date(log.createdAt).toLocaleTimeString("en-US", {
+                      {new Date(log.createdAt).toLocaleTimeString("pt-BR", {
                         hour: "2-digit",
                         minute: "2-digit",
                       })}
                     </p>
                     <p className="text-xs text-muted-foreground/60">
-                      {new Date(log.createdAt).toLocaleDateString("en-US", {
+                      {new Date(log.createdAt).toLocaleDateString("pt-BR", {
                         month: "short",
                         day: "numeric",
                       })}
@@ -288,7 +288,7 @@ export default function LogsPage({ guildId }: LogsPageProps) {
       {/* Footer */}
       {!isLoading && filtered.length > 0 && (
         <p className="text-xs text-muted-foreground text-center">
-          Showing {filtered.length} of {logs?.length ?? 0} events
+          Mostrando {filtered.length} de {logs?.length ?? 0} eventos
         </p>
       )}
     </div>

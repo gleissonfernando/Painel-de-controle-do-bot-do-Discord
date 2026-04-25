@@ -8,15 +8,19 @@ interface CommandsPageProps {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  General: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-  Moderation: "bg-red-500/10 text-red-400 border-red-500/20",
-  Music: "bg-purple-500/10 text-purple-400 border-purple-500/20",
-  Fun: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
+  General: "bg-primary/10 text-primary border-primary/20",
+  Moderation: "bg-red-600/10 text-red-500 border-red-600/20",
+  Music: "bg-primary/10 text-primary border-primary/20",
+  Fun: "bg-primary/10 text-primary border-primary/20",
+  Geral: "bg-primary/10 text-primary border-primary/20",
+  Moderação: "bg-red-600/10 text-red-500 border-red-600/20",
+  Música: "bg-primary/10 text-primary border-primary/20",
+  Diversão: "bg-primary/10 text-primary border-primary/20",
 };
 
 export default function CommandsPage({ guildId }: CommandsPageProps) {
   const [search, setSearch] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("All");
+  const [selectedCategory, setSelectedCategory] = useState<string>("Todos");
 
   const { data: commands, isLoading } = trpc.commands.list.useQuery({
     guildId,
@@ -42,7 +46,7 @@ export default function CommandsPage({ guildId }: CommandsPageProps) {
   });
 
   const categories = [
-    "All",
+    "Todos",
     ...Array.from(new Set((commands ?? []).map(c => c.category))),
   ];
 
@@ -51,7 +55,7 @@ export default function CommandsPage({ guildId }: CommandsPageProps) {
       c.commandName.toLowerCase().includes(search.toLowerCase()) ||
       c.description.toLowerCase().includes(search.toLowerCase());
     const matchCategory =
-      selectedCategory === "All" || c.category === selectedCategory;
+      selectedCategory === "Todos" || c.category === selectedCategory;
     return matchSearch && matchCategory;
   });
 
@@ -63,10 +67,10 @@ export default function CommandsPage({ guildId }: CommandsPageProps) {
       <div>
         <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
           <Terminal size={22} className="text-primary" />
-          Commands
+          Comandos
         </h1>
         <p className="text-sm text-muted-foreground mt-0.5">
-          Enable or disable bot commands for this server
+          Ative ou desative os comandos do bot para este servidor
         </p>
       </div>
 
@@ -76,17 +80,17 @@ export default function CommandsPage({ guildId }: CommandsPageProps) {
           <p className="text-2xl font-bold text-foreground">
             {commands?.length ?? 0}
           </p>
-          <p className="text-xs text-muted-foreground">Total Commands</p>
+          <p className="text-xs text-muted-foreground">Total de Comandos</p>
         </div>
-        <div className="bg-card border border-green-500/20 rounded-xl p-4 text-center bg-green-500/5">
-          <p className="text-2xl font-bold text-green-400">{enabledCount}</p>
-          <p className="text-xs text-muted-foreground">Enabled</p>
+        <div className="bg-card border border-primary/20 rounded-xl p-4 text-center bg-primary/5">
+          <p className="text-2xl font-bold text-primary">{enabledCount}</p>
+          <p className="text-xs text-muted-foreground">Ativados</p>
         </div>
         <div className="bg-card border border-red-500/20 rounded-xl p-4 text-center bg-red-500/5">
           <p className="text-2xl font-bold text-red-400">
             {(commands?.length ?? 0) - enabledCount}
           </p>
-          <p className="text-xs text-muted-foreground">Disabled</p>
+          <p className="text-xs text-muted-foreground">Desativados</p>
         </div>
       </div>
 
@@ -99,7 +103,7 @@ export default function CommandsPage({ guildId }: CommandsPageProps) {
           />
           <input
             type="text"
-            placeholder="Search commands..."
+            placeholder="Pesquisar comandos..."
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="w-full pl-9 pr-4 py-2 bg-card border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors"
@@ -143,7 +147,7 @@ export default function CommandsPage({ guildId }: CommandsPageProps) {
               size={32}
               className="text-muted-foreground mx-auto mb-2"
             />
-            <p className="text-muted-foreground text-sm">No commands found</p>
+            <p className="text-muted-foreground text-sm">Nenhum comando encontrado</p>
           </div>
         ) : (
           <div className="divide-y divide-border">

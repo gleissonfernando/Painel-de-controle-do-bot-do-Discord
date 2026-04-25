@@ -10,6 +10,7 @@ export interface IUser extends Document {
   accessToken?: string;
   refreshToken?: string;
   loginMethod?: string;
+  steamHex?: string;
   role: "user" | "admin";
   createdAt: Date;
   updatedAt: Date;
@@ -26,6 +27,7 @@ const UserSchema = new Schema<IUser>(
     accessToken: String,
     refreshToken: String,
     loginMethod: String,
+    steamHex: String,
     role: { type: String, enum: ["user", "admin"], default: "user" },
     lastSignedIn: { type: Date, default: Date.now },
   },
@@ -34,43 +36,63 @@ const UserSchema = new Schema<IUser>(
 
 export const User = mongoose.model<IUser>("User", UserSchema);
 
-// --- Guild Settings ---
-export interface IGuildSettings extends Document {
+// --- Guild Config (Antigo GuildSettings) ---
+export interface IGuildConfig extends Document {
   guildId: string;
   guildName?: string;
   guildIcon?: string;
   ownerId?: string;
-  prefix: string;
-  language: string;
-  timezone: string;
-  adminRoleId?: string;
-  welcomeChannelId?: string;
-  logsChannelId?: string;
-  botToken?: string;
-  botEnabled: boolean;
-  createdAt: Date;
+  alertChannelId: string | null;
+  alertChannelName: string | null;
+  maintenanceEnabled: boolean;
+  maintenanceMessage: string;
+  maintenanceVideoUrl: string | null;
+  updatedBy: string;
   updatedAt: Date;
 }
 
-const GuildSettingsSchema = new Schema<IGuildSettings>(
+const GuildConfigSchema = new Schema<IGuildConfig>(
   {
     guildId: { type: String, required: true, unique: true },
     guildName: String,
     guildIcon: String,
     ownerId: String,
-    prefix: { type: String, default: "!" },
-    language: { type: String, default: "en" },
-    timezone: { type: String, default: "UTC" },
-    adminRoleId: String,
-    welcomeChannelId: String,
-    logsChannelId: String,
-    botToken: String,
-    botEnabled: { type: Boolean, default: true },
+    alertChannelId: { type: String, default: null },
+    alertChannelName: { type: String, default: null },
+    maintenanceEnabled: { type: Boolean, default: false },
+    maintenanceMessage: { type: String, default: "⚠️ O bot está em manutenção. Aguarde, já voltamos." },
+    maintenanceVideoUrl: { type: String, default: null },
+    updatedBy: String,
   },
   { timestamps: true }
 );
 
-export const GuildSettings = mongoose.model<IGuildSettings>("GuildSettings", GuildSettingsSchema);
+export const GuildConfig = mongoose.model<IGuildConfig>("GuildConfig", GuildConfigSchema);
+
+// --- Global Config ---
+export interface IGlobalConfig extends Document {
+  maintenanceGlobalEnabled: boolean;
+  maintenanceMessage: string;
+  maintenanceVideoUrl: string | null;
+  updatedBy: string;
+  updatedAt: Date;
+}
+
+const GlobalConfigSchema = new Schema<IGlobalConfig>(
+  {
+    maintenanceGlobalEnabled: { type: Boolean, default: false },
+    maintenanceMessage: { type: String, default: "⚠️ O bot está em manutenção global. Aguarde, já voltamos." },
+    maintenanceVideoUrl: { type: String, default: null },
+    updatedBy: String,
+  },
+  { timestamps: true }
+);
+
+export const GlobalConfig = mongoose.model<IGlobalConfig>("GlobalConfig", GlobalConfigSchema);
+
+// --- Manter compatibilidade com modelos antigos se necessário ---
+export const GuildSettings = GuildConfig;
+export const MaintenanceSettings = GuildConfig;
 
 // --- Auto Moderation ---
 export interface IAutoModSettings extends Document {
@@ -220,6 +242,8 @@ export interface IWelcomeMessage extends Document {
   goodbyeMessage?: string;
   dmWelcome: boolean;
   dmMessage?: string;
+  welcomeBanner?: string;
+  goodbyeBanner?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -235,8 +259,259 @@ const WelcomeMessageSchema = new Schema<IWelcomeMessage>(
     goodbyeMessage: String,
     dmWelcome: { type: Boolean, default: false },
     dmMessage: String,
+    welcomeBanner: String,
+    goodbyeBanner: String,
   },
   { timestamps: true }
 );
 
 export const WelcomeMessage = mongoose.model<IWelcomeMessage>("WelcomeMessage", WelcomeMessageSchema);
+
+// --- Dev Audit Log ---
+export interface IDevAuditLog extends Document {
+  devUserId: string;
+  action: string;
+  details: Record<string, any>;
+  timestamp: Date;
+}
+
+const DevAuditLogSchema = new Schema<IDevAuditLog>(
+  {
+    devUserId: { type: String, required: true },
+    action: { type: String, required: true },
+    details: { type: Schema.Types.Mixed, default: {} },
+    timestamp: { type: Date, default: Date.now },
+  },
+  { timestamps: false }
+);
+
+export const DevAuditLog = mongoose.model<IDevAuditLog>("DevAuditLog", DevAuditLogSchema);
+
+// --- Guild Removal Log ---
+export interface IGuildRemovalLog extends Document {
+  guildId: string;
+  guildName?: string;
+  removedBy: string;
+  reason?: string;
+  timestamp: Date;
+}
+
+const GuildRemovalLogSchema = new Schema<IGuildRemovalLog>(
+  {
+    guildId: { type: String, required: true },
+    guildName: String,
+    removedBy: { type: String, required: true },
+    reason: String,
+    timestamp: { type: Date, default: Date.now },
+  },
+  { timestamps: false }
+);
+
+export const GuildRemovalLog = mongoose.model<IGuildRemovalLog>("GuildRemovalLog", GuildRemovalLogSchema);
+
+// --- Dev Users ---
+export type DevRole = "master" | "creator" | "helper";
+
+export interface IDevUser extends Document {
+  userId: string;
+  username: string;
+  email?: string;
+  avatar?: string;
+  role: DevRole;
+  createdBy?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const DevUserSchema = new Schema<IDevUser>(
+  {
+    userId: { type: String, required: true, unique: true },
+    username: { type: String, required: true },
+    email: String,
+    avatar: String,
+    role: { type: String, enum: ["master", "creator", "helper"], default: "helper" },
+    createdBy: String,
+  },
+  { timestamps: true }
+);
+
+export const DevUser = mongoose.model<IDevUser>("DevUser", DevUserSchema);
+
+// --- Log Configuration ---
+export interface ILogConfig extends Document {
+  guildId: string;
+  messageDeleteChannelId?: string;
+  messageEditChannelId?: string;
+  memberJoinChannelId?: string;
+  memberLeaveChannelId?: string;
+  botMessageChannelId?: string;
+  moderationChannelId?: string;
+  logsEnabled: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const LogConfigSchema = new Schema<ILogConfig>(
+  {
+    guildId: { type: String, required: true, unique: true },
+    messageDeleteChannelId: String,
+    messageEditChannelId: String,
+    memberJoinChannelId: String,
+    memberLeaveChannelId: String,
+    botMessageChannelId: String,
+    moderationChannelId: String,
+    logsEnabled: { type: Boolean, default: true },
+  },
+  { timestamps: true }
+);
+
+export const LogConfig = mongoose.model<ILogConfig>("LogConfig", LogConfigSchema);
+
+// --- Guild Event Logs ---
+export interface IGuildEventLog extends Document {
+  guildId: string;
+  eventType: "MESSAGE_DELETE" | "MESSAGE_EDIT" | "MEMBER_JOIN" | "MEMBER_LEAVE" | "BOT_MESSAGE";
+  userId?: string;
+  userName?: string;
+  userAvatar?: string;
+  details: Record<string, any>;
+  timestamp: Date;
+}
+
+const GuildEventLogSchema = new Schema<IGuildEventLog>(
+  {
+    guildId: { type: String, required: true, index: true },
+    eventType: {
+      type: String,
+      enum: ["MESSAGE_DELETE", "MESSAGE_EDIT", "MEMBER_JOIN", "MEMBER_LEAVE", "BOT_MESSAGE"],
+      index: true,
+    },
+    userId: String,
+    userName: String,
+    userAvatar: String,
+    details: { type: Schema.Types.Mixed, default: {} },
+    timestamp: { type: Date, default: Date.now, index: true },
+  },
+  { timestamps: false }
+);
+
+export const GuildEventLog = mongoose.model<IGuildEventLog>("GuildEventLog", GuildEventLogSchema);
+
+// --- Real-Time Logs ---
+export interface IRealTimeLog extends Document {
+  guildId: string;
+  channelId?: string;
+  title: string;
+  description: string;
+  fields?: Array<{ name: string; value: string; inline?: boolean }>;
+  imageUrl?: string;
+  footer?: string;
+  color?: number;
+  type?: string;
+  createdAt: Date;
+}
+
+const RealTimeLogSchema = new Schema<IRealTimeLog>(
+  {
+    guildId: { type: String, required: true, index: true },
+    channelId: String,
+    title: { type: String, required: true },
+    description: { type: String, required: true },
+    fields: [{ name: String, value: String, inline: Boolean }],
+    imageUrl: String,
+    footer: String,
+    color: { type: Number, default: 0x000000 },
+    type: { type: String, index: true },
+  },
+  { timestamps: true }
+);
+
+export const RealTimeLog = mongoose.model<IRealTimeLog>("RealTimeLog", RealTimeLogSchema);
+
+// --- Real-Time Log Configuration ---
+export interface IRealTimeLogConfig extends Document {
+  guildId: string;
+  logChannelId: string | null;
+  enabled: boolean;
+  updatedBy: string;
+  updatedAt: Date;
+}
+
+const RealTimeLogConfigSchema = new Schema<IRealTimeLogConfig>(
+  {
+    guildId: { type: String, required: true, unique: true },
+    logChannelId: { type: String, default: null },
+    enabled: { type: Boolean, default: true },
+    updatedBy: String,
+  },
+  { timestamps: true }
+);
+
+export const RealTimeLogConfig = mongoose.model<IRealTimeLogConfig>("RealTimeLogConfig", RealTimeLogConfigSchema);
+
+// --- Monitor Config ---
+export interface IMonitorConfig extends Document {
+  guildId: string;
+  alertChannelId: string | null;
+  enabled: boolean;
+  updatedBy: string;
+  updatedAt: Date;
+}
+
+const MonitorConfigSchema = new Schema<IMonitorConfig>(
+  {
+    guildId: { type: String, required: true, unique: true },
+    alertChannelId: { type: String, default: null },
+    enabled: { type: Boolean, default: true },
+    updatedBy: { type: String, default: "N/A" },
+  },
+  { timestamps: true }
+);
+
+export const MonitorConfig = mongoose.model<IMonitorConfig>("MonitorConfig", MonitorConfigSchema);
+
+// --- Monitor Log ---
+export interface IMonitorLog extends Document {
+  guildId: string;
+  service: string;
+  status: string;
+  message?: string;
+  errorDetail?: string;
+  createdAt: Date;
+}
+
+const MonitorLogSchema = new Schema<IMonitorLog>(
+  {
+    guildId: { type: String, required: true },
+    service: { type: String, required: true },
+    status: { type: String, required: true },
+    message: String,
+    errorDetail: String,
+    createdAt: { type: Date, default: Date.now },
+  }
+);
+
+export const MonitorLog = mongoose.model<IMonitorLog>("MonitorLog", MonitorLogSchema);
+
+// --- Service Metrics ---
+export interface IServiceMetric extends Document {
+  service: string;
+  latency: number; // em ms
+  cpu?: number;    // em %
+  ram?: number;    // em MB
+  status: string;
+  createdAt: Date;
+}
+
+const ServiceMetricSchema = new Schema<IServiceMetric>(
+  {
+    service: { type: String, required: true, index: true },
+    latency: { type: Number, required: true },
+    cpu: { type: Number },
+    ram: { type: Number },
+    status: { type: String, required: true },
+    createdAt: { type: Date, default: Date.now, index: true },
+  }
+);
+
+export const ServiceMetric = mongoose.model<IServiceMetric>("ServiceMetric", ServiceMetricSchema);

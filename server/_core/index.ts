@@ -7,6 +7,7 @@ import { registerDiscordOAuthRoutes } from "./discordOAuth";
 import { registerStorageProxy } from "./storageProxy";
 import { setupWebSocket } from "./socket";
 import { appRouter } from "../routers";
+import { startMonitor } from "../monitor-service";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 
@@ -59,6 +60,7 @@ async function startServer() {
   });
 }
 
+startMonitor();
 startServer().catch(err => {
   console.error("CRITICAL ERROR DURING STARTUP:", err);
   process.exit(1);

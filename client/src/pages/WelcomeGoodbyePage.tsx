@@ -1,327 +1,235 @@
-import { useLanguage } from "@/contexts/LanguageContext";
-import { trpc } from "@/lib/trpc";
+import React, { useState } from "react";
 import { useParams } from "wouter";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
+import { trpc } from "@/lib/trpc";
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  CardTitle
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
 } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Save, Eye } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { 
+  DoorOpen, 
+  Save, 
+  MapPin, 
+  UserPlus,
+  UserMinus
+} from "lucide-react";
 import { toast } from "sonner";
-
-interface WelcomeGoodbyeConfig {
-  welcomeEnabled: boolean;
-  welcomeChannelId: string | null;
-  welcomeMessage: string | null;
-  goodbyeEnabled: boolean;
-  goodbyeChannelId: string | null;
-  goodbyeMessage: string | null;
-}
-
-const PLACEHOLDER_VARIABLES = [
-  { name: "{user}", description: "Menção do usuário" },
-  { name: "{username}", description: "Nome do usuário" },
-  { name: "{server}", description: "Nome do servidor" },
-  { name: "{memberCount}", description: "Total de membros" },
-  {
-    name: "{joinPosition}",
-    description: "Posição de entrada (ex: 42º membro)",
-  },
-];
 
 export default function WelcomeGoodbyePage() {
   const { guildId } = useParams<{ guildId: string }>();
-  const { t } = useLanguage();
-  const [config, setConfig] = useState<WelcomeGoodbyeConfig>({
-    welcomeEnabled: true,
-    welcomeChannelId: null,
-    welcomeMessage:
-      "Bem-vindo {user}! 👋 Você é o {joinPosition} membro de {server}",
-    goodbyeEnabled: true,
-    goodbyeChannelId: null,
-    goodbyeMessage: "{user} saiu do servidor. Até logo! 👋",
-  });
-
+  
   const { data: channels } = trpc.guilds.channels.useQuery(
     { guildId: guildId || "" },
-    {
-      enabled: !!guildId,
-    }
+    { enabled: !!guildId }
   );
 
-  const { data: savedConfig } = trpc.welcomeGoodbye.get.useQuery(
+  const { data: config, refetch } = trpc.welcomeGoodbye.get.useQuery(
     { guildId: guildId || "" },
-    {
-      enabled: !!guildId,
-    }
+    { enabled: !!guildId }
   );
 
   const saveMutation = trpc.welcomeGoodbye.save.useMutation({
     onSuccess: () => {
-      toast.success(t("common.saved") || "Configurações salvas!");
+      toast.success("Configurações salvas com sucesso!");
+      refetch();
     },
-    onError: (error: any) => {
-      toast.error(error.message || "Erro ao salvar");
-    },
+    onError: (error) => {
+      toast.error(`Erro ao salvar: ${error.message}`);
+    }
   });
 
-  useEffect(() => {
-    if (savedConfig) {
-      setConfig({
-        welcomeEnabled: savedConfig.welcomeEnabled ?? false,
-        welcomeChannelId: savedConfig.welcomeChannelId ?? null,
-        welcomeMessage: savedConfig.welcomeMessage ?? null,
-        goodbyeEnabled: savedConfig.goodbyeEnabled ?? false,
-        goodbyeChannelId: savedConfig.goodbyeChannelId ?? null,
-        goodbyeMessage: savedConfig.goodbyeMessage ?? null,
+  const [formData, setFormData] = useState({
+    welcomeEnabled: true,
+    welcomeChannelId: "",
+    welcomeTitle: "👑 Bem-vindo(a) ao clã Magnatas",
+    welcomeMessage: "seja bem-vindo ao império Magnatas.",
+    welcomeBanner: "",
+    goodbyeEnabled: true,
+    goodbyeChannelId: "",
+    goodbyeTitle: "🚪 Saída do clã Magnatas",
+    goodbyeMessage: "saiu do império Magnatas.",
+    goodbyeBanner: ""
+  });
+
+  // Sync data when loaded
+  React.useEffect(() => {
+    if (config) {
+      setFormData({
+        welcomeEnabled: config.welcomeEnabled ?? true,
+        welcomeChannelId: config.welcomeChannelId || "",
+        welcomeTitle: (config as any).welcomeTitle || "👑 Bem-vindo(a) ao clã Magnatas",
+        welcomeMessage: config.welcomeMessage || "seja bem-vindo ao império Magnatas.",
+        welcomeBanner: (config as any).welcomeBanner || "",
+        goodbyeEnabled: config.goodbyeEnabled ?? true,
+        goodbyeChannelId: config.goodbyeChannelId || "",
+        goodbyeTitle: (config as any).goodbyeTitle || "🚪 Saída do clã Magnatas",
+        goodbyeMessage: config.goodbyeMessage || "saiu do império Magnatas.",
+        goodbyeBanner: (config as any).goodbyeBanner || ""
       });
     }
-  }, [savedConfig]);
+  }, [config]);
 
   const handleSave = () => {
-    if (!guildId) return;
     saveMutation.mutate({
-      guildId,
-      config: {
-        welcomeEnabled: config.welcomeEnabled,
-        welcomeChannelId: config.welcomeChannelId || "",
-        welcomeMessage: config.welcomeMessage || "",
-        goodbyeEnabled: config.goodbyeEnabled,
-        goodbyeChannelId: config.goodbyeChannelId || "",
-        goodbyeMessage: config.goodbyeMessage || "",
-      },
+      guildId: guildId || "",
+      config: formData
     });
   };
 
-  const replaceVariables = (message: string | null): string => {
-    if (!message) return "";
-    return message
-      .replace("{user}", "@Usuário")
-      .replace("{username}", "Usuário")
-      .replace("{server}", "Meu Servidor")
-      .replace("{memberCount}", "150")
-      .replace("{joinPosition}", "42º");
-  };
-
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">
-          Mensagens de Entrada e Saída
+    <div className="space-y-8 animate-in fade-in duration-700">
+      <div className="space-y-1">
+        <h1 className="text-4xl font-black text-primary flex items-center gap-3 tracking-tighter italic uppercase">
+          <DoorOpen size={40} />
+          Entrada / Saída
         </h1>
-        <p className="text-muted-foreground mt-2">
-          Configure mensagens personalizadas para quando usuários entram ou saem
-          do servidor
-        </p>
+        <p className="text-muted-foreground font-medium">Configure as mensagens automáticas de boas-vindas e despedida</p>
       </div>
 
-      {/* Variables Info */}
-      <Alert>
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          <p className="font-semibold mb-2">Variáveis disponíveis:</p>
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            {PLACEHOLDER_VARIABLES.map(v => (
-              <div key={v.name}>
-                <code className="bg-muted px-2 py-1 rounded">{v.name}</code>
-                <p className="text-xs text-muted-foreground">{v.description}</p>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Entrada */}
+        <Card className="border-border bg-[#0A0A0A] shadow-2xl">
+          <CardHeader className="bg-[#050505] border-b border-border/50">
+            <CardTitle className="text-xl flex items-center gap-2 text-white uppercase italic font-black">
+              <UserPlus className="h-5 w-5 text-green-500" />
+              Configuração de Entrada
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6 space-y-6">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                  <MapPin size={14} className="text-primary" /> Canal de Entrada
+                </label>
+                <Select 
+                  value={formData.welcomeChannelId} 
+                  onValueChange={(val) => setFormData({...formData, welcomeChannelId: val})}
+                >
+                  <SelectTrigger className="bg-[#111] border-border/50 font-bold">
+                    <SelectValue placeholder="Escolha o canal..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#111] border-border">
+                    {channels?.filter(c => c.type === 0).map((channel) => (
+                      <SelectItem key={channel.id} value={channel.id} className="font-bold">
+                        # {channel.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            ))}
-          </div>
-        </AlertDescription>
-      </Alert>
 
-      <Tabs defaultValue="welcome" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="welcome">Mensagem de Entrada</TabsTrigger>
-          <TabsTrigger value="goodbye">Mensagem de Saída</TabsTrigger>
-        </TabsList>
-
-        {/* Welcome Tab */}
-        <TabsContent value="welcome" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Configurar Mensagem de Boas-vindas</CardTitle>
-              <CardDescription>
-                Mensagem enviada quando um novo usuário entra no servidor
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Enable Toggle */}
-              <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  id="welcomeEnabled"
-                  checked={config.welcomeEnabled}
-                  onChange={e =>
-                    setConfig({ ...config, welcomeEnabled: e.target.checked })
-                  }
-                  className="w-4 h-4 rounded border-border bg-background cursor-pointer"
+              <div className="space-y-2">
+                <label className="text-xs font-black text-muted-foreground uppercase tracking-widest">Título</label>
+                <Input 
+                  className="bg-[#111] border-border/50 font-bold"
+                  value={formData.welcomeTitle}
+                  onChange={(e) => setFormData({...formData, welcomeTitle: e.target.value})}
                 />
-                <Label htmlFor="welcomeEnabled" className="cursor-pointer">
-                  Ativar mensagens de boas-vindas
-                </Label>
               </div>
 
-              {config.welcomeEnabled && (
-                <>
-                  {/* Channel Select */}
-                  <div className="space-y-2">
-                    <Label htmlFor="welcomeChannel">Canal de Destino</Label>
-                    <Select
-                      value={config.welcomeChannelId || ""}
-                      onValueChange={value =>
-                        setConfig({ ...config, welcomeChannelId: value })
-                      }
-                    >
-                      <SelectTrigger id="welcomeChannel">
-                        <SelectValue placeholder="Selecione um canal" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {channels?.map(channel => (
-                          <SelectItem key={channel.id} value={channel.id}>
-                            #{channel.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Message Textarea */}
-                  <div className="space-y-2">
-                    <Label htmlFor="welcomeMessage">Mensagem</Label>
-                    <Textarea
-                      id="welcomeMessage"
-                      value={config.welcomeMessage || ""}
-                      onChange={e =>
-                        setConfig({ ...config, welcomeMessage: e.target.value })
-                      }
-                      placeholder="Digite a mensagem de boas-vindas..."
-                      className="min-h-[120px]"
-                    />
-                  </div>
-
-                  {/* Preview */}
-                  <div className="space-y-2">
-                    <Label>Preview</Label>
-                    <div className="bg-card border border-border rounded-lg p-4">
-                      <p className="text-sm text-foreground whitespace-pre-wrap">
-                        {replaceVariables(config.welcomeMessage)}
-                      </p>
-                    </div>
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Goodbye Tab */}
-        <TabsContent value="goodbye" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Configurar Mensagem de Despedida</CardTitle>
-              <CardDescription>
-                Mensagem enviada quando um usuário sai do servidor
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Enable Toggle */}
-              <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  id="goodbyeEnabled"
-                  checked={config.goodbyeEnabled}
-                  onChange={e =>
-                    setConfig({ ...config, goodbyeEnabled: e.target.checked })
-                  }
-                  className="w-4 h-4 rounded border-border bg-background cursor-pointer"
+              <div className="space-y-2">
+                <label className="text-xs font-black text-muted-foreground uppercase tracking-widest">Mensagem</label>
+                <Textarea 
+                  className="bg-[#111] border-border/50 font-bold min-h-[100px]"
+                  value={formData.welcomeMessage}
+                  onChange={(e) => setFormData({...formData, welcomeMessage: e.target.value})}
                 />
-                <Label htmlFor="goodbyeEnabled" className="cursor-pointer">
-                  Ativar mensagens de despedida
-                </Label>
               </div>
 
-              {config.goodbyeEnabled && (
-                <>
-                  {/* Channel Select */}
-                  <div className="space-y-2">
-                    <Label htmlFor="goodbyeChannel">Canal de Destino</Label>
-                    <Select
-                      value={config.goodbyeChannelId || ""}
-                      onValueChange={value =>
-                        setConfig({ ...config, goodbyeChannelId: value })
-                      }
-                    >
-                      <SelectTrigger id="goodbyeChannel">
-                        <SelectValue placeholder="Selecione um canal" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {channels?.map(channel => (
-                          <SelectItem key={channel.id} value={channel.id}>
-                            #{channel.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+              <div className="space-y-2">
+                <label className="text-xs font-black text-muted-foreground uppercase tracking-widest">URL da Imagem (Banner)</label>
+                <Input 
+                  className="bg-[#111] border-border/50 font-bold"
+                  placeholder="https://link-da-imagem.png"
+                  value={formData.welcomeBanner}
+                  onChange={(e) => setFormData({...formData, welcomeBanner: e.target.value})}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-                  {/* Message Textarea */}
-                  <div className="space-y-2">
-                    <Label htmlFor="goodbyeMessage">Mensagem</Label>
-                    <Textarea
-                      id="goodbyeMessage"
-                      value={config.goodbyeMessage || ""}
-                      onChange={e =>
-                        setConfig({ ...config, goodbyeMessage: e.target.value })
-                      }
-                      placeholder="Digite a mensagem de despedida..."
-                      className="min-h-[120px]"
-                    />
-                  </div>
+        {/* Saída */}
+        <Card className="border-border bg-[#0A0A0A] shadow-2xl">
+          <CardHeader className="bg-[#050505] border-b border-border/50">
+            <CardTitle className="text-xl flex items-center gap-2 text-white uppercase italic font-black">
+              <UserMinus className="h-5 w-5 text-red-500" />
+              Configuração de Saída
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6 space-y-6">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                  <MapPin size={14} className="text-primary" /> Canal de Saída
+                </label>
+                <Select 
+                  value={formData.goodbyeChannelId} 
+                  onValueChange={(val) => setFormData({...formData, goodbyeChannelId: val})}
+                >
+                  <SelectTrigger className="bg-[#111] border-border/50 font-bold">
+                    <SelectValue placeholder="Escolha o canal..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#111] border-border">
+                    {channels?.filter(c => c.type === 0).map((channel) => (
+                      <SelectItem key={channel.id} value={channel.id} className="font-bold">
+                        # {channel.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-                  {/* Preview */}
-                  <div className="space-y-2">
-                    <Label>Preview</Label>
-                    <div className="bg-card border border-border rounded-lg p-4">
-                      <p className="text-sm text-foreground whitespace-pre-wrap">
-                        {replaceVariables(config.goodbyeMessage)}
-                      </p>
-                    </div>
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+              <div className="space-y-2">
+                <label className="text-xs font-black text-muted-foreground uppercase tracking-widest">Título</label>
+                <Input 
+                  className="bg-[#111] border-border/50 font-bold"
+                  value={formData.goodbyeTitle}
+                  onChange={(e) => setFormData({...formData, goodbyeTitle: e.target.value})}
+                />
+              </div>
 
-      {/* Save Button */}
-      <div className="flex justify-end gap-2">
-        <Button
+              <div className="space-y-2">
+                <label className="text-xs font-black text-muted-foreground uppercase tracking-widest">Mensagem</label>
+                <Textarea 
+                  className="bg-[#111] border-border/50 font-bold min-h-[100px]"
+                  value={formData.goodbyeMessage}
+                  onChange={(e) => setFormData({...formData, goodbyeMessage: e.target.value})}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-black text-muted-foreground uppercase tracking-widest">URL da Imagem (Banner)</label>
+                <Input 
+                  className="bg-[#111] border-border/50 font-bold"
+                  placeholder="https://link-da-imagem.png"
+                  value={formData.goodbyeBanner}
+                  onChange={(e) => setFormData({...formData, goodbyeBanner: e.target.value})}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="flex justify-end">
+        <Button 
           onClick={handleSave}
           disabled={saveMutation.isPending}
-          className="gap-2"
+          className="h-14 px-10 bg-primary hover:bg-primary/90 text-white font-black uppercase italic text-lg gap-3 shadow-xl shadow-primary/20"
         >
-          <Save size={16} />
-          {saveMutation.isPending ? "Salvando..." : "Salvar Configurações"}
+          <Save size={20} /> Salvar Configurações
         </Button>
       </div>
     </div>

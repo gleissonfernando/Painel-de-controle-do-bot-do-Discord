@@ -13,18 +13,18 @@ export default function LoginPage() {
   const [, navigate] = useLocation();
 
   useEffect(() => {
-    // Se o usuário já estiver logado, manda direto para os servidores
+    // Se o usuário já estiver logado, manda direto para o novo dashboard unificado
     if (!loading && isAuthenticated) {
-      navigate("/servers");
+      navigate("/unified");
     }
   }, [isAuthenticated, loading, navigate]);
 
   if (loading || isProcessing) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-[#050505] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-          <p className="text-muted-foreground text-sm">Loading...</p>
+          <p className="text-muted-foreground text-sm">Carregando...</p>
         </div>
       </div>
     );
@@ -49,11 +49,11 @@ export default function LoginPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-[#050505] flex flex-col">
       {/* Background decoration */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-primary/3 rounded-full blur-3xl" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-3xl" />
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center px-4 relative z-10">
@@ -63,7 +63,7 @@ export default function LoginPage() {
             <Bot size={40} className="text-primary" />
           </div>
           <h1 className="text-4xl font-bold text-foreground tracking-tight mb-2">
-            Bot<span className="text-primary">Panel</span>
+            Magnatas<span className="text-primary">GG</span>
           </h1>
           <p className="text-muted-foreground text-center max-w-sm text-sm leading-relaxed">
             {t("login.subtitle")}

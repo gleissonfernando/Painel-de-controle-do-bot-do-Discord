@@ -117,7 +117,7 @@ export default function SocialNotificationsPage({
           <span className={cfg.color}>{cfg.icon}</span>
           <h2 className={`font-semibold ${cfg.color}`}>{cfg.label}</h2>
           <span className="ml-auto text-xs text-muted-foreground">
-            {items.length} channel{items.length !== 1 ? "s" : ""}
+            {items.length} canal{items.length !== 1 ? "is" : ""}
           </span>
           <button
             onClick={() => {
@@ -127,7 +127,7 @@ export default function SocialNotificationsPage({
             className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${cfg.bg} ${cfg.color} hover:opacity-80`}
           >
             <Plus size={12} />
-            Add
+            Adicionar
           </button>
         </div>
 
@@ -135,7 +135,7 @@ export default function SocialNotificationsPage({
         {items.length === 0 ? (
           <div className="py-8 text-center">
             <p className="text-sm text-muted-foreground">
-              No {cfg.label} channels configured
+              Nenhum canal de {cfg.label} configurado
             </p>
             <button
               onClick={() => {
@@ -144,7 +144,7 @@ export default function SocialNotificationsPage({
               }}
               className="mt-2 text-xs text-primary hover:underline"
             >
-              Add your first channel
+              Adicione seu primeiro canal
             </button>
           </div>
         ) : (
@@ -214,10 +214,10 @@ export default function SocialNotificationsPage({
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Bell size={22} className="text-primary" />
-            Social Notifications
+            Notificações Sociais
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Get notified when streamers go live or post new content
+            Seja notificado quando streamers entrarem ao vivo ou postarem novos conteúdos
           </p>
         </div>
         <Button
@@ -225,7 +225,7 @@ export default function SocialNotificationsPage({
           className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
         >
           <Plus size={14} />
-          Add Channel
+          Adicionar Canal
         </Button>
       </div>
 
@@ -235,7 +235,7 @@ export default function SocialNotificationsPage({
           <div className="bg-card border border-border rounded-xl p-6 w-full max-w-md shadow-2xl">
             <div className="flex items-center justify-between mb-5">
               <h3 className="font-semibold text-foreground">
-                Add Notification
+                Adicionar Notificação
               </h3>
               <button
                 onClick={() => setShowAddForm(false)}
@@ -249,7 +249,7 @@ export default function SocialNotificationsPage({
               {/* Platform */}
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
-                  Platform
+                  Plataforma
                 </label>
                 <div className="grid grid-cols-3 gap-2">
                   {(["youtube", "twitch", "tiktok"] as Platform[]).map(p => {
@@ -283,7 +283,7 @@ export default function SocialNotificationsPage({
               {/* Channel Username */}
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1.5">
-                  {PLATFORM_CONFIG[addForm.platform].label} Username
+                  Usuário do {PLATFORM_CONFIG[addForm.platform].label}
                 </label>
                 <input
                   type="text"
@@ -299,7 +299,7 @@ export default function SocialNotificationsPage({
               {/* Discord Channel */}
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1.5">
-                  Discord Channel
+                  Canal do Discord
                 </label>
                 <select
                   value={addForm.discordChannelId}
@@ -308,7 +308,7 @@ export default function SocialNotificationsPage({
                   }
                   className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                 >
-                  <option value="">Select a channel...</option>
+                  <option value="">Selecione um canal...</option>
                   {(channels ?? []).map((c: { id: string; name: string }) => (
                     <option key={c.id} value={c.id}>
                       #{c.name}
@@ -320,13 +320,13 @@ export default function SocialNotificationsPage({
               {/* Custom Message */}
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1.5">
-                  Announcement Message{" "}
+                  Mensagem de Anúncio{" "}
                   <span className="text-muted-foreground font-normal">
-                    (optional)
+                    (opcional)
                   </span>
                 </label>
                 <textarea
-                  placeholder={`{streamer} is now live! 🔴 {url}`}
+                  placeholder={`{streamer} está ao vivo! 🔴 {url}`}
                   value={addForm.message}
                   onChange={e =>
                     setAddForm({ ...addForm, message: e.target.value })
@@ -343,7 +343,7 @@ export default function SocialNotificationsPage({
                 className="flex-1"
                 onClick={() => setShowAddForm(false)}
               >
-                Cancel
+                Cancelar
               </Button>
               <Button
                 className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
@@ -354,7 +354,7 @@ export default function SocialNotificationsPage({
                 }
                 onClick={() => createMutation.mutate({ guildId, ...addForm })}
               >
-                {createMutation.isPending ? "Adding..." : "Add Channel"}
+                {createMutation.isPending ? "Adicionando..." : "Adicionar Canal"}
               </Button>
             </div>
           </div>

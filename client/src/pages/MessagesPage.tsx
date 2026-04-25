@@ -16,12 +16,12 @@ export default function MessagesPage({ guildId }: MessagesPageProps) {
   const [form, setForm] = useState({
     welcomeEnabled: false,
     welcomeChannelId: "",
-    welcomeMessage: "Welcome to the server, {user}! 🎉",
+    welcomeMessage: "Bem-vindo ao servidor, {user}! 🎉",
     goodbyeEnabled: false,
     goodbyeChannelId: "",
-    goodbyeMessage: "{user} has left the server.",
+    goodbyeMessage: "{user} saiu do servidor.",
     dmWelcome: false,
-    dmMessage: "Welcome to {server}! Please read the rules.",
+    dmMessage: "Bem-vindo ao {server}! Por favor, leia as regras.",
   });
 
   useEffect(() => {
@@ -30,13 +30,13 @@ export default function MessagesPage({ guildId }: MessagesPageProps) {
         welcomeEnabled: msgs.welcomeEnabled ?? false,
         welcomeChannelId: msgs.welcomeChannelId ?? "",
         welcomeMessage:
-          msgs.welcomeMessage ?? "Welcome to the server, {user}! 🎉",
+          msgs.welcomeMessage ?? "Bem-vindo ao servidor, {user}! 🎉",
         goodbyeEnabled: msgs.goodbyeEnabled ?? false,
         goodbyeChannelId: msgs.goodbyeChannelId ?? "",
-        goodbyeMessage: msgs.goodbyeMessage ?? "{user} has left the server.",
+        goodbyeMessage: msgs.goodbyeMessage ?? "{user} saiu do servidor.",
         dmWelcome: msgs.dmWelcome ?? false,
         dmMessage:
-          msgs.dmMessage ?? "Welcome to {server}! Please read the rules.",
+          msgs.dmMessage ?? "Bem-vindo ao {server}! Por favor, leia as regras.",
       });
     }
   }, [msgs]);
@@ -92,10 +92,10 @@ export default function MessagesPage({ guildId }: MessagesPageProps) {
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <MessageSquare size={22} className="text-primary" />
-            Messages
+            Mensagens
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Configure welcome and goodbye messages
+            Configure as mensagens de boas-vindas e despedida
           </p>
         </div>
         <Button
@@ -111,14 +111,14 @@ export default function MessagesPage({ guildId }: MessagesPageProps) {
           className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
         >
           <Save size={14} />
-          {updateMutation.isPending ? "Saving..." : "Save"}
+          {updateMutation.isPending ? "Salvando..." : "Salvar"}
         </Button>
       </div>
 
       {/* Variables reference */}
       <div className="bg-primary/5 border border-primary/20 rounded-xl p-4">
         <p className="text-xs font-semibold text-primary mb-2">
-          Available Variables
+          Variáveis Disponíveis
         </p>
         <div className="flex flex-wrap gap-2">
           {VARIABLES.map(v => (
@@ -136,9 +136,9 @@ export default function MessagesPage({ guildId }: MessagesPageProps) {
       <div className="bg-card border border-border rounded-xl p-6">
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h2 className="font-semibold text-foreground">Welcome Message</h2>
+            <h2 className="font-semibold text-foreground">Mensagem de Boas-vindas</h2>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Sent when a new member joins the server
+              Enviada quando um novo membro entra no servidor
             </p>
           </div>
           <Toggle
@@ -151,7 +151,7 @@ export default function MessagesPage({ guildId }: MessagesPageProps) {
         >
           <div>
             <label className="block text-sm font-medium text-foreground mb-1.5">
-              Channel
+              Canal
             </label>
             <select
               value={form.welcomeChannelId}
@@ -160,7 +160,7 @@ export default function MessagesPage({ guildId }: MessagesPageProps) {
               }
               className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors"
             >
-              <option value="">Select a channel...</option>
+              <option value="">Selecione um canal...</option>
               {(channels ?? []).map((c: { id: string; name: string }) => (
                 <option key={c.id} value={c.id}>
                   #{c.name}
@@ -170,7 +170,7 @@ export default function MessagesPage({ guildId }: MessagesPageProps) {
           </div>
           <div>
             <label className="block text-sm font-medium text-foreground mb-1.5">
-              Message
+              Mensagem
             </label>
             <textarea
               value={form.welcomeMessage}
@@ -188,9 +188,9 @@ export default function MessagesPage({ guildId }: MessagesPageProps) {
       <div className="bg-card border border-border rounded-xl p-6">
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h2 className="font-semibold text-foreground">Goodbye Message</h2>
+            <h2 className="font-semibold text-foreground">Mensagem de Saída</h2>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Sent when a member leaves the server
+              Enviada quando um membro sai do servidor
             </p>
           </div>
           <Toggle
@@ -203,7 +203,7 @@ export default function MessagesPage({ guildId }: MessagesPageProps) {
         >
           <div>
             <label className="block text-sm font-medium text-foreground mb-1.5">
-              Channel
+              Canal
             </label>
             <select
               value={form.goodbyeChannelId}
@@ -212,7 +212,7 @@ export default function MessagesPage({ guildId }: MessagesPageProps) {
               }
               className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors"
             >
-              <option value="">Select a channel...</option>
+              <option value="">Selecione um canal...</option>
               {(channels ?? []).map((c: { id: string; name: string }) => (
                 <option key={c.id} value={c.id}>
                   #{c.name}
@@ -222,7 +222,7 @@ export default function MessagesPage({ guildId }: MessagesPageProps) {
           </div>
           <div>
             <label className="block text-sm font-medium text-foreground mb-1.5">
-              Message
+              Mensagem
             </label>
             <textarea
               value={form.goodbyeMessage}
@@ -240,9 +240,9 @@ export default function MessagesPage({ guildId }: MessagesPageProps) {
       <div className="bg-card border border-border rounded-xl p-6">
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h2 className="font-semibold text-foreground">DM Welcome</h2>
+            <h2 className="font-semibold text-foreground">Boas-vindas no DM</h2>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Send a private message to new members
+              Envia uma mensagem privada para novos membros
             </p>
           </div>
           <Toggle
@@ -254,7 +254,7 @@ export default function MessagesPage({ guildId }: MessagesPageProps) {
           className={`transition-opacity ${form.dmWelcome ? "opacity-100" : "opacity-40 pointer-events-none"}`}
         >
           <label className="block text-sm font-medium text-foreground mb-1.5">
-            DM Message
+            Mensagem no DM
           </label>
           <textarea
             value={form.dmMessage}

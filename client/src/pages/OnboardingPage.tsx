@@ -36,11 +36,11 @@ export default function OnboardingPage() {
   const inviteUrl = getBotInviteUrl();
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-[#050505] flex flex-col">
       {/* Background decoration */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-primary/3 rounded-full blur-3xl" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl" />
       </div>
 
       {/* Header */}
@@ -50,12 +50,12 @@ export default function OnboardingPage() {
             <div className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
               <Bot size={20} className="text-primary" />
             </div>
-            <span className="font-bold text-lg text-foreground">BotPanel</span>
+            <span className="font-bold text-lg text-foreground">MagnatasGG</span>
           </div>
           <div className="text-sm text-muted-foreground">
             {t("servers.loggedInAs")}{" "}
             <span className="font-semibold text-foreground">
-              {user?.name || "User"}
+              {user?.name || "Usuário"}
             </span>
           </div>
         </div>

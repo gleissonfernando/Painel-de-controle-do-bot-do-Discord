@@ -25,16 +25,24 @@ async function resolveBotToken(guildId?: string): Promise<string | undefined> {
 // ─── User-level calls (uses user access token) ────────────────────────────────
 
 export async function fetchDiscordGuilds(accessToken: string) {
-  const res = await axios.get(`${DISCORD_API}/users/@me/guilds`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-  return res.data as Array<{
-    id: string;
-    name: string;
-    icon: string | null;
-    owner: boolean;
-    permissions: string;
-  }>;
+  try {
+    const res = await axios.get(`${DISCORD_API}/users/@me/guilds`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    return res.data as Array<{
+      id: string;
+      name: string;
+      icon: string | null;
+      owner: boolean;
+      permissions: string;
+    }>;
+  } catch (error: any) {
+    if (error.response?.status === 429) {
+      console.warn("[Discord] Rate limit atingido ao buscar guilds. Retornando lista vazia temporária.");
+      return [];
+    }
+    throw error;
+  }
 }
 
 // ─── Bot-level calls (uses bot token) ────────────────────────────────────────
@@ -164,4 +172,111 @@ export function getMockGuilds() {
       botPresent: true,
     },
   ];
+}
+
+export async function sendMessageToChannel(channelId: string, message: string) {
+  const token = await resolveBotToken(); // Tenta o token global se não houver guildId específico
+  if (!token) throw new Error("Bot token not configured");
+
+  try {
+    await axios.post(
+      `${DISCORD_API}/channels/${channelId}/messages`,
+      { content: message },
+      {
+        headers: { Authorization: `Bot ${token}` },
+      }
+    );
+  } catch (error: any) {
+    console.error(`[Discord] Erro ao enviar mensagem para canal ${channelId}:`, error.response?.status || error.message);
+    throw error;
+  }
+}
+
+/**
+ * Envia um alerta global de manutenção para todos os servidores onde o bot está presente.
+ */
+export async function sendGlobalMaintenanceAlert() {
+  const token = await resolveBotToken();
+  if (!token) return;
+
+  try {
+    // 1. Buscar todas as guildas onde o bot está
+    const guildsRes = await axios.get(`${DISCORD_API}/users/@me/guilds`, {
+      headers: { Authorization: `Bot ${token}` },
+    });
+    
+    const guilds = guildsRes.data;
+
+    // 2. Preparar o Embed de Manutenção
+    const maintenanceEmbed = {
+      title: "🚨 COMUNICADO OFICIAL - MANUTENÇÃO GLOBAL",
+      description: "Atenção! O sistema **Magnatas.gg** está entrando em manutenção global para atualizações críticas.\n\n" +
+                   "Durante este período, as funcionalidades do bot e do painel podem ficar indisponíveis.\n\n" +
+                   "**Previsão de Retorno:** Em breve!\n" +
+                   "Agradecemos a compreensão de todos os membros.",
+      color: 0xFFAA00,
+      image: { url: "https://i.imgur.com/x9n7S6L.png" },
+      footer: { text: "Equipe de Desenvolvimento Magnatas.gg" },
+      timestamp: new Date().toISOString()
+    };
+
+    // 3. Enviar para o canal principal de cada guilda
+    for (const guild of guilds) {
+      try {
+        const channelsRes = await axios.get(`${DISCORD_API}/guilds/${guild.id}/channels`, {
+          headers: { Authorization: `Bot ${token}` },
+        });
+        
+        const channels = channelsRes.data;
+        
+        // Prioriza canais com nomes comuns de avisos ou o primeiro canal de texto
+        const targetChannel = channels.find((c: any) => 
+          c.type === 0 && (c.name.includes("avisos") || c.name.includes("geral") || c.name.includes("anúncios"))
+        ) || channels.find((c: any) => c.type === 0);
+
+        if (targetChannel) {
+          await axios.post(
+            `${DISCORD_API}/channels/${targetChannel.id}/messages`,
+            { embeds: [maintenanceEmbed] },
+            { headers: { Authorization: `Bot ${token}` } }
+          );
+        }
+      } catch (e) {
+        console.error(`[Maintenance] Erro ao enviar alerta para guilda ${guild.id}`);
+      }
+    }
+  } catch (error) {
+    console.error("[Maintenance] Erro no sistema de alerta global:", error);
+  }
+}
+
+/**
+ * Envia um log de auditoria para o canal configurado no servidor.
+ */
+export async function sendAuditLog(guildId: string, embedData: { title: string, description: string, color: number }) {
+  const token = await resolveBotToken(guildId);
+  if (!token) return;
+
+  try {
+    // 1. Buscar as configurações da guild para pegar o logsChannelId
+    const settings = await getGuildSettings(guildId);
+    const channelId = settings?.logsChannelId;
+
+    if (!channelId) return;
+
+    // 2. Enviar o Embed de Log
+    await axios.post(
+      `${DISCORD_API}/channels/${channelId}/messages`,
+      {
+        embeds: [{
+          ...embedData,
+          footer: { text: "Sistema de Auditoria Magnatas.gg" },
+          timestamp: new Date().toISOString()
+        }]
+      },
+      { headers: { Authorization: `Bot ${token}` } }
+    );
+  } catch (error) {
+    console.error(`[AuditLog] Erro ao enviar log para guild ${guildId}:`, error);
+  }
 }
