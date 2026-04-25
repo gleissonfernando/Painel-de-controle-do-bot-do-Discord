@@ -5,13 +5,14 @@
   "license": "MIT",
   "scripts": {
     "dev": "cross-env NODE_ENV=development tsx watch server/_core/index.ts",
-    "build": "rm -rf dist && vite build && esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/index.js",
+    "build": "cross-env NODE_OPTIONS=--max-old-space-size=2048 bash build-optimized.sh",
+    "build:fast": "rm -rf dist && cross-env NODE_OPTIONS=--max-old-space-size=2048 vite build && cross-env NODE_OPTIONS=--max-old-space-size=2048 esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/index.js",
     "start": "cross-env NODE_ENV=production PORT=80 node dist/index.js",
-    "prestart": "npm run build",
+    "prestart": "npm run build:fast",
     "check": "tsc --noEmit",
     "format": "prettier --write .",
     "test": "vitest run",
-    "postinstall": "npm run build"
+    "postinstall": "npm run build:fast"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.693.0",

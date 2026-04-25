@@ -173,13 +173,17 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
-    sourcemap: false, // Desativar sourcemaps para economizar memória
+    sourcemap: false,
     minify: "esbuild",
+    target: "esnext",
+    cssCodeSplit: false,
+    reportCompressedSize: false,
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
         manualChunks: {
-          // Dividir bibliotecas grandes em chunks separados
-          vendor: ["react", "react-dom", "recharts", "lucide-react"],
+          vendor: ["react", "react-dom"],
+          ui: ["recharts", "lucide-react"],
         },
       },
     },
