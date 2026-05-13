@@ -2,6 +2,7 @@ import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import type { Express, Request, Response } from "express";
 import * as db from "../db";
 import { getSessionCookieOptions } from "./cookies";
+import { ENV } from "./env";
 import { sdk } from "./sdk";
 
 function getQueryParam(req: Request, key: string): string | undefined {
@@ -10,10 +11,20 @@ function getQueryParam(req: Request, key: string): string | undefined {
 }
 
 export function registerOAuthRoutes(app: Express) {
+  const getCallbackUrl = (req: Request) => {
+    if (ENV.discordRedirectUri) {
+      return ENV.discordRedirectUri;
+    }
+
+    const protocol = req.headers["x-forwarded-proto"] || req.protocol;
+    const host = req.headers["x-forwarded-host"] || req.get("host");
+    return `${protocol}://${host}${req.path}`;
+  };
+
   const oauthHandler = async (req: Request, res: Response) => {
     const code = getQueryParam(req, "code") || (req.query.code as string);
     const state = getQueryParam(req, "state") || (req.query.state as string);
-    const guildId = getQueryParam(req, "guild_id") || (req.query.guild_id as string);
+    let guildId = getQueryParam(req, "guild_id") || (req.query.guild_id as string);
 
     console.log(`[OAuth] Callback received. Code: ${code ? "present" : "missing"}, State: ${state ? "present" : "missing"}, Guild: ${guildId || "none"}`);
 
@@ -44,9 +55,7 @@ export function registerOAuthRoutes(app: Express) {
         console.warn("[OAuth] Using direct Discord exchange (SDK fallback/no state).");
         
         // FALLBACK: Troca de código direta com o Discord
-        const protocol = req.headers["x-forwarded-proto"] || req.protocol;
-        const host = req.headers["x-forwarded-host"] || req.get("host");
-        const redirectUri = `${protocol}://${host}${req.path}`;
+        const redirectUri = getCallbackUrl(req);
 
         console.log(`[OAuth] Exchanging code for token with redirect_uri: ${redirectUri}`);
 
@@ -56,8 +65,8 @@ export function registerOAuthRoutes(app: Express) {
             "Content-Type": "application/x-www-form-urlencoded",
           },
           body: new URLSearchParams({
-            client_id: process.env.VITE_DISCORD_CLIENT_ID || "1492325134550302952",
-            client_secret: process.env.DISCORD_CLIENT_SECRET || "",
+            client_id: ENV.discordClientId || "1492325134550302952",
+            client_secret: ENV.discordClientSecret,
             grant_type: "authorization_code",
             code: code,
             redirect_uri: redirectUri,
@@ -71,6 +80,10 @@ export function registerOAuthRoutes(app: Express) {
         }
 
         const discordTokens = await discordResponse.json();
+        if (!guildId && discordTokens.guild?.id) {
+          guildId = discordTokens.guild.id;
+        }
+
         tokenResponse = {
           accessToken: discordTokens.access_token,
           refreshToken: discordTokens.refresh_token,
@@ -80,17 +93,22 @@ export function registerOAuthRoutes(app: Express) {
         const userResponse = await fetch("https://discord.com/api/v10/users/@me", {
           headers: { Authorization: `Bearer ${tokenResponse.accessToken}` },
         });
-        
-        const discordUser = await userResponse.json();
-        userInfo = {
-          openId: discordUser.id,
-          name: discordUser.global_name || discordUser.username,
-          email: discordUser.email,
-          avatar: discordUser.avatar 
-            ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png`
-            : null,
-          loginMethod: "discord",
-        };
+
+        if (userResponse.ok) {
+          const discordUser = await userResponse.json();
+          userInfo = {
+            openId: discordUser.id,
+            name: discordUser.global_name || discordUser.username,
+            email: discordUser.email,
+            avatar: discordUser.avatar
+              ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png`
+              : null,
+            loginMethod: "discord",
+          };
+        } else {
+          const userError = await userResponse.text();
+          console.warn(`[OAuth] Could not fetch Discord user. Status: ${userResponse.status}, Body:`, userError);
+        }
       }
 
       if (!userInfo || !userInfo.openId) {
@@ -119,7 +137,7 @@ export function registerOAuthRoutes(app: Express) {
           headers: { Authorization: `Bearer ${tokenResponse.accessToken}` },
         });
         if (guildsResponse.ok) {
-          userGuilds = await guildsResponse.ok ? await guildsResponse.json() : [];
+          userGuilds = await guildsResponse.json();
         }
       } catch (e) {
         console.error("[OAuth] Failed to fetch user guilds during login:", e);

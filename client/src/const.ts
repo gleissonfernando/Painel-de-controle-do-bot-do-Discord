@@ -1,36 +1,51 @@
 export { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 
+const DISCORD_AUTHORIZE_URL = "https://discord.com/oauth2/authorize";
+const DEFAULT_DISCORD_CLIENT_ID = "1492325134550302952";
+const DISCORD_CALLBACK_PATH = "/auth/discord/callback";
+const BOT_PERMISSIONS = "8";
+
+const getDiscordClientId = () =>
+  import.meta.env.VITE_DISCORD_CLIENT_ID || DEFAULT_DISCORD_CLIENT_ID;
+
+const getDiscordRedirectUri = () =>
+  import.meta.env.VITE_DISCORD_REDIRECT_URI ||
+  `${window.location.origin}${DISCORD_CALLBACK_PATH}`;
+
 /**
  * Gera a URL de login do Discord em tempo de execução.
  * Escopos otimizados para evitar "Invalid Form Body".
  */
 export const getLoginUrl = () => {
-  const clientId = import.meta.env.VITE_DISCORD_CLIENT_ID || "1492325134550302952";
-  const redirectUri = encodeURIComponent(`${window.location.origin}/auth/discord/callback`);
-  
-  // Escopos estáveis e necessários para o dashboard
-  const scope = encodeURIComponent("identify guilds email");
-  
-  return `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&prompt=consent`;
+  const params = new URLSearchParams({
+    client_id: getDiscordClientId(),
+    redirect_uri: getDiscordRedirectUri(),
+    response_type: "code",
+    scope: "identify guilds email",
+    prompt: "consent",
+  });
+
+  return `${DISCORD_AUTHORIZE_URL}?${params.toString()}`;
 };
 
 /**
  * Gera a URL de convite do bot.
- * Removidos escopos problemáticos como rpc.notifications.read e connections.
+ * Fluxo OAuth2 avançado: adiciona o bot e retorna code/guild_id no callback.
  */
 export const getBotInviteUrl = (guildId?: string) => {
-  const clientId = import.meta.env.VITE_DISCORD_CLIENT_ID || "1492325134550302952";
-  const redirectUri = encodeURIComponent(`${window.location.origin}/auth/discord/callback`);
-  
-  // Escopos corretos para adicionar o bot e identificar o usuário
-  // Removido: connections, rpc.notifications.read (causam erros se não autorizados)
-  const scope = encodeURIComponent("identify guilds email bot applications.commands");
-  const permissions = "8"; // Administrador
-  
-  let url = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&permissions=${permissions}&response_type=code&redirect_uri=${redirectUri}&scope=${scope}&prompt=consent`;
-  
+  const params = new URLSearchParams({
+    client_id: getDiscordClientId(),
+    permissions: BOT_PERMISSIONS,
+    response_type: "code",
+    redirect_uri: getDiscordRedirectUri(),
+    integration_type: "0",
+    scope: "bot guilds.join guilds identify",
+    prompt: "consent",
+  });
+
   if (guildId) {
-    url += `&guild_id=${guildId}`;
+    params.set("guild_id", guildId);
   }
-  return url;
+
+  return `${DISCORD_AUTHORIZE_URL}?${params.toString()}`;
 };

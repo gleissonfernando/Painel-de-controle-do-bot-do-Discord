@@ -7,10 +7,19 @@ import { checkBotInGuild } from "../discord";
  * Discord redirects here after user authorizes the bot
  */
 export function registerDiscordOAuthRoutes(app: Express) {
+  const getCallbackUrl = (req: Request) => {
+    if (ENV.discordRedirectUri) {
+      return ENV.discordRedirectUri;
+    }
+
+    const protocol = req.headers["x-forwarded-proto"] || req.protocol;
+    const host = req.headers["x-forwarded-host"] || req.get("host");
+    return `${protocol}://${host}${req.path}`;
+  };
+
   app.get("/api/discord/callback", async (req: Request, res: Response) => {
     const code = req.query.code as string;
-    const state = req.query.state as string;
-    const guildId = req.query.guild_id as string;
+    let guildId = req.query.guild_id as string;
 
     if (!code) {
       return res.status(400).json({ error: "Missing authorization code" });
@@ -30,8 +39,7 @@ export function registerDiscordOAuthRoutes(app: Express) {
             client_secret: ENV.discordClientSecret,
             code,
             grant_type: "authorization_code",
-            redirect_uri: `${req.protocol}://${req.get("host")}/api/discord/callback`,
-            scope: "identify bot",
+            redirect_uri: getCallbackUrl(req),
           }).toString(),
         }
       );
@@ -45,6 +53,9 @@ export function registerDiscordOAuthRoutes(app: Express) {
       }
 
       const tokenData = await tokenResponse.json();
+      if (!guildId && tokenData.guild?.id) {
+        guildId = tokenData.guild.id;
+      }
 
       // Get bot info
       const botResponse = await fetch(

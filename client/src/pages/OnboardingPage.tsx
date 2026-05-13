@@ -4,12 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { Bot, ArrowRight, Check, Zap } from "lucide-react";
-
-const getBotInviteUrl = () => {
-  const clientId = "1492325134550302952";
-  const redirectUri = encodeURIComponent(`${window.location.origin}/api/discord/callback`);
-  return `https://discord.com/oauth2/authorize?client_id=${clientId}&permissions=0&response_type=code&redirect_uri=${redirectUri}&integration_type=0&scope=identify+bot+applications.commands`;
-};
+import { getBotInviteUrl } from "@/const";
 
 export default function OnboardingPage() {
   const { isAuthenticated, loading, user } = useAuth();

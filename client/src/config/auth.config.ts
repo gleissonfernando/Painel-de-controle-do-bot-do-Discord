@@ -12,10 +12,12 @@ export const OAUTH_CONFIG = {
   AUTHORIZE_URL: "https://discord.com/oauth2/authorize",
   
   // ID da aplicação Discord
-  CLIENT_ID: import.meta.env.VITE_DISCORD_CLIENT_ID || "1234567890",
+  CLIENT_ID: import.meta.env.VITE_DISCORD_CLIENT_ID || "1492325134550302952",
   
   // Redirect URI (deve estar registrado no Discord Developer Portal)
-  REDIRECT_URI: `${window.location.origin}/auth/callback`,
+  REDIRECT_URI:
+    import.meta.env.VITE_DISCORD_REDIRECT_URI ||
+    `${window.location.origin}/auth/discord/callback`,
   
   // Escopos necessários
   SCOPES: ["identify", "guilds", "email"],
@@ -60,7 +62,7 @@ export const REDIRECT_CONFIG = {
   DASHBOARD_PATH: "/dashboard",
   
   // Redirecionar para callback de OAuth2
-  CALLBACK_PATH: "/auth/callback",
+  CALLBACK_PATH: "/auth/discord/callback",
 };
 
 // Configuração de validação

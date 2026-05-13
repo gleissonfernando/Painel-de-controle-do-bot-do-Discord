@@ -85,9 +85,12 @@ Crie um arquivo `.env` na raiz:
 
 ```env
 # Discord
-DISCORD_CLIENT_ID=seu_client_id
+DISCORD_CLIENT_ID=1492325134550302952
+VITE_DISCORD_CLIENT_ID=1492325134550302952
 DISCORD_CLIENT_SECRET=seu_client_secret
 DISCORD_BOT_TOKEN=seu_bot_token
+DISCORD_REDIRECT_URI=https://seu-dominio.com/auth/discord/callback
+VITE_DISCORD_REDIRECT_URI=https://seu-dominio.com/auth/discord/callback
 
 # Database
 MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/database
