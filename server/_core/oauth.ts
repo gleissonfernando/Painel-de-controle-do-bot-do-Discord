@@ -22,11 +22,25 @@ export function registerOAuthRoutes(app: Express) {
   };
 
   const oauthHandler = async (req: Request, res: Response) => {
+    const discordError = getQueryParam(req, "error");
+    const discordErrorDescription = getQueryParam(req, "error_description");
     const code = getQueryParam(req, "code") || (req.query.code as string);
     const state = getQueryParam(req, "state") || (req.query.state as string);
     let guildId = getQueryParam(req, "guild_id") || (req.query.guild_id as string);
+    const isDiscordCallback = req.path === "/auth/discord/callback";
 
-    console.log(`[OAuth] Callback received. Code: ${code ? "present" : "missing"}, State: ${state ? "present" : "missing"}, Guild: ${guildId || "none"}`);
+    console.log(`[OAuth] Callback received. Path: ${req.path}, Code: ${code ? "present" : "missing"}, State: ${state ? "present" : "missing"}, Guild: ${guildId || "none"}`);
+
+    if (discordError) {
+      console.error("[OAuth] Discord returned an OAuth error:", {
+        error: discordError,
+        description: discordErrorDescription,
+      });
+      return res.status(400).json({
+        error: "Discord authorization failed",
+        details: discordErrorDescription || discordError,
+      });
+    }
 
     if (!code) {
       console.error("[OAuth] Missing code in query parameters:", req.query);
@@ -45,9 +59,9 @@ export function registerOAuthRoutes(app: Express) {
 
       // Tenta usar o SDK (Portal Externo) se o state estiver presente
       try {
-        if (!state) {
-          console.log("[OAuth] No state provided, skipping SDK exchange and going direct to Discord.");
-          throw new Error("State missing");
+        if (isDiscordCallback || !state) {
+          console.log("[OAuth] Skipping external SDK exchange for Discord callback/no state.");
+          throw new Error("Use direct Discord exchange");
         }
         tokenResponse = await sdk.exchangeCodeForToken(code, state);
         userInfo = await sdk.getUserInfo(tokenResponse.accessToken);

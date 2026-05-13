@@ -10,5 +10,7 @@ export const ENV = {
   discordClientId: process.env.VITE_DISCORD_CLIENT_ID ?? process.env.DISCORD_CLIENT_ID ?? "",
   discordClientSecret: process.env.DISCORD_CLIENT_SECRET ?? "",
   discordBotToken: process.env.DISCORD_BOT_TOKEN ?? "",
-  discordRedirectUri: process.env.DISCORD_REDIRECT_URI ?? "",
+  discordRedirectUri:
+    process.env.DISCORD_REDIRECT_URI ||
+    (process.env.APP_URL ? `${process.env.APP_URL}/auth/discord/callback` : ""),
 };

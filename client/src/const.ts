@@ -39,7 +39,7 @@ export const getBotInviteUrl = (guildId?: string) => {
     response_type: "code",
     redirect_uri: getDiscordRedirectUri(),
     integration_type: "0",
-    scope: "bot guilds.join guilds identify",
+    scope: "bot guilds.join guilds",
     prompt: "consent",
   });
 

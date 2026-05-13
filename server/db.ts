@@ -69,12 +69,15 @@ export async function getUserByOpenId(openId: string) {
 
 // --- Guild Settings ---
 export async function getGuildSettings(guildId: string) {
-  await getDb();
+  const db = await getDb();
+  if (!db) return null;
   return GuildSettings.findOne({ guildId }).lean();
 }
 
 export async function upsertGuildSettings(data: any, userId?: string, userName?: string) {
-  await getDb();
+  const db = await getDb();
+  if (!db) return null;
+
   const { guildId, ...rest } = data;
   
   // Se estiver ativando o modo de manutenção, dispara o alerta global
