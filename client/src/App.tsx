@@ -1,0 +1,181 @@
+import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import NotFound from "@/pages/NotFound";
+import { Route, Switch } from "wouter";
+import ErrorBoundary from "./components/ErrorBoundary";
+import { ThemeProvider as ShadcnThemeProvider } from "./contexts/ThemeContext";
+import { ThemeProvider } from "./contexts/ThemeProviderContext";
+import { LanguageProvider } from "./contexts/LanguageContext";
+import "./styles/theme.css";
+import { SessionProvider } from "./contexts/SessionContext";
+import LoginPage from "./pages/LoginPage";
+import ServerSelectPage from "./pages/ServerSelectPage";
+import DashboardPage from "./pages/DashboardPage";
+import GeneralSettingsPage from "./pages/GeneralSettingsPage";
+import AlertBotPage from "./pages/AlertBotPage";
+import CommandsPage from "./pages/CommandsPage";
+import MessagesPage from "./pages/MessagesPage";
+import AutoModerationPage from "./pages/AutoModerationPage";
+import SocialNotificationsPage from "./pages/SocialNotificationsPage";
+import LogsPage from "./pages/LogsPage";
+import OnboardingPage from "./pages/OnboardingPage";
+import WelcomeGoodbyePage from "./pages/WelcomeGoodbyePage";
+import RealTimeLogsPage from "./pages/RealTimeLogsPage";
+import RealTimeLogConfigPage from "./pages/RealTimeLogConfigPage";
+import WelcomeMagnatasPage from "./pages/WelcomeMagnatasPage";
+import ExitMagnatasPage from "./pages/ExitMagnatasPage";
+import MonitorPage from "./pages/MonitorPage";
+import DevCentralPage from "./pages/DevCentralPage";
+
+import DevActivationPage from "./pages/DevActivationPage";
+import DevsLoginPage from "./pages/DevsLoginPage";
+import DevsPage from "./pages/DevsPage";
+import DashboardLayout from "./components/DiscordDashboardLayout";
+import UnifiedDashboard from "./pages/UnifiedDashboard";
+
+function Router() {
+  return (
+    <Switch>
+      <Route path="/" component={LoginPage} />
+      <Route path="/unified" component={UnifiedDashboard} />
+      <Route path="/onboarding" component={OnboardingPage} />
+      <Route path="/servers" component={ServerSelectPage} />
+      <Route path="/dashboard/:guildId">
+        {params => (
+          <DashboardLayout guildId={params.guildId}>
+            <DashboardPage guildId={params.guildId} />
+          </DashboardLayout>
+        )}
+      </Route>
+      <Route path="/dashboard/:guildId/general">
+        {params => (
+          <DashboardLayout guildId={params.guildId}>
+            <GeneralSettingsPage guildId={params.guildId} />
+          </DashboardLayout>
+        )}
+      </Route>
+      <Route path="/dashboard/:guildId/alerts">
+        {params => (
+          <DashboardLayout guildId={params.guildId}>
+            <AlertBotPage guildId={params.guildId} />
+          </DashboardLayout>
+        )}
+      </Route>
+      <Route path="/dashboard/:guildId/commands">
+        {params => (
+          <DashboardLayout guildId={params.guildId}>
+            <CommandsPage guildId={params.guildId} />
+          </DashboardLayout>
+        )}
+      </Route>
+      <Route path="/dashboard/:guildId/messages">
+        {params => (
+          <DashboardLayout guildId={params.guildId}>
+            <MessagesPage guildId={params.guildId} />
+          </DashboardLayout>
+        )}
+      </Route>
+      <Route path="/dashboard/:guildId/automod">
+        {params => (
+          <DashboardLayout guildId={params.guildId}>
+            <AutoModerationPage guildId={params.guildId} />
+          </DashboardLayout>
+        )}
+      </Route>
+      <Route path="/dashboard/:guildId/notifications">
+        {params => (
+          <DashboardLayout guildId={params.guildId}>
+            <SocialNotificationsPage guildId={params.guildId} />
+          </DashboardLayout>
+        )}
+      </Route>
+      <Route path="/dashboard/:guildId/logs">
+        {params => (
+          <DashboardLayout guildId={params.guildId}>
+            <LogsPage guildId={params.guildId} />
+          </DashboardLayout>
+        )}
+      </Route>
+      <Route path="/dashboard/:guildId/realtime-logs">
+        {params => (
+          <DashboardLayout guildId={params.guildId}>
+            <RealTimeLogsPage />
+          </DashboardLayout>
+        )}
+      </Route>
+      <Route path="/dashboard/:guildId/log-config">
+        {params => (
+          <DashboardLayout guildId={params.guildId}>
+            <RealTimeLogConfigPage />
+          </DashboardLayout>
+        )}
+      </Route>
+      <Route path="/dashboard/:guildId/welcome">
+        {params => (
+          <DashboardLayout guildId={params.guildId}>
+            <WelcomeGoodbyePage />
+          </DashboardLayout>
+        )}
+      </Route>
+      <Route path="/dashboard/:guildId/welcome-magnatas">
+        {params => (
+          <DashboardLayout guildId={params.guildId}>
+            <WelcomeMagnatasPage />
+          </DashboardLayout>
+        )}
+      </Route>
+      <Route path="/dashboard/:guildId/exit-magnatas">
+        {params => (
+          <DashboardLayout guildId={params.guildId}>
+            <ExitMagnatasPage />
+          </DashboardLayout>
+        )}
+      </Route>
+      <Route path="/dashboard/:guildId/monitor">
+        {params => (
+          <DashboardLayout guildId={params.guildId}>
+            <MonitorPage />
+          </DashboardLayout>
+        )}
+      </Route>
+      <Route path="/dashboard/:guildId/dev-central">
+        {params => (
+          <DashboardLayout guildId={params.guildId}>
+            <DevCentralPage />
+          </DashboardLayout>
+        )}
+      </Route>
+
+      <Route path="/dashboard/:guildId/dev-activation">
+        {params => <DevActivationPage guildId={params.guildId} />}
+      </Route>
+      <Route path="/devs/login" component={DevsLoginPage} />
+      <Route path="/devs" component={DevsPage} />
+      <Route path="/404" component={NotFound} />
+      <Route component={NotFound} />
+    </Switch>
+  );
+}
+
+function App() {
+  return (
+    <div translate="no">
+      <ErrorBoundary>
+        <ThemeProvider>
+          <LanguageProvider>
+            <ShadcnThemeProvider defaultTheme="dark">
+              <SessionProvider>
+                <TooltipProvider>
+                  <Toaster />
+                  <Router />
+                </TooltipProvider>
+              </SessionProvider>
+            </ShadcnThemeProvider>
+          </LanguageProvider>
+        </ThemeProvider>
+      </ErrorBoundary>
+    </div>
+  );
+}
+
+export default App;

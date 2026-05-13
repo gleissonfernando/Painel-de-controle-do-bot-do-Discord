@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "3000:80"
+    environment:
+      NODE_ENV: production
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID}
+      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET}
+      DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN}
+      MONGODB_URI: ${MONGODB_URI}
+      OAUTH_SERVER_URL: ${OAUTH_SERVER_URL}
+      MANUS_PROJECT_ID: ${MANUS_PROJECT_ID}
+      SESSION_SECRET: ${SESSION_SECRET}
+      APP_URL: ${APP_URL:-http://localhost:3000}
+    depends_on:
+      - mongodb
+    restart: unless-stopped
+    networks:
+      - discord-bot-network
+
+  mongodb:
+    image: mongo:7-alpine
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-password}
+      MONGO_INITDB_DATABASE: discord_bot
+    volumes:
+      - mongodb_data:/data/db
+    restart: unless-stopped
+    networks:
+      - discord-bot-network
+
+volumes:
+  mongodb_data:
+
+networks:
+  discord-bot-network:
+    driver: bridge
