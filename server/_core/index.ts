@@ -39,7 +39,10 @@ async function startServer() {
     serveStatic(app);
   }
 
-  const port = Number(process.env.SOCKET_PORT || process.env.PORT || (process.env.NODE_ENV === "development" ? 3000 : 80));
+  const port = Number(
+    process.env.PORT ||
+      (process.env.NODE_ENV === "development" ? process.env.SOCKET_PORT || 3000 : 80)
+  );
   const host = "0.0.0.0";
 
   server.listen(port, host, () => {

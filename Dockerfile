@@ -5,7 +5,6 @@ WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
-COPY pnpm-lock.yaml ./
 
 # Install dependencies
 RUN npm install --legacy-peer-deps

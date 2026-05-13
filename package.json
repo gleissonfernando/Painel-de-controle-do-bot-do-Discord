@@ -7,7 +7,7 @@
     "dev": "cross-env NODE_ENV=development tsx watch server/_core/index.ts",
     "build": "cross-env NODE_OPTIONS=--max-old-space-size=1024 npm run build:fast",
     "build:fast": "rimraf dist && cross-env NODE_OPTIONS=--max-old-space-size=1024 vite build && cross-env NODE_OPTIONS=--max-old-space-size=1024 esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/index.js",
-    "start": "cross-env NODE_ENV=production PORT=80 NODE_OPTIONS=--max-old-space-size=512 node dist/index.js",
+    "start": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=512 node dist/index.js",
     "check": "tsc --noEmit",
     "format": "prettier --write .",
     "test": "vitest run",
